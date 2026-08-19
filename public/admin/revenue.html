@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Revenue — OL Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<link rel="icon" href="/images/logo.png">
+<link rel="apple-touch-icon" href="/images/logo.png">
+<link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="admin.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<div id="admin-sidebar"></div>
+<div id="admin-topbar"></div>
+<main id="admin-main">
+  <h1 class="admin-section-title"><span class="material-icons-round">payments</span> Revenue</h1>
+
+  <!-- Summary tiles -->
+  <div class="admin-stat-grid mb-3" id="rev-stats">
+    <div class="admin-stat skeleton" style="height:80px"></div>
+    <div class="admin-stat skeleton" style="height:80px"></div>
+    <div class="admin-stat skeleton" style="height:80px"></div>
+    <div class="admin-stat skeleton" style="height:80px"></div>
+  </div>
+
+  <div class="grid-2 mb-3">
+    <!-- Revenue by month -->
+    <div class="admin-card">
+      <h3 style="font-size:14px;margin-bottom:14px">Revenue by Month (₦)</h3>
+      <div class="chart-wrap"><canvas id="rev-chart"></canvas></div>
+    </div>
+    <!-- Subscriber growth -->
+    <div class="admin-card">
+      <h3 style="font-size:14px;margin-bottom:14px">Subscriber Growth</h3>
+      <div class="chart-wrap"><canvas id="growth-chart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid-2 mb-3">
+    <!-- Plan distribution -->
+    <div class="admin-card">
+      <h3 style="font-size:14px;margin-bottom:14px">Plan Distribution</h3>
+      <div style="display:flex;align-items:center;justify-content:center;height:260px">
+        <canvas id="plan-chart" width="260" height="260"></canvas>
+      </div>
+    </div>
+    <!-- Churn -->
+    <div class="admin-card">
+      <h3 style="font-size:14px;margin-bottom:14px">Monthly Churn Rate</h3>
+      <div class="chart-wrap"><canvas id="churn-chart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- AdSense panel -->
+  <div class="admin-card">
+    <h3 style="font-size:15px;margin-bottom:14px"><span class="material-icons-round">phone_android</span> AdSense Overview</h3>
+    <p class="text-soft mb-3" style="font-size:13px">AdSense revenue data is managed directly in your Google AdSense dashboard. Configure your client ID in Settings.</p>
+    <div id="adsense-info" class="flex gap-3" style="flex-wrap:wrap;font-size:14px">
+      <div class="admin-stat" style="min-width:160px"><div style="font-size:18px"><span class="material-icons-round" style="font-size:18px">analytics</span></div><div class="sv" id="adsense-client">—</div><div class="sl">AdSense Client ID</div></div>
+    </div>
+  </div>
+</main>
+
+<script src="admin.js"></script>
+<script>
+injectAdminShell('revenue.html');
+let revChart, growthChart, planChart, churnChart;
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadSummary();
+  loadByMonth();
+  loadGrowth();
+  loadPlans();
+  loadChurn();
+  loadAdsense();
+});
+
+async function loadSummary() {
+  const d = await api('/analytics/revenue');
+  const s = d.data || {};
+  document.getElementById('rev-stats').innerHTML = [
+    { icon:'payments', val:'₦'+(s.total_revenue||0).toLocaleString(), label:'Total Revenue' },
+    { icon:'today', val:'₦'+(s.month_revenue||0).toLocaleString(), label:'This Month' },
+    { icon:'workspace_premium', val:s.active_subs||0, label:'Active Subscribers' },
+    { icon:'trending_down', val:(s.churn_rate||0)+'%', label:'Churn Rate' },
+  ].map(i=>`<div class="admin-stat"><div style="font-size:20px"><span class="material-icons-round" style="font-size:20px">${i.icon}</span></div><div class="sv">${i.val}</div><div class="sl">${i.label}</div></div>`).join('');
+}
+
+async function loadByMonth() {
+  const d = await api('/analytics/revenue/by-month');
+  const rows = d.data?.rows || [];
+  if (revChart) revChart.destroy();
+  const ctx = document.getElementById('rev-chart').getContext('2d');
+  revChart = new Chart(ctx, {
+    type: 'bar',
+    data: { labels:rows.map(r=>r.month), datasets:[{ label:'Revenue ₦', data:rows.map(r=>r.revenue||0), backgroundColor:'rgba(2,245,161,0.7)', borderRadius:4 }] },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ y:{ticks:{color:'rgba(173,223,241,0.6)',callback:v=>'₦'+v.toLocaleString()}}, x:{ticks:{color:'rgba(173,223,241,0.6)',font:{size:11}}} } }
+  });
+}
+
+async function loadGrowth() {
+  const d = await api('/analytics/revenue/growth');
+  const rows = d.data?.rows || [];
+  if (growthChart) growthChart.destroy();
+  const ctx = document.getElementById('growth-chart').getContext('2d');
+  growthChart = new Chart(ctx, {
+    type: 'line',
+    data: { labels:rows.map(r=>r.month), datasets:[{ label:'New Subs', data:rows.map(r=>r.new_subs||0), borderColor:'#99cc33', backgroundColor:'rgba(153,204,51,0.08)', tension:0.4, fill:true }] },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ y:{ticks:{color:'rgba(173,223,241,0.6)'}}, x:{ticks:{color:'rgba(173,223,241,0.6)',font:{size:11}}} } }
+  });
+}
+
+async function loadPlans() {
+  const d = await api('/analytics/revenue/plans');
+  const rows = d.data?.rows || [];
+  if (planChart) planChart.destroy();
+  if (!rows.length) return;
+  const ctx = document.getElementById('plan-chart').getContext('2d');
+  planChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels:rows.map(r=>r.plan), datasets:[{ data:rows.map(r=>r.count), backgroundColor:['#02f5a1','#99cc33','#faf92a'], borderWidth:0 }] },
+    options: { responsive:false, plugins:{ legend:{ position:'bottom', labels:{ color:'rgba(173,223,241,0.75)', font:{size:12} } } } }
+  });
+}
+
+async function loadChurn() {
+  const d = await api('/analytics/revenue/churn');
+  const rows = d.data?.rows || [];
+  if (churnChart) churnChart.destroy();
+  const ctx = document.getElementById('churn-chart').getContext('2d');
+  churnChart = new Chart(ctx, {
+    type: 'line',
+    data: { labels:rows.map(r=>r.month), datasets:[{ label:'Churn %', data:rows.map(r=>r.churn_rate||0), borderColor:'#ff4757', backgroundColor:'rgba(255,71,87,0.08)', tension:0.4, fill:true }] },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ y:{min:0,ticks:{color:'rgba(173,223,241,0.6)',callback:v=>v+'%'}}, x:{ticks:{color:'rgba(173,223,241,0.6)',font:{size:11}}} } }
+  });
+}
+
+async function loadAdsense() {
+  const d = await api('/admin/settings');
+  const s = d.data?.settings || {};
+  document.getElementById('adsense-client').textContent = s.adsense_client_id || 'Not configured';
+}
+</script>
+</body>
+</html>

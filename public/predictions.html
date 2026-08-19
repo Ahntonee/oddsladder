@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Football Predictions & Tips — Oddslander</title>
+<meta name="description" content="Browse today's free and VIP football predictions. Filter by league, market, or category.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<link rel="icon" href="/images/logo.png">
+<link rel="apple-touch-icon" href="/images/logo.png">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="header-placeholder"></div>
+
+<main>
+  <section>
+    <div class="container">
+      <div class="flex-between mb-3">
+        <h1 class="section-title mb-0">Predictions <span>&amp; Picks</span></h1>
+      </div>
+
+      <!-- Banker Section -->
+      <div id="banker-section" class="mb-3"></div>
+
+      <!-- Category Tabs -->
+      <div class="tab-row mb-2" id="category-tabs">
+        <button class="category-tab active" data-cat="">All</button>
+        <button class="category-tab" data-cat="free">Free</button>
+        <button class="category-tab" data-cat="over_1_5">Over 1.5</button>
+        <button class="category-tab" data-cat="over_2_5">Over 2.5</button>
+        <button class="category-tab" data-cat="over_3_5">Over 3.5</button>
+        <button class="category-tab" data-cat="under_2_5">Under 2.5</button>
+        <button class="category-tab" data-cat="gg">BTTS</button>
+        <button class="category-tab" data-cat="home_win">Home Win</button>
+        <button class="category-tab" data-cat="away_win">Away Win</button>
+        <button class="category-tab" data-cat="draw">Draw</button>
+        <button class="category-tab" data-cat="vip">VIP</button>
+      </div>
+
+      <!-- Date Tabs -->
+      <div class="date-tabs mb-2">
+        <button class="date-tab" onclick="setDate(this,'yesterday')">Yesterday</button>
+        <button class="date-tab active" onclick="setDate(this,'today')">Today</button>
+        <button class="date-tab" onclick="setDate(this,'tomorrow')">Tomorrow</button>
+      </div>
+
+      <!-- Filters -->
+      <div class="flex gap-2 mb-3" style="flex-wrap:wrap;align-items:center">
+        <select class="form-control" style="max-width:200px" id="league-filter" onchange="applyFilters()">
+          <option value="">All Leagues</option>
+        </select>
+        <select class="form-control" style="max-width:180px" id="market-filter" onchange="applyFilters()">
+          <option value="">All Markets</option>
+          <option value="1X2">1X2</option>
+          <option value="Over/Under">Over/Under</option>
+          <option value="BTTS">BTTS</option>
+          <option value="Draw No Bet">Draw No Bet</option>
+          <option value="Accumulator">Accumulator</option>
+        </select>
+        <select class="form-control" style="max-width:160px" id="result-filter" onchange="applyFilters()">
+          <option value="">All Results</option>
+          <option value="pending">Pending</option>
+          <option value="won">Won</option>
+          <option value="lost">Lost</option>
+        </select>
+        <input type="text" class="form-control" style="max-width:220px" id="search-input" placeholder="Search teams…" oninput="debounceSearch()">
+      </div>
+
+      <!-- VIP Section -->
+      <div id="vip-section" class="mb-3"></div>
+
+      <!-- Grid -->
+      <div class="grid-3" id="predictions-grid"></div>
+
+      <!-- Pagination -->
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </section>
+</main>
+
+<div id="footer-placeholder"></div>
+<script src="/js/app.js"></script>
+<script>
+let currentPage = 1, currentDate = 'today', currentCat = '', currentLeague = '', currentMarket = '', currentResult = '', searchTerm = '';
+let searchTimer;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await renderBankerCards(document.getElementById('banker-section'));
+  await renderVipTeaser(document.getElementById('vip-section'));
+  await populateLeagues();
+  applyFilters();
+  setupCategoryTabs();
+});
+
+async function populateLeagues() {
+  const leagues = await fetchLeagues();
+  const sel = document.getElementById('league-filter');
+  Object.entries(leagues).forEach(([continent, items]) => {
+    const grp = document.createElement('optgroup');
+    grp.label = continent;
+    items.forEach(l => { grp.appendChild(new Option(l.name, l.id)); });
+    sel.appendChild(grp);
+  });
+}
+
+function setupCategoryTabs() {
+  document.querySelectorAll('.category-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.category-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentCat = btn.dataset.cat;
+      currentPage = 1;
+      applyFilters();
+    });
+  });
+}
+
+function setDate(btn, date) {
+  document.querySelectorAll('.date-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentDate = date;
+  currentPage = 1;
+  applyFilters();
+}
+
+function debounceSearch() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    searchTerm = document.getElementById('search-input').value;
+    currentPage = 1;
+    applyFilters();
+  }, 400);
+}
+
+function applyFilters() {
+  currentLeague = document.getElementById('league-filter')?.value || '';
+  currentMarket = document.getElementById('market-filter')?.value || '';
+  currentResult = document.getElementById('result-filter')?.value || '';
+  const params = { date: currentDate, page: currentPage, limit: 18 };
+  if (currentCat) params.category = currentCat;
+  if (currentLeague) params.league_id = currentLeague;
+  if (currentMarket) params.market = currentMarket;
+  if (currentResult) params.result = currentResult;
+  if (searchTerm) params.search = searchTerm;
+
+  loadPredictions(params, document.getElementById('predictions-grid')).then(pg => renderPagination(pg));
+}
+
+function renderPagination(pg) {
+  const el = document.getElementById('pagination');
+  if (!pg || pg.totalPages <= 1) { el.innerHTML = ''; return; }
+  const pages = [];
+  for (let i = 1; i <= pg.totalPages; i++) {
+    pages.push(`<button class="page-btn ${i === pg.page ? 'active' : ''}" onclick="goPage(${i})">${i}</button>`);
+  }
+  el.innerHTML = pages.join('');
+}
+
+function goPage(p) {
+  currentPage = p;
+  applyFilters();
+  window.scrollTo(0, 0);
+}
+</script>
+</body>
+</html>

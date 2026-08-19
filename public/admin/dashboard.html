@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard — OL Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<link rel="icon" href="/images/logo.png">
+<link rel="apple-touch-icon" href="/images/logo.png">
+<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<div id="admin-sidebar"></div>
+<div id="admin-topbar"></div>
+<main id="admin-main">
+  <h1 class="admin-section-title">Dashboard</h1>
+
+  <!-- Stats -->
+  <div class="admin-stat-grid" id="stat-grid">
+    <div class="admin-stat skeleton" style="height:90px"></div>
+    <div class="admin-stat skeleton" style="height:90px"></div>
+    <div class="admin-stat skeleton" style="height:90px"></div>
+    <div class="admin-stat skeleton" style="height:90px"></div>
+    <div class="admin-stat skeleton" style="height:90px"></div>
+    <div class="admin-stat skeleton" style="height:90px"></div>
+  </div>
+
+  <div class="grid-2 mb-3">
+    <!-- Quick actions -->
+    <div class="admin-card">
+      <h3 style="font-size:15px;margin-bottom:14px"><span class="material-icons-round">bolt</span> Quick Actions</h3>
+      <div class="flex" style="flex-wrap:wrap;gap:8px">
+        <a href="predictions.html" class="btn btn-primary btn-sm">+ New Prediction</a>
+        <a href="intelligence.html" class="btn btn-ghost btn-sm"><span class="material-icons-round">psychology</span> Intelligence</a>
+        <a href="sync.html" class="btn btn-ghost btn-sm"><span class="material-icons-round">sync</span> Sync Data</a>
+        <a href="blog.html" class="btn btn-ghost btn-sm"><span class="material-icons-round">edit_note</span> New Post</a>
+        <a href="subscriptions.html" class="btn btn-ghost btn-sm"><span class="material-icons-round">credit_card</span> Subscriptions</a>
+        <a href="settings.html" class="btn btn-ghost btn-sm"><span class="material-icons-round">settings</span> Settings</a>
+      </div>
+    </div>
+    <!-- System Status -->
+    <div class="admin-card">
+      <h3 style="font-size:15px;margin-bottom:14px"><span class="material-icons-round">circle</span> System Status</h3>
+      <div id="sys-status"><div class="skeleton" style="height:60px"></div></div>
+    </div>
+  </div>
+
+  <!-- Recent predictions -->
+  <div class="admin-card">
+    <div class="flex-between mb-3">
+      <h3 style="font-size:15px">Recent Predictions</h3>
+      <a href="predictions.html" class="btn btn-ghost btn-sm">View All →</a>
+    </div>
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Match</th><th>Tip</th><th>Cat</th><th>Conf</th><th>Date</th><th>Result</th><th>Published</th></tr></thead>
+        <tbody id="recent-preds"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Recent users -->
+  <div class="admin-card">
+    <div class="flex-between mb-3">
+      <h3 style="font-size:15px">New Users (last 10)</h3>
+      <a href="users.html" class="btn btn-ghost btn-sm">Manage Users →</a>
+    </div>
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Joined</th></tr></thead>
+        <tbody id="recent-users"></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<script src="admin.js"></script>
+<script>
+injectAdminShell('dashboard.html');
+
+document.addEventListener('DOMContentLoaded', async () => {
+  loadStats();
+  loadRecentPreds();
+  loadRecentUsers();
+  loadSysStatus();
+});
+
+async function loadStats() {
+  const d = await api('/admin/stats');
+  const s = d.data || {};
+  const items = [
+    { icon:'sports_soccer', val:s.total_predictions||0, label:'Total Predictions', color:'' },
+    { icon:'today', val:s.today_predictions||0, label:"Today's Tips", color:'' },
+    { icon:'gps_fixed', val:(s.win_rate||0)+'%', label:'Win Rate (30d)', color:'var(--primary)' },
+    { icon:'group', val:s.total_users||0, label:'Total Users', color:'' },
+    { icon:'workspace_premium', val:s.vip_users||0, label:'VIP Subscribers', color:'var(--accent)' },
+    { icon:'payments', val:'₦'+(s.revenue_month||0).toLocaleString(), label:'Revenue This Month', color:'var(--primary)' },
+  ];
+  document.getElementById('stat-grid').innerHTML = items.map(i=>`
+    <div class="admin-stat">
+      <div style="font-size:22px"><span class="material-icons-round" style="font-size:22px">${i.icon}</span></div>
+      <div class="sv" style="${i.color?'color:'+i.color:''}">${i.val}</div>
+      <div class="sl">${i.label}</div>
+    </div>`).join('');
+}
+
+async function loadRecentPreds() {
+  const d = await api('/predictions?limit=10');
+  const preds = d.data?.predictions || [];
+  document.getElementById('recent-preds').innerHTML = preds.length
+    ? preds.map(p=>`<tr>
+        <td><strong style="font-size:13px">${escHtml(p.home_team)} vs ${escHtml(p.away_team)}</strong></td>
+        <td>${escHtml(p.tip||'—')}</td>
+        <td><span class="badge">${escHtml(p.category||'—')}</span></td>
+        <td>${p.confidence_score||'—'}</td>
+        <td>${fmtDate(p.match_date)}</td>
+        <td><span class="badge badge-${p.result||'pending'}">${(p.result||'pending').toUpperCase()}</span></td>
+        <td>${p.is_published?'<span class="material-icons-round" style="color:var(--primary);font-size:16px">check_circle</span>':'<span class="material-icons-round" style="font-size:16px;opacity:.4">radio_button_unchecked</span>'}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="7" class="empty-cell">No predictions yet</td></tr>';
+}
+
+async function loadRecentUsers() {
+  const d = await api('/admin/users?limit=10');
+  const users = d.data?.users || [];
+  document.getElementById('recent-users').innerHTML = users.length
+    ? users.map(u=>`<tr>
+        <td>${escHtml(u.name)}</td>
+        <td>${escHtml(u.email)}</td>
+        <td><span class="badge badge-${u.role==='vip'?'vip':u.role==='admin'?'admin':'free'}">${u.role}</span></td>
+        <td>${fmtDate(u.created_at)}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="4" class="empty-cell">No users</td></tr>';
+}
+
+async function loadSysStatus() {
+  const d = await api('/intelligence/status');
+  const s = d.data || {};
+  document.getElementById('sys-status').innerHTML = `
+    <div class="flex" style="flex-wrap:wrap;gap:12px;font-size:13px">
+      <span><span class="material-icons-round" style="font-size:16px">psychology</span> Engine: <strong style="color:${s.enabled?'var(--primary)':'var(--danger)'}">${s.enabled?'ON':'OFF'}</strong></span>
+      <span><span class="material-icons-round" style="font-size:16px">analytics</span> Weights: <strong>${s.weightsLoaded?'Loaded':'—'}</strong></span>
+      <span><span class="material-icons-round" style="font-size:16px">content_paste</span> Queue: <strong>${s.pendingQueue||0}</strong></span>
+      <span><span class="material-icons-round" style="font-size:16px">today</span> Last sync: <strong>${s.lastSync?fmtDateTime(s.lastSync):'Never'}</strong></span>
+    </div>`;
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>__META_TITLE__</title>
+<meta name="description" content="__META_DESC__">
+<meta name="keywords" content="__META_KEYWORDS__">
+<link rel="canonical" href="__CANONICAL__">
+<meta property="og:title" content="__META_TITLE__">
+<meta property="og:description" content="__META_DESC__">
+<meta property="og:url" content="__CANONICAL__">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://oddslander.com/images/logo.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="__META_TITLE__">
+<meta name="twitter:description" content="__META_DESC__">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<link rel="icon" href="/images/logo.png">
+<link rel="apple-touch-icon" href="/images/logo.png">
+<link rel="stylesheet" href="/css/style.css">
+<script>
+  window._MARKET_SLUG  = '__MARKET_SLUG__';
+  window._MARKET_LABEL = '__MARKET_LABEL__';
+  window._MARKET_API   = '__MARKET_API__';
+</script>
+</head>
+<body>
+<div id="header-placeholder"></div>
+
+<main>
+  <section>
+    <div class="container">
+
+      <!-- Breadcrumb -->
+      <nav class="breadcrumb mb-2" aria-label="breadcrumb">
+        <a href="/">Home</a>
+        <span class="material-icons-round" style="font-size:14px;vertical-align:middle;margin:0 4px;color:var(--text-soft)">chevron_right</span>
+        <a href="/predictions.html">Predictions</a>
+        <span class="material-icons-round" style="font-size:14px;vertical-align:middle;margin:0 4px;color:var(--text-soft)">chevron_right</span>
+        <span id="breadcrumb-label" style="color:var(--primary)">__MARKET_LABEL__</span>
+      </nav>
+
+      <!-- Heading -->
+      <div class="flex-between mb-2">
+        <h1 class="section-title mb-0" id="market-heading">__MARKET_LABEL__ <span>Predictions</span></h1>
+      </div>
+
+      <!-- SEO Intro -->
+      <p class="market-intro mb-3">__MARKET_INTRO__</p>
+
+      <!-- Category Tabs -->
+      <div class="tab-row mb-2" id="category-tabs">
+        <button class="category-tab active" data-cat="">All</button>
+        <button class="category-tab" data-cat="free">Free</button>
+        <button class="category-tab" data-cat="vip">VIP</button>
+      </div>
+
+      <!-- Date Tabs -->
+      <div class="date-tabs mb-2">
+        <button class="date-tab" onclick="setDate(this,'yesterday')">Yesterday</button>
+        <button class="date-tab active" onclick="setDate(this,'today')">Today</button>
+        <button class="date-tab" onclick="setDate(this,'tomorrow')">Tomorrow</button>
+      </div>
+
+      <!-- Filters -->
+      <div class="flex gap-2 mb-3" style="flex-wrap:wrap;align-items:center">
+        <select class="form-control" style="max-width:200px" id="league-filter" onchange="applyFilters()">
+          <option value="">All Leagues</option>
+        </select>
+        <select class="form-control" style="max-width:160px" id="result-filter" onchange="applyFilters()">
+          <option value="">All Results</option>
+          <option value="pending">Pending</option>
+          <option value="won">Won</option>
+          <option value="lost">Lost</option>
+        </select>
+        <input type="text" class="form-control" style="max-width:220px" id="search-input" placeholder="Search teams…" oninput="debounceSearch()">
+      </div>
+
+      <!-- Grid -->
+      <div class="grid-3" id="predictions-grid"></div>
+
+      <!-- Pagination -->
+      <div class="pagination" id="pagination"></div>
+
+    </div>
+  </section>
+</main>
+
+<div id="footer-placeholder"></div>
+<script src="/js/app.js"></script>
+<script>
+let currentPage = 1, currentDate = 'today', currentCat = '', currentLeague = '', currentResult = '', searchTerm = '';
+let searchTimer;
+
+const MARKET_API = window._MARKET_API;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await populateLeagues();
+  applyFilters();
+  setupCategoryTabs();
+});
+
+async function populateLeagues() {
+  const leagues = await fetchLeagues();
+  const sel = document.getElementById('league-filter');
+  Object.entries(leagues).forEach(([continent, items]) => {
+    const grp = document.createElement('optgroup');
+    grp.label = continent;
+    items.forEach(l => { grp.appendChild(new Option(l.name, l.id)); });
+    sel.appendChild(grp);
+  });
+}
+
+function setupCategoryTabs() {
+  document.querySelectorAll('.category-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.category-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentCat = btn.dataset.cat;
+      currentPage = 1;
+      applyFilters();
+    });
+  });
+}
+
+function setDate(btn, date) {
+  document.querySelectorAll('.date-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentDate = date;
+  currentPage = 1;
+  applyFilters();
+}
+
+function debounceSearch() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    searchTerm = document.getElementById('search-input').value;
+    currentPage = 1;
+    applyFilters();
+  }, 400);
+}
+
+function applyFilters() {
+  currentLeague = document.getElementById('league-filter')?.value || '';
+  currentResult = document.getElementById('result-filter')?.value || '';
+  const params = { date: currentDate, page: currentPage, limit: 18, market: MARKET_API };
+  if (currentCat)    params.category   = currentCat;
+  if (currentLeague) params.league_id  = currentLeague;
+  if (currentResult) params.result     = currentResult;
+  if (searchTerm)    params.search     = searchTerm;
+
+  loadPredictions(params, document.getElementById('predictions-grid')).then(pg => renderPagination(pg));
+}
+
+function renderPagination(pg) {
+  const el = document.getElementById('pagination');
+  if (!pg || pg.totalPages <= 1) { el.innerHTML = ''; return; }
+  const pages = [];
+  for (let i = 1; i <= pg.totalPages; i++) {
+    pages.push(`<button class="page-btn ${i === pg.page ? 'active' : ''}" onclick="goPage(${i})">${i}</button>`);
+  }
+  el.innerHTML = pages.join('');
+}
+
+function goPage(p) {
+  currentPage = p;
+  applyFilters();
+  window.scrollTo(0, 0);
+}
+</script>
+</body>
+</html>

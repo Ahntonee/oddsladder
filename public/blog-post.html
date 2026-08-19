@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Blog — Oddslander</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<link rel="icon" href="/images/logo.png">
+<link rel="apple-touch-icon" href="/images/logo.png">
+<link rel="stylesheet" href="/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/marked@4/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+</head>
+<body>
+<div id="header-placeholder"></div>
+<main>
+  <section>
+    <div class="container" style="max-width:800px">
+      <div id="breadcrumb" class="mb-3" style="font-size:13px;color:var(--text-soft)">
+        <a href="/">Home</a> › <a href="/blog.html">Blog</a> › <span id="bc-title">Loading…</span>
+      </div>
+      <div id="post-content"><div class="skeleton" style="height:500px;border-radius:14px"></div></div>
+      <div id="related-section" class="mt-4" style="display:none">
+        <h3 class="section-title">Related Posts</h3>
+        <div class="grid-3" id="related-grid"></div>
+      </div>
+    </div>
+  </section>
+</main>
+<div id="footer-placeholder"></div>
+<script src="/js/app.js"></script>
+<script>
+const slug = window.location.pathname.match(/\/blog\/([^/?#]+)/)?.[1];
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!slug) { document.getElementById('post-content').innerHTML = '<div class="empty-state"><h3>Post not found</h3></div>'; return; }
+  try {
+    const r = await fetch(`/api/blog/${slug}`);
+    if (!r.ok) throw new Error('Not found');
+    const { post, related } = (await r.json()).data;
+
+    // Update meta
+    document.title = `${post.meta_title || post.title} — Oddslander`;
+    setMeta('description', post.meta_description || post.excerpt || '');
+    setMeta('keywords', post.keywords || '');
+    setOg('title', post.title);
+    setOg('description', post.excerpt || '');
+    if (post.featured_image) setOg('image', post.featured_image);
+
+    // JSON-LD
+    const ld = document.createElement('script');
+    ld.type = 'application/ld+json';
+    ld.textContent = JSON.stringify({ "@context":"https://schema.org","@type":"Article","headline":post.title,"datePublished":post.published_at,"author":{"@type":"Person","name":post.author_name||'Oddslander'},"publisher":{"@type":"Organization","name":"Oddslander"} });
+    document.head.appendChild(ld);
+
+    document.getElementById('bc-title').textContent = post.title;
+
+    const html = DOMPurify.sanitize(marked.parse(post.content || ''));
+    document.getElementById('post-content').innerHTML = `
+      ${post.featured_image ? `<img src="${post.featured_image.startsWith('data:')?post.featured_image:escapeHtml(post.featured_image)}" alt="${escapeHtml(post.title)}" style="width:100%;max-height:400px;object-fit:cover;border-radius:14px;margin-bottom:28px">` : ''}
+      <div class="flex gap-2 mb-3" style="flex-wrap:wrap;align-items:center">
+        ${post.category ? `<span class="badge" style="background:rgba(2,245,161,0.12);color:var(--primary)">${escapeHtml(post.category)}</span>` : ''}
+        <span class="text-soft" style="font-size:13px">${formatDate(post.published_at)}</span>
+        ${post.author_name ? `<span class="text-soft" style="font-size:13px">by ${escapeHtml(post.author_name)}</span>` : ''}
+      </div>
+      <h1 style="font-size:clamp(24px,4vw,36px);font-weight:900;margin-bottom:24px;line-height:1.25">${escapeHtml(post.title)}</h1>
+      <div class="article-content">${html}</div>
+      <div class="flex gap-2 mt-4">
+        <button class="btn btn-ghost btn-sm" onclick="sharePost()"><span class="material-icons-round">share</span> Share</button>
+        <a href="/blog.html" class="btn btn-ghost btn-sm">← All Posts</a>
+      </div>`;
+
+    if (related?.length) {
+      document.getElementById('related-section').style.display = 'block';
+      document.getElementById('related-grid').innerHTML = related.map(p => `
+        <div class="blog-card">
+          ${p.featured_image ? `<img class="blog-card-img" src="${p.featured_image.startsWith('data:')?p.featured_image:escapeHtml(p.featured_image)}" alt="${escapeHtml(p.title)}" loading="lazy">` : `<div class="blog-card-img" style="background:var(--bg-2);display:flex;align-items:center;justify-content:center;font-size:36px"><span class="material-icons-round" style="font-size:36px;opacity:.4">article</span></div>`}
+          <div class="blog-card-body"><h3>${escapeHtml(p.title)}</h3><p>${escapeHtml(p.excerpt||'')}</p></div>
+          <div class="blog-card-footer"><span>${formatDate(p.published_at)}</span><a href="/blog/${p.slug}" class="btn btn-sm btn-outline">Read →</a></div>
+        </div>`).join('');
+    }
+  } catch {
+    document.getElementById('post-content').innerHTML = '<div class="empty-state"><div class="empty-icon"><span class="material-icons-round" style="font-size:48px">edit_note</span></div><h3>Post not found</h3><a href="/blog.html" class="btn btn-outline mt-2">← Back to Blog</a></div>';
+  }
+});
+
+function setMeta(name, content) { let el = document.querySelector(`meta[name="${name}"]`); if (!el) { el=document.createElement('meta'); el.name=name; document.head.appendChild(el); } el.content=content; }
+function setOg(prop, content) { let el = document.querySelector(`meta[property="og:${prop}"]`); if (!el) { el=document.createElement('meta'); el.setAttribute('property',`og:${prop}`); document.head.appendChild(el); } el.content=content; }
+function sharePost() { if (navigator.share) navigator.share({title:document.title,url:location.href}); else { navigator.clipboard?.writeText(location.href); showToast('Link copied!','success'); } }
+</script>
+</body>
+</html>

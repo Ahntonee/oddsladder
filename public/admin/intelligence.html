@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Intelligence Engine — OL Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<link rel="icon" href="/images/logo.png">
+<link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="admin.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<div id="admin-sidebar"></div>
+<div id="admin-topbar"></div>
+<main id="admin-main">
+  <h1 class="admin-section-title"><span class="material-icons-round">psychology</span> Intelligence Engine</h1>
+
+  <!-- Status bar + actions -->
+  <div class="admin-card mb-3">
+    <div class="flex-between" style="flex-wrap:wrap;gap:16px">
+      <div id="eng-status" style="flex:1"><div class="skeleton" style="height:40px;max-width:500px"></div></div>
+      <div class="flex gap-2">
+        <button class="btn btn-primary btn-sm" id="run-all-btn">▶ Run Engine</button>
+        <button class="btn btn-ghost btn-sm" id="refresh-status-btn">↻ Refresh</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Queue (main focus) -->
+  <div class="admin-card mb-3">
+    <div class="flex-between mb-3">
+      <h3 style="font-size:15px"><span class="material-icons-round">content_paste</span> Prediction Queue
+        <span id="queue-count" class="badge" style="background:rgba(2,245,161,0.12);color:var(--primary);margin-left:6px">0</span>
+      </h3>
+      <button class="btn btn-ghost btn-sm" id="refresh-queue-btn">↻ Refresh</button>
+    </div>
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Match</th><th>Date</th><th>Tip</th><th>Market</th><th>Conf</th><th>Actions</th></tr></thead>
+        <tbody id="queue-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Advanced (collapsed by default) -->
+  <details class="admin-card mb-3" id="advanced-panel">
+    <summary style="cursor:pointer;font-size:14px;font-weight:700;color:var(--text-soft);list-style:none;display:flex;align-items:center;gap:8px;user-select:none">
+      <span class="material-icons-round" style="font-size:16px" id="adv-icon">expand_more</span>
+      Advanced — Weights, Patterns &amp; Accuracy Chart
+    </summary>
+    <div style="margin-top:20px">
+
+      <!-- Weights -->
+      <div class="mb-3">
+        <div class="flex-between mb-2">
+          <h4 style="font-size:13px;font-weight:700"><span class="material-icons-round" style="font-size:15px;vertical-align:middle">balance</span> Confidence Weights</h4>
+          <button class="btn btn-primary btn-sm" id="save-weights-btn">Save</button>
+        </div>
+        <p class="text-soft mb-2" style="font-size:11px">Must sum to 1.00.</p>
+        <div id="weight-sliders"><div class="skeleton" style="height:100px"></div></div>
+      </div>
+
+      <!-- Performance + Patterns side by side -->
+      <div class="grid-2 mb-3">
+        <div>
+          <h4 style="font-size:13px;font-weight:700;margin-bottom:10px"><span class="material-icons-round" style="font-size:15px;vertical-align:middle">bar_chart</span> Learning Performance</h4>
+          <div id="perf-card"><div class="skeleton" style="height:60px"></div></div>
+        </div>
+        <div>
+          <h4 style="font-size:13px;font-weight:700;margin-bottom:10px"><span class="material-icons-round" style="font-size:15px;vertical-align:middle">manage_search</span> Pattern Insights</h4>
+          <div id="patterns-wrap"><div class="skeleton" style="height:60px"></div></div>
+        </div>
+      </div>
+
+      <!-- Chart -->
+      <div>
+        <h4 style="font-size:13px;font-weight:700;margin-bottom:10px"><span class="material-icons-round" style="font-size:15px;vertical-align:middle">trending_up</span> Accuracy Over Time</h4>
+        <div class="chart-wrap"><canvas id="accuracy-chart"></canvas></div>
+      </div>
+
+    </div>
+  </details>
+
+</main>
+
+<script src="admin.js"></script>
+<script>
+injectAdminShell('intelligence.html');
+let weights = {};
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadStatus();
+  loadQueue();
+
+  document.getElementById('run-all-btn').addEventListener('click', runAll);
+  document.getElementById('refresh-status-btn').addEventListener('click', loadStatus);
+  document.getElementById('refresh-queue-btn').addEventListener('click', loadQueue);
+  document.getElementById('save-weights-btn').addEventListener('click', saveWeights);
+
+  // Load advanced section only when opened
+  const panel = document.getElementById('advanced-panel');
+  let advLoaded = false;
+  panel.addEventListener('toggle', () => {
+    document.getElementById('adv-icon').textContent = panel.open ? 'expand_less' : 'expand_more';
+    if (panel.open && !advLoaded) {
+      advLoaded = true;
+      loadWeights();
+      loadPerf();
+      loadPatterns();
+      loadAccuracyChart();
+    }
+  });
+});
+
+async function loadStatus() {
+  const d = await api('/admin/intelligence/status');
+  const s = d.data || {};
+  document.getElementById('eng-status').innerHTML = `
+    <div class="flex" style="flex-wrap:wrap;gap:20px;font-size:13px;align-items:center">
+      <div>Status <strong style="color:${s.queueCount>0?'var(--primary)':'var(--text-soft)'}">${s.queueCount>0?'ACTIVE':'IDLE'}</strong></div>
+      <div>Queue <strong>${s.queueCount||0}</strong></div>
+      <div>Generated Today <strong style="color:var(--primary)">${s.todayGenerated||0}</strong></div>
+      <div>Auto-Published <strong>${s.autoPublished||0}</strong></div>
+      <div>Last Run <strong>${s.lastRun ? fmtDate(s.lastRun) : 'Never'}</strong></div>
+    </div>`;
+}
+
+async function loadWeights() {
+  const d = await api('/admin/intelligence/weights');
+  const raw = d.data?.weights || [];
+  raw.forEach(w => { weights[w.weight_key] = w.weight_value; });
+  const labels = { form_weight:'Form', h2h_weight:'H2H', odds_weight:'Odds', market_weight:'Market', league_weight:'League' };
+  document.getElementById('weight-sliders').innerHTML = Object.entries(labels).map(([k,label]) => {
+    const val = parseFloat(weights[k]||0);
+    return `<div class="form-group" style="margin-bottom:10px">
+      <div class="flex-between mb-1"><label class="form-label" style="margin-bottom:0;font-size:12px">${label}</label><span id="lbl-${k}" style="font-size:12px;font-weight:700;color:var(--primary)">${val.toFixed(2)}</span></div>
+      <input type="range" min="0" max="1" step="0.01" value="${val}" id="sl-${k}" data-sl-key="${k}" style="width:100%;accent-color:var(--primary)">
+    </div>`;
+  }).join('');
+  document.querySelectorAll('[data-sl-key]').forEach(input => {
+    input.addEventListener('input', function() {
+      document.getElementById('lbl-' + this.dataset.slKey).textContent = parseFloat(this.value).toFixed(2);
+    });
+  });
+}
+
+async function saveWeights() {
+  const keys = ['form_weight','h2h_weight','odds_weight','market_weight','league_weight'];
+  const body = {};
+  keys.forEach(k => body[k] = parseFloat(document.getElementById('sl-'+k).value));
+  const sum = Object.values(body).reduce((a,b)=>a+b,0);
+  if (Math.abs(sum-1) > 0.01) { showToast(`Weights sum to ${sum.toFixed(2)}, must be 1.00`,'error'); return; }
+  const d = await api('/admin/intelligence/weights', {method:'PUT', body:JSON.stringify(body)});
+  if (d.success) showToast('Weights saved','success');
+  else showToast(d.message,'error');
+}
+
+async function loadQueue() {
+  const d = await api('/admin/intelligence/queue');
+  const items = d.data?.queue || [];
+  document.getElementById('queue-count').textContent = items.length;
+  document.getElementById('queue-body').innerHTML = items.length
+    ? items.map(q=>`<tr>
+        <td><strong>${escHtml(q.home_team)} vs ${escHtml(q.away_team)}</strong><br><span class="text-soft" style="font-size:11px">${escHtml(q.league_name||'')}</span></td>
+        <td style="font-size:12px">${q.match_date ? new Date(q.match_date).toLocaleDateString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '—'}</td>
+        <td><strong>${escHtml(q.tip||'—')}</strong></td>
+        <td>${escHtml(q.market||'—')}</td>
+        <td><span style="color:var(--primary);font-weight:700">${q.confidence_score||'—'}</span></td>
+        <td>
+          <div class="flex gap-1">
+            <button class="btn btn-sm btn-primary" data-queue-id="${q.id}" data-queue-action="approve" title="Approve & publish"><span class="material-icons-round" style="font-size:14px">check_circle</span></button>
+            <button class="btn btn-sm btn-danger" data-queue-id="${q.id}" data-queue-action="reject" title="Reject"><span class="material-icons-round" style="font-size:14px">cancel</span></button>
+          </div>
+        </td>
+      </tr>`).join('')
+    : '<tr><td colspan="6" class="empty-cell">Queue is empty — run the engine to generate predictions</td></tr>';
+
+  document.querySelectorAll('[data-queue-id]').forEach(btn => {
+    btn.addEventListener('click', () => queueAction(btn.dataset.queueId, btn.dataset.queueAction));
+  });
+}
+
+async function queueAction(id, action) {
+  const d = await api(`/admin/intelligence/queue/${id}/${action}`, {method:'PUT'});
+  if (d.success) { showToast(action==='approve'?'Published':'Rejected','success'); loadQueue(); loadStatus(); }
+  else showToast(d.message,'error');
+}
+
+async function runAll() {
+  const btn = document.getElementById('run-all-btn');
+  btn.disabled=true; btn.textContent='Running…';
+  const d = await api('/admin/intelligence/run', {method:'POST'});
+  btn.disabled=false; btn.textContent='▶ Run Engine';
+  if (d.success) { showToast(`Done — ${d.data?.generated||0} generated, ${d.data?.autoPublished||0} auto-published`,'success'); loadQueue(); loadStatus(); }
+  else showToast(d.message,'error');
+}
+
+async function loadPerf() {
+  const d = await api('/admin/intelligence/performance');
+  const p = d.data || {};
+  document.getElementById('perf-card').innerHTML = `
+    <div class="flex" style="flex-wrap:wrap;gap:14px;font-size:13px">
+      <div>Outcomes <strong>${p.total||0}</strong></div>
+      <div>Correct <strong style="color:var(--primary)">${p.correct||0}</strong></div>
+      <div>Accuracy <strong style="color:var(--primary)">${(p.accuracy||0).toFixed(1)}%</strong></div>
+      <div>Avg Conf <strong>${(p.avgConfidence||0).toFixed(0)}</strong></div>
+    </div>`;
+}
+
+async function loadPatterns() {
+  const d = await api('/admin/intelligence/patterns');
+  const patterns = d.data?.patterns || [];
+  document.getElementById('patterns-wrap').innerHTML = patterns.length
+    ? patterns.slice(0,4).map(p=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid var(--border)"><span>${escHtml(p.market)}</span><strong style="color:var(--primary)">${(p.win_rate||0).toFixed(1)}% (${p.count})</strong></div>`).join('')
+    : '<p class="text-soft" style="font-size:12px">No pattern data yet.</p>';
+}
+
+async function loadAccuracyChart() {
+  const d = await api('/analytics/accuracy-trend');
+  const rows = d.data?.rows || [];
+  if (!rows.length) { document.querySelector('.chart-wrap').innerHTML = '<p class="text-soft" style="font-size:12px;padding:16px 0">No accuracy data yet.</p>'; return; }
+  const ctx = document.getElementById('accuracy-chart').getContext('2d');
+  new Chart(ctx, { type:'line', data:{ labels:rows.map(r=>r.week||r.month||r.date), datasets:[{ label:'Win Rate %', data:rows.map(r=>r.win_rate||0), borderColor:'#02f5a1', backgroundColor:'rgba(2,245,161,0.08)', tension:0.4, fill:true }] }, options:{ responsive:true, maintainAspectRatio:false, scales:{ y:{ min:0, max:100, ticks:{color:'rgba(173,223,241,0.6)'} }, x:{ ticks:{color:'rgba(173,223,241,0.6)'} } }, plugins:{ legend:{display:false} } } });
+}
+</script>
+</body>
+</html>

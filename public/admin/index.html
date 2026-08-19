@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin Login — Oddslander</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<link rel="icon" href="/images/logo.png">
+<link rel="apple-touch-icon" href="/images/logo.png">
+<link rel="stylesheet" href="/css/style.css">
+<style>
+body{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--deep-onyx)}
+.login-box{width:100%;max-width:400px;padding:16px}
+.brand{text-align:center;margin-bottom:32px}
+.brand h1{font-size:28px;font-weight:900;letter-spacing:-1px}
+.brand h1 span{color:var(--primary)}
+.brand p{color:var(--text-soft);font-size:13px;margin-top:4px}
+</style>
+</head>
+<body>
+<div class="login-box">
+  <div class="brand">
+    <h1>Odds<span>lander</span></h1>
+    <p>Admin Control Panel</p>
+  </div>
+  <div class="card">
+    <h2 style="margin-bottom:20px;font-size:18px">Sign In</h2>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input type="email" class="form-control" id="email" placeholder="admin@oddslander.com" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input type="password" class="form-control" id="password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <div id="err-msg" class="alert" style="display:none;background:rgba(255,71,87,0.12);border:1px solid var(--danger);color:var(--danger);margin-bottom:12px;padding:10px 14px;border-radius:8px;font-size:13px"></div>
+    <button class="btn btn-primary w-full" id="login-btn">Sign In</button>
+  </div>
+</div>
+<script>
+(function(){
+  const t = localStorage.getItem('ol_admin');
+  if (t) try { const p = JSON.parse(atob(t.split('.')[1])); if (p.exp*1000 > Date.now() && (p.role==='admin'||p.role==='super_admin')) location.href='/admin/dashboard.html'; } catch{}
+})();
+
+async function doLogin() {
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const btn = document.getElementById('login-btn');
+  const err = document.getElementById('err-msg');
+  err.style.display = 'none';
+  if (!email || !password) { showErr('Enter email and password'); return; }
+  btn.disabled = true; btn.textContent = 'Signing in…';
+  try {
+    const r = await fetch('/api/auth/login', { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email,password}) });
+    const data = await r.json();
+    if (data.success) {
+      const user = data.data?.user;
+      if (user?.role !== 'admin' && user?.role !== 'super_admin') { showErr('Access denied: not an admin account'); btn.disabled=false; btn.textContent='Sign In'; return; }
+      localStorage.setItem('ol_admin', JSON.stringify(user));
+      location.href = '/admin/dashboard.html';
+    } else { showErr(data.message || 'Invalid credentials'); btn.disabled=false; btn.textContent='Sign In'; }
+  } catch { showErr('Network error — please try again'); btn.disabled=false; btn.textContent='Sign In'; }
+}
+
+function showErr(msg) { const e = document.getElementById('err-msg'); e.textContent = msg; e.style.display = 'block'; }
+
+document.getElementById('login-btn').addEventListener('click', doLogin);
+document.getElementById('password').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+</script>
+</body>
+</html>

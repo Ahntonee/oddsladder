@@ -1,0 +1,415 @@
+﻿<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard — Oddslander</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<link rel="icon" href="/images/logo.png">
+<link rel="apple-touch-icon" href="/images/logo.png">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="header-placeholder"></div>
+<main>
+  <section>
+    <div class="container" style="max-width:900px">
+      <h1 class="section-title">My <span>Dashboard</span></h1>
+
+      <!-- Profile + Subscription -->
+      <div class="grid-2 mb-3">
+        <div class="card" id="profile-card"><div class="skeleton" style="height:180px"></div></div>
+        <div class="card" id="sub-card"><div class="skeleton" style="height:180px"></div></div>
+      </div>
+
+      <!-- Telegram Banner -->
+      <div id="telegram-banner" class="alert alert-info mb-3" style="display:none">
+        Join our exclusive VIP Telegram channel for live tips and alerts!
+        <button class="btn btn-primary btn-sm" style="margin-left:12px" onclick="joinTelegram()">Join Now →</button>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tab-row mb-3">
+        <button class="category-tab active" onclick="switchTab('bookmarks',this)"><span class="material-icons-round">bookmarks</span> Bookmarks</button>
+        <button class="category-tab" onclick="switchTab('bets',this)"><span class="material-icons-round">bar_chart</span> Bet History</button>
+        <button class="category-tab" id="tokens-tab-btn" onclick="switchTab('tokens',this)"><span class="material-icons-round">toll</span> ODLT Tokens</button>
+        <button class="category-tab" onclick="switchTab('settings',this)"><span class="material-icons-round">settings</span> Settings</button>
+      </div>
+
+      <!-- Bookmarks Tab -->
+      <div id="tab-bookmarks">
+        <div class="grid-3" id="bookmarks-grid"><div class="skeleton" style="height:150px;border-radius:14px"></div></div>
+      </div>
+
+      <!-- Bet History Tab -->
+      <div id="tab-bets" style="display:none">
+        <div class="flex-between mb-2">
+          <h3>Bet History</h3>
+          <button class="btn btn-primary btn-sm" onclick="openBetModal()">+ Log Bet</button>
+        </div>
+        <div id="pnl-summary" class="alert alert-info mb-2" style="display:none"></div>
+        <div class="data-table-wrap"><table class="data-table" id="bets-table">
+          <thead><tr><th>Match</th><th>Tip</th><th>Stake</th><th>Odds</th><th>Result</th><th>P&L</th><th></th></tr></thead>
+          <tbody id="bets-body"></tbody>
+        </table></div>
+      </div>
+
+      <!-- ODLT Tokens Tab -->
+      <div id="tab-tokens" style="display:none">
+        <!-- Balance + Check-in row -->
+        <div class="grid-2 mb-3">
+          <div class="card" style="border-color:rgba(2,245,161,0.25)">
+            <div class="flex gap-3 mb-3" style="align-items:center">
+              <span class="material-icons-round" style="font-size:36px;color:var(--primary)">toll</span>
+              <div>
+                <p class="text-soft" style="font-size:12px;margin-bottom:2px">ODLT Balance</p>
+                <h2 id="odlt-balance-big" style="font-size:28px;font-weight:900;color:var(--primary)">—</h2>
+              </div>
+            </div>
+            <p class="text-soft" style="font-size:12px">Total earned: <strong id="odlt-total-earned">—</strong> ODLT &nbsp;|&nbsp; Spent: <strong id="odlt-total-spent">—</strong> ODLT</p>
+            <p class="text-soft mt-2" style="font-size:11px">Tokens are platform-only credits — not redeemable for cash.</p>
+          </div>
+          <div class="card" style="border-color:rgba(2,245,161,0.15)" id="checkin-card">
+            <h3 class="mb-2"><span class="material-icons-round" style="vertical-align:middle;font-size:18px">today</span> Daily Check-in</h3>
+            <p class="text-soft mb-3" style="font-size:13px" id="checkin-status-text">Loading…</p>
+            <div class="flex gap-2" style="align-items:center;margin-bottom:12px">
+              <span class="material-icons-round" style="font-size:16px;color:var(--primary)">local_fire_department</span>
+              <span style="font-size:13px">Streak: <strong id="odlt-streak">—</strong> day(s)</span>
+            </div>
+            <div id="checkin-milestone" class="text-soft mb-3" style="font-size:12px"></div>
+            <button class="btn btn-primary w-full" id="checkin-btn" onclick="doCheckin()">
+              <span class="material-icons-round">check_circle</span> Check In (+10 ODLT)
+            </button>
+          </div>
+        </div>
+
+        <!-- Transaction History -->
+        <div class="card mb-3">
+          <div class="flex-between mb-2">
+            <h3 style="font-size:15px"><span class="material-icons-round" style="vertical-align:middle;font-size:18px">receipt_long</span> Transaction History</h3>
+          </div>
+          <div class="data-table-wrap"><table class="data-table" id="odlt-tx-table">
+            <thead><tr><th>Date</th><th>Description</th><th>Amount</th><th>Type</th></tr></thead>
+            <tbody id="odlt-tx-body"><tr><td colspan="4" class="text-center text-soft" style="padding:20px">Loading…</td></tr></tbody>
+          </table></div>
+        </div>
+
+        <!-- Prediction Bets -->
+        <div class="card">
+          <h3 class="mb-2" style="font-size:15px"><span class="material-icons-round" style="vertical-align:middle;font-size:18px">sports</span> My Prediction Bets</h3>
+          <div class="data-table-wrap"><table class="data-table" id="odlt-bets-table">
+            <thead><tr><th>Match</th><th>Direction</th><th>Wagered</th><th>Payout</th><th>Status</th></tr></thead>
+            <tbody id="odlt-bets-body"><tr><td colspan="5" class="text-center text-soft" style="padding:20px">Loading…</td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- Settings Tab -->
+      <div id="tab-settings" style="display:none">
+        <div class="card mb-3">
+          <h3 class="mb-3">Change Password</h3>
+          <div class="form-group"><label class="form-label">Current Password</label><input type="password" class="form-control" id="cp-current"></div>
+          <div class="form-group"><label class="form-label">New Password</label><input type="password" class="form-control" id="cp-new"></div>
+          <button class="btn btn-primary" onclick="changePassword()">Update Password</button>
+        </div>
+        <div class="card" style="border-color:var(--danger)">
+          <h3 class="mb-2" style="color:var(--danger)">Delete Account</h3>
+          <p class="text-soft mb-3" style="font-size:14px">This will permanently delete your account and all data. This cannot be undone.</p>
+          <button class="btn btn-danger" onclick="confirmDelete()">Delete My Account</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Bet Modal -->
+<div class="modal-overlay" id="bet-modal">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-header"><h3>Log a Bet</h3><button class="modal-close" onclick="closeBetModal()"><span class="material-icons-round">close</span></button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Match / Notes</label><input type="text" class="form-control" id="bet-notes" placeholder="e.g. Arsenal vs Chelsea"></div>
+      <div class="grid-2">
+        <div class="form-group"><label class="form-label">Stake (₦)</label><input type="number" class="form-control" id="bet-stake" placeholder="500"></div>
+        <div class="form-group"><label class="form-label">Odds</label><input type="number" class="form-control" id="bet-odds" placeholder="2.00" step="0.01"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Result</label>
+        <select class="form-control" id="bet-result">
+          <option value="void">Pending</option><option value="won">Won</option><option value="lost">Lost</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeBetModal()">Cancel</button><button class="btn btn-primary" onclick="logBet()">Save Bet</button></div>
+  </div>
+</div>
+
+<div id="footer-placeholder"></div>
+<script src="/js/app.js"></script>
+<script>
+let userData = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const r = await fetch('/api/auth/me');
+  if (!r.ok) { location.href = '/pricing.html#login'; return; }
+  const data = await r.json();
+  userData = data.data?.user;
+  const sub = data.data?.subscription;
+  setUser(userData);
+  renderProfile(userData, sub);
+  loadBookmarks();
+
+  if (location.hash === '#tokens') {
+    const btn = document.getElementById('tokens-tab-btn');
+    if (btn) switchTab('tokens', btn);
+  }
+});
+
+function renderProfile(u, sub) {
+  const roleBadge = u.role === 'vip' ? '<span class="badge badge-vip">VIP</span>' : u.role === 'admin' ? '<span class="badge badge-banker">Admin</span>' : '<span class="badge badge-pending">Free</span>';
+  document.getElementById('profile-card').innerHTML = `
+    <div class="flex gap-3 mb-3" style="align-items:flex-start">
+      <div style="width:56px;height:56px;border-radius:50%;background:var(--primary);color:var(--deep-onyx);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;flex-shrink:0">${escapeHtml(u.name?.[0]?.toUpperCase()||'U')}</div>
+      <div><h3 style="margin-bottom:4px">${escapeHtml(u.name)}</h3>${roleBadge}<p class="text-soft" style="font-size:13px;margin-top:4px">${escapeHtml(u.email)}</p></div>
+    </div>
+    ${u.country ? `<p class="text-soft" style="font-size:13px"><span class="material-icons-round" style="font-size:13px;vertical-align:middle">location_on</span> ${escapeHtml(u.country)}</p>` : ''}
+    <p class="text-soft" style="font-size:12px;margin-top:4px">Member since ${formatDate(u.created_at||new Date())}</p>`;
+
+  if (sub?.status === 'active') {
+    document.getElementById('sub-card').innerHTML = `
+      <h3 class="mb-2"><span class="material-icons-round">card_membership</span> Subscription</h3>
+      <p class="mb-1"><span class="badge badge-won">ACTIVE</span> <strong style="text-transform:capitalize">${sub.plan}</strong> Plan</p>
+      <p class="text-soft" style="font-size:13px">Expires: <strong>${formatDate(sub.expires_at)}</strong></p>
+      ${!u.telegram_invited ? '' : ''}
+      <button class="btn btn-danger btn-sm mt-3" onclick="cancelSub()">Cancel Subscription</button>`;
+    if (u.role === 'vip' && !u.telegram_invited) {
+      const banner = document.getElementById('telegram-banner');
+      banner.style.display = 'flex';
+      document.getElementById('telegram-link').href = '#';
+    }
+  } else {
+    document.getElementById('sub-card').innerHTML = `
+      <h3 class="mb-2"><span class="material-icons-round">card_membership</span> Subscription</h3>
+      <p class="text-soft mb-3" style="font-size:14px">You're on the free plan. Upgrade to unlock VIP picks and Telegram access.</p>
+      <a href="/pricing.html" class="btn btn-vip w-full">Upgrade to VIP</a>`;
+  }
+}
+
+async function joinTelegram() {
+  const r = await fetch('/api/users/telegram-link');
+  const data = await r.json();
+  if (data.success && data.data?.link) {
+    window.open(data.data.link, '_blank');
+    document.getElementById('telegram-banner').style.display = 'none';
+    showToast('Opening Telegram VIP channel…', 'success');
+  } else {
+    showToast(data.message || 'Telegram link not available yet — contact support.', 'info');
+  }
+}
+
+async function loadBookmarks() {
+  const grid = document.getElementById('bookmarks-grid');
+  try {
+    const r = await fetch('/api/users/bookmarks');
+    const data = await r.json();
+    const bm = data.data?.bookmarks || [];
+    if (!bm.length) { grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon"><span class="material-icons-round" style="font-size:48px">bookmarks</span></div><h3>No bookmarks yet</h3><p>Bookmark predictions from the predictions page</p></div>`; return; }
+    grid.innerHTML = bm.map(p => `
+      <div class="prediction-card">
+        <div class="flex-between mb-2"><strong style="font-size:14px">${escapeHtml(p.home_team)} vs ${escapeHtml(p.away_team)}</strong><span class="badge badge-${p.result||'pending'}">${(p.result||'pending').toUpperCase()}</span></div>
+        <p class="text-soft" style="font-size:13px">${escapeHtml(p.tip||'')}</p>
+        <div class="flex-between mt-2"><span class="text-muted" style="font-size:12px">${formatDate(p.match_date)}</span>
+          <a href="/prediction/${p.slug}" class="btn btn-sm btn-outline">View →</a></div>
+      </div>`).join('');
+  } catch { grid.innerHTML = `<p class="text-soft">Failed to load bookmarks.</p>`; }
+}
+
+async function loadBets() {
+  const tbody = document.getElementById('bets-body');
+  try {
+    const r = await fetch('/api/users/bet-history');
+    const data = await r.json();
+    const history = data.data?.history || [];
+    const pnl = data.data?.totalPnl || 0;
+    const pnlEl = document.getElementById('pnl-summary');
+    pnlEl.style.display = 'flex';
+    pnlEl.innerHTML = `Running P&L: <strong style="color:${pnl>=0?'var(--primary)':'var(--danger)';margin-left:6px}">${pnl>=0?'+':''}₦${Math.abs(pnl).toFixed(2)}</strong>`;
+    if (!history.length) { tbody.innerHTML = `<tr><td colspan="7" class="text-center text-soft" style="padding:24px">No bets logged yet</td></tr>`; return; }
+    tbody.innerHTML = history.map(b => `
+      <tr>
+        <td>${escapeHtml(b.home_team||b.notes||'—')} ${b.away_team?'vs '+escapeHtml(b.away_team):''}</td>
+        <td>${escapeHtml(b.tip||'—')}</td>
+        <td>₦${parseFloat(b.stake).toFixed(2)}</td>
+        <td>${b.odds ? parseFloat(b.odds).toFixed(2) : '—'}</td>
+        <td><span class="badge badge-${b.result}">${b.result.toUpperCase()}</span></td>
+        <td style="color:${b.profit_loss>=0?'var(--primary)':'var(--danger)'}">${b.profit_loss>=0?'+':''}₦${Math.abs(b.profit_loss||0).toFixed(2)}</td>
+        <td><button class="btn btn-danger btn-sm" onclick="deleteBet(${b.id})"><span class="material-icons-round">close</span></button></td>
+      </tr>`).join('');
+  } catch { tbody.innerHTML = `<tr><td colspan="7" class="text-soft">Failed to load.</td></tr>`; }
+}
+
+function switchTab(tab, btn) {
+  document.querySelectorAll('.category-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  ['bookmarks','bets','tokens','settings'].forEach(t => document.getElementById(`tab-${t}`).style.display = 'none');
+  document.getElementById(`tab-${tab}`).style.display = 'block';
+  if (tab === 'bets') loadBets();
+  if (tab === 'tokens') loadTokensTab();
+}
+
+async function loadTokensTab() {
+  await Promise.all([loadOdltBalance(), loadCheckinStatus(), loadOdltTransactions(), loadOdltBets()]);
+}
+
+async function loadOdltBalance() {
+  try {
+    const r = await fetch('/api/tokens/balance');
+    const d = await r.json();
+    if (d.success) {
+      const b = d.data;
+      document.getElementById('odlt-balance-big').textContent = (b.balance || 0).toLocaleString();
+      document.getElementById('odlt-total-earned').textContent = (b.total_earned || 0).toLocaleString();
+      document.getElementById('odlt-total-spent').textContent = (b.total_spent || 0).toLocaleString();
+    }
+  } catch {}
+}
+
+async function loadCheckinStatus() {
+  try {
+    const r = await fetch('/api/tokens/checkin');
+    const d = await r.json();
+    if (d.success) {
+      const s = d.data;
+      const btn = document.getElementById('checkin-btn');
+      const statusEl = document.getElementById('checkin-status-text');
+      document.getElementById('odlt-streak').textContent = s.currentStreak || 0;
+      if (s.checkedInToday) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="material-icons-round">check</span> Checked in today';
+        statusEl.textContent = `Come back tomorrow to keep your streak going!`;
+      } else {
+        btn.disabled = false;
+        btn.innerHTML = '<span class="material-icons-round">check_circle</span> Check In (+10 ODLT)';
+        statusEl.textContent = `Check in daily to earn tokens and grow your streak.`;
+      }
+      const milestone = document.getElementById('checkin-milestone');
+      const streak = s.currentStreak || 0;
+      if (streak >= 30) {
+        milestone.textContent = '30-day streak active! +200 bonus on each check-in.';
+      } else if (streak >= 7) {
+        milestone.textContent = `7-day streak! +50 bonus earned. Next milestone: day 30.`;
+      } else {
+        const daysTo7 = 7 - streak;
+        milestone.textContent = `${daysTo7} more day(s) to hit the 7-day streak bonus (+50 ODLT).`;
+      }
+    }
+  } catch {}
+}
+
+async function doCheckin() {
+  const btn = document.getElementById('checkin-btn');
+  btn.disabled = true;
+  try {
+    const r = await fetch('/api/tokens/checkin', { method: 'POST' });
+    const d = await r.json();
+    if (d.success) {
+      const td = d.data;
+      showToast(`+${td.tokens || td.awarded || 10} ODLT earned! Streak: ${td.streakDay || td.streak || 1} day(s)`, 'success');
+      await loadTokensTab();
+    } else {
+      showToast(d.message || 'Check-in failed', 'error');
+      btn.disabled = false;
+    }
+  } catch { btn.disabled = false; }
+}
+
+async function loadOdltTransactions() {
+  const tbody = document.getElementById('odlt-tx-body');
+  try {
+    const r = await fetch('/api/tokens/transactions?limit=20');
+    const d = await r.json();
+    const txs = d.data?.transactions || [];
+    if (!txs.length) { tbody.innerHTML = `<tr><td colspan="4" class="text-center text-soft" style="padding:20px">No transactions yet</td></tr>`; return; }
+    tbody.innerHTML = txs.map(t => {
+      const isCredit = t.type === 'credit';
+      return `<tr>
+        <td style="font-size:12px">${formatDate(t.created_at)}</td>
+        <td style="font-size:13px">${escapeHtml(t.reason || '—')}</td>
+        <td style="color:${isCredit ? 'var(--primary)' : 'var(--danger)'}">
+          ${isCredit ? '+' : '-'}${parseInt(t.amount).toLocaleString()} ODLT
+        </td>
+        <td><span class="badge badge-${isCredit ? 'won' : 'lost'}" style="text-transform:capitalize">${t.type}</span></td>
+      </tr>`;
+    }).join('');
+  } catch { tbody.innerHTML = `<tr><td colspan="4" class="text-soft">Failed to load.</td></tr>`; }
+}
+
+async function loadOdltBets() {
+  const tbody = document.getElementById('odlt-bets-body');
+  try {
+    const r = await fetch('/api/tokens/bets');
+    const d = await r.json();
+    const bets = d.data?.bets || [];
+    if (!bets.length) { tbody.innerHTML = `<tr><td colspan="5" class="text-center text-soft" style="padding:20px">No prediction bets yet — bet FOR or AGAINST predictions to earn more ODLT</td></tr>`; return; }
+    tbody.innerHTML = bets.map(b => {
+      const outcome = b.outcome || 'pending';
+      const statusColor = outcome === 'won' ? 'var(--primary)' : outcome === 'lost' ? 'var(--danger)' : 'var(--text-soft)';
+      return `<tr>
+        <td style="font-size:13px">${escapeHtml(b.home_team || '—')} vs ${escapeHtml(b.away_team || '—')}</td>
+        <td><span class="badge badge-${b.direction === 'for' ? 'won' : 'lost'}" style="text-transform:uppercase">${b.direction}</span></td>
+        <td>${parseInt(b.amount).toLocaleString()} ODLT</td>
+        <td style="color:var(--primary)">${outcome === 'won' && b.tokens_returned ? '+' + parseInt(b.tokens_returned).toLocaleString() + ' ODLT' : '—'}</td>
+        <td><span style="color:${statusColor};font-weight:600;text-transform:capitalize">${outcome}</span></td>
+      </tr>`;
+    }).join('');
+  } catch { tbody.innerHTML = `<tr><td colspan="5" class="text-soft">Failed to load.</td></tr>`; }
+}
+
+function openBetModal() { document.getElementById('bet-modal').classList.add('open'); }
+function closeBetModal() { document.getElementById('bet-modal').classList.remove('open'); }
+
+async function logBet() {
+  const stake = parseFloat(document.getElementById('bet-stake').value);
+  const odds = parseFloat(document.getElementById('bet-odds').value);
+  const result = document.getElementById('bet-result').value;
+  const notes = document.getElementById('bet-notes').value;
+  if (!stake) { showToast('Stake is required','error'); return; }
+  const r = await fetch('/api/users/bet-history', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({stake,odds,result,notes}) });
+  const data = await r.json();
+  if (data.success) { closeBetModal(); showToast('Bet logged!','success'); loadBets(); }
+  else showToast(data.message,'error');
+}
+
+async function deleteBet(id) {
+  if (!confirm('Delete this bet?')) return;
+  await fetch(`/api/users/bet-history/${id}`, { method:'DELETE' });
+  showToast('Deleted','info'); loadBets();
+}
+
+async function changePassword() {
+  const current = document.getElementById('cp-current').value;
+  const newPass = document.getElementById('cp-new').value;
+  const r = await fetch('/api/auth/change-password', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({current_password:current,new_password:newPass}) });
+  const data = await r.json();
+  showToast(data.message, data.success ? 'success' : 'error');
+  if (data.success) { document.getElementById('cp-current').value=''; document.getElementById('cp-new').value=''; }
+}
+
+async function cancelSub() {
+  if (!confirm('Cancel your VIP subscription?')) return;
+  const r = await fetch('/api/subscriptions/cancel', { method:'POST' });
+  const data = await r.json();
+  showToast(data.message, data.success ? 'info' : 'error');
+  if (data.success) setTimeout(() => location.reload(), 1500);
+}
+
+async function confirmDelete() {
+  if (!confirm('Are you SURE? This will permanently delete your account.')) return;
+  if (!confirm('Last chance — delete account?')) return;
+  const r = await fetch('/api/users/account', { method:'DELETE' });
+  const data = await r.json();
+  if (data.success) { clearUser(); location.href='/'; }
+  else showToast(data.message,'error');
+}
+</script>
+</body>
+</html>

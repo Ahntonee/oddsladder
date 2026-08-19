@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bet Builder — Oddslander</title>
+<meta name="description" content="Build your accumulator from today's highest-confidence AI predictions. Auto-generated picks, combined odds, and stake calculator.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<link rel="icon" href="/images/logo.png">
+<link rel="apple-touch-icon" href="/images/logo.png">
+<link rel="stylesheet" href="/css/style.css">
+<style>
+/* ── Layout ── */
+.bb-layout { display:grid; grid-template-columns:1fr 320px; gap:24px; align-items:start; max-width:1200px; margin:0 auto; padding:24px 16px 60px; }
+@media(max-width:900px){ .bb-layout{ grid-template-columns:1fr; } .slip-sticky{ position:static !important; } }
+
+/* ── Hero ── */
+.bb-hero { background:linear-gradient(135deg,rgba(2,245,161,.08) 0%,rgba(0,40,60,.0) 60%); border:1px solid rgba(2,245,161,.15); border-radius:14px; padding:28px 28px 24px; margin-bottom:24px; }
+.bb-hero h1 { font-size:26px; font-weight:900; color:var(--text); margin-bottom:4px; }
+.bb-hero p  { font-size:14px; color:var(--text-soft); margin:0; }
+
+/* ── Auto-pick bar ── */
+.auto-bar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:16px; background:var(--card); border:1px solid var(--border); border-radius:10px; margin-bottom:20px; }
+.auto-bar label { font-size:13px; font-weight:600; color:var(--text-soft); }
+.auto-sel { background:var(--bg); border:1px solid var(--border); color:var(--text); border-radius:6px; padding:6px 10px; font-size:13px; font-family:inherit; }
+.auto-sel:focus { outline:none; border-color:var(--primary); }
+
+/* ── Game list ── */
+.game-card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:16px; margin-bottom:12px; cursor:pointer; transition:border-color .15s, box-shadow .15s; display:flex; align-items:center; gap:14px; }
+.game-card:hover { border-color:rgba(2,245,161,.35); }
+.game-card.selected { border-color:var(--primary); box-shadow:0 0 0 2px rgba(2,245,161,.18); }
+.game-chk { width:20px; height:20px; border-radius:5px; border:2px solid var(--border); display:flex; align-items:center; justify-content:center; flex-shrink:0; background:var(--bg); transition:all .15s; }
+.game-card.selected .game-chk { background:var(--primary); border-color:var(--primary); }
+.game-chk-icon { font-size:14px; color:#07191e; display:none; }
+.game-card.selected .game-chk-icon { display:block; }
+.game-info { flex:1; min-width:0; }
+.game-match { font-size:14px; font-weight:700; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.game-meta  { font-size:12px; color:var(--text-soft); margin-top:2px; }
+.game-pick  { text-align:right; flex-shrink:0; }
+.game-tip   { font-size:13px; font-weight:800; color:var(--primary); }
+.game-odds  { font-size:18px; font-weight:900; color:var(--text); margin-top:2px; }
+.game-conf  { font-size:11px; color:var(--text-soft); margin-top:2px; }
+.conf-dot   { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:3px; vertical-align:middle; }
+
+/* ── Slip (sticky right panel) ── */
+.slip-sticky { position:sticky; top:80px; }
+.slip-card { background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+.slip-head { background:linear-gradient(135deg,rgba(2,245,161,.12),rgba(0,40,60,0)); padding:16px 18px; border-bottom:1px solid var(--border); }
+.slip-head h2 { font-size:15px; font-weight:800; margin:0; display:flex; align-items:center; gap:6px; }
+.slip-body { padding:16px 18px; }
+.slip-empty { text-align:center; padding:32px 0; color:var(--text-soft); font-size:13px; }
+.slip-item { display:flex; justify-content:space-between; align-items:start; gap:8px; padding:10px 0; border-bottom:1px solid var(--border); }
+.slip-item:last-child { border-bottom:none; }
+.slip-item-left { flex:1; min-width:0; }
+.slip-item-match { font-size:12px; font-weight:700; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.slip-item-pick  { font-size:11px; color:var(--primary); margin-top:2px; }
+.slip-item-odds  { font-size:15px; font-weight:900; color:var(--text); flex-shrink:0; }
+.slip-remove { background:none; border:none; cursor:pointer; color:var(--danger); padding:0; font-size:16px; line-height:1; }
+.slip-divider { border:none; border-top:1px solid var(--border); margin:14px 0; }
+.slip-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; font-size:13px; }
+.slip-row strong { font-weight:700; }
+.slip-total { font-size:20px; font-weight:900; color:var(--primary); }
+.stake-wrap { margin:14px 0; }
+.stake-wrap label { font-size:12px; color:var(--text-soft); display:block; margin-bottom:6px; }
+.stake-input-row { display:flex; gap:6px; align-items:center; }
+.stake-prefix { font-size:16px; font-weight:700; color:var(--text-soft); }
+.stake-input { flex:1; background:var(--bg); border:1px solid var(--border); color:var(--text); border-radius:8px; padding:10px 12px; font-size:16px; font-weight:700; font-family:inherit; width:100%; }
+.stake-input:focus { outline:none; border-color:var(--primary); }
+.payout-box { background:rgba(2,245,161,.08); border:1px solid rgba(2,245,161,.2); border-radius:8px; padding:14px; margin-top:12px; text-align:center; }
+.payout-lbl { font-size:12px; color:var(--text-soft); }
+.payout-val { font-size:28px; font-weight:900; color:var(--primary); margin-top:4px; }
+.share-row { display:flex; gap:8px; margin-top:14px; }
+.share-row .btn { flex:1; font-size:13px; }
+
+/* ── Section header ── */
+.section-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; flex-wrap:wrap; gap:8px; }
+.section-hdr h2 { font-size:16px; font-weight:800; margin:0; }
+
+/* ── Tabs ── */
+.bb-tabs { display:flex; gap:0; border-bottom:1px solid var(--border); margin-bottom:20px; }
+.bb-tab  { padding:8px 16px; background:none; border:none; color:var(--text-soft); font-size:13px; font-weight:600; cursor:pointer; border-bottom:2px solid transparent; }
+.bb-tab.active { color:var(--primary); border-bottom-color:var(--primary); }
+
+/* ── Filter ── */
+.filter-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+.filter-chip { padding:5px 12px; border-radius:20px; border:1px solid var(--border); background:var(--bg); color:var(--text-soft); font-size:12px; font-weight:600; cursor:pointer; transition:all .15s; }
+.filter-chip.active { background:rgba(2,245,161,.15); border-color:var(--primary); color:var(--primary); }
+
+/* ── Skeleton ── */
+.game-card.skeleton-card { background:var(--card); min-height:72px; border-radius:10px; }
+</style>
+</head>
+<body>
+<div id="header-placeholder"></div>
+<div id="page-loading" style="display:none"></div>
+
+<div class="bb-layout">
+  <!-- ═══ LEFT: Game List ═══ -->
+  <div>
+    <!-- Hero -->
+    <div class="bb-hero">
+      <h1><span class="material-icons-round" style="font-size:28px;color:var(--primary);vertical-align:middle;margin-right:6px">construction</span>Bet Builder</h1>
+      <p>Auto-generate your accumulator from today's highest-confidence AI predictions. Add or remove picks, set your stake, and copy your slip.</p>
+    </div>
+
+    <!-- Auto-pick bar -->
+    <div class="auto-bar">
+      <span class="material-icons-round" style="color:var(--primary)">auto_awesome</span>
+      <label>Auto-pick top</label>
+      <select class="auto-sel" id="auto-count">
+        <option value="3">3 picks</option>
+        <option value="5" selected>5 picks</option>
+        <option value="7">7 picks</option>
+        <option value="10">10 picks</option>
+      </select>
+      <label>confidence ≥</label>
+      <select class="auto-sel" id="auto-conf">
+        <option value="60">60%</option>
+        <option value="65" selected>65%</option>
+        <option value="70">70%</option>
+        <option value="75">75%</option>
+      </select>
+      <button class="btn btn-primary btn-sm" id="auto-btn">
+        <span class="material-icons-round" style="font-size:16px">auto_awesome</span> Auto-Generate
+      </button>
+      <button class="btn btn-ghost btn-sm" id="clear-btn">
+        <span class="material-icons-round" style="font-size:16px">clear_all</span> Clear Slip
+      </button>
+    </div>
+
+    <!-- Tabs -->
+    <div class="bb-tabs">
+      <button class="bb-tab active" data-tab="today">Today's Games</button>
+      <button class="bb-tab" data-tab="tomorrow">Tomorrow</button>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-row" id="filter-row">
+      <button class="filter-chip active" data-market="">All Markets</button>
+      <button class="filter-chip" data-market="Over 1.5 Goals">O1.5</button>
+      <button class="filter-chip" data-market="Over 2.5 Goals">O2.5</button>
+      <button class="filter-chip" data-market="BTTS - Yes">BTTS</button>
+      <button class="filter-chip" data-market="Home Win">1</button>
+      <button class="filter-chip" data-market="Away Win">2</button>
+      <button class="filter-chip" data-market="Draw">X</button>
+      <button class="filter-chip" data-market="Double Chance">DC</button>
+    </div>
+
+    <!-- Section header -->
+    <div class="section-hdr">
+      <h2 id="games-title">Loading predictions…</h2>
+      <span class="text-soft" style="font-size:12px" id="games-count"></span>
+    </div>
+
+    <!-- Game list -->
+    <div id="games-list">
+      <div class="game-card skeleton-card skeleton"></div>
+      <div class="game-card skeleton-card skeleton" style="opacity:.7"></div>
+      <div class="game-card skeleton-card skeleton" style="opacity:.5"></div>
+    </div>
+  </div>
+
+  <!-- ═══ RIGHT: Bet Slip ═══ -->
+  <div class="slip-sticky">
+    <div class="slip-card">
+      <div class="slip-head">
+        <h2>
+          <span class="material-icons-round" style="color:var(--primary)">receipt_long</span>
+          Bet Slip
+          <span id="slip-count" style="background:var(--primary);color:#07191e;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:900;margin-left:4px">0</span>
+        </h2>
+      </div>
+      <div class="slip-body">
+        <div id="slip-items">
+          <div class="slip-empty">
+            <span class="material-icons-round" style="font-size:32px;display:block;margin-bottom:8px;opacity:.4">add_circle_outline</span>
+            Select games or use Auto-Generate
+          </div>
+        </div>
+
+        <hr class="slip-divider" id="slip-stats-divider" style="display:none">
+        <div id="slip-stats" style="display:none">
+          <div class="slip-row">
+            <span>Selections</span>
+            <strong id="slip-sel-count">0</strong>
+          </div>
+          <div class="slip-row">
+            <span>Combined Odds</span>
+            <strong class="slip-total" id="slip-odds">—</strong>
+          </div>
+          <div class="slip-row">
+            <span>Avg Confidence</span>
+            <strong id="slip-avg-conf" style="color:var(--primary)">—</strong>
+          </div>
+
+          <div class="stake-wrap">
+            <label>Stake amount</label>
+            <div class="stake-input-row">
+              <span class="stake-prefix">$</span>
+              <input type="number" class="stake-input" id="stake-input" value="10" min="0.01" step="0.01" placeholder="10.00">
+            </div>
+          </div>
+
+          <div class="payout-box">
+            <div class="payout-lbl">Potential Payout</div>
+            <div class="payout-val" id="payout-val">$0.00</div>
+          </div>
+
+          <div class="share-row">
+            <button class="btn btn-ghost btn-sm" id="copy-btn">
+              <span class="material-icons-round" style="font-size:15px">content_copy</span> Copy Slip
+            </button>
+            <button class="btn btn-primary btn-sm" id="share-btn">
+              <span class="material-icons-round" style="font-size:15px">share</span> Share
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Odds disclaimer -->
+    <p style="font-size:11px;color:var(--text-soft);margin-top:12px;line-height:1.5;text-align:center">
+      Odds shown are estimated from our confidence scores. Always verify actual odds with your bookmaker. Bet responsibly.
+    </p>
+  </div>
+</div>
+
+<div id="footer-placeholder"></div>
+<script src="/js/app.js"></script>
+<script>
+let allPredictions = { today: [], tomorrow: [] };
+let selectedIds = new Set();
+let activeTab = 'today';
+let activeMarket = '';
+
+// ─── Init ─────────────────────────────────────────────────────────────────
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await injectHeader();
+  loadPredictions();
+
+  document.querySelectorAll('.bb-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeTab = btn.dataset.tab;
+      document.querySelectorAll('.bb-tab').forEach(b => b.classList.toggle('active', b === btn));
+      renderGames();
+    });
+  });
+
+  document.getElementById('filter-row').addEventListener('click', e => {
+    const chip = e.target.closest('.filter-chip');
+    if (!chip) return;
+    activeMarket = chip.dataset.market;
+    document.querySelectorAll('.filter-chip').forEach(c => c.classList.toggle('active', c === chip));
+    renderGames();
+  });
+
+  document.getElementById('auto-btn').addEventListener('click', autoGenerate);
+  document.getElementById('clear-btn').addEventListener('click', () => { selectedIds.clear(); updateSlip(); renderGames(); });
+  document.getElementById('stake-input').addEventListener('input', updatePayout);
+  document.getElementById('copy-btn').addEventListener('click', copySlip);
+  document.getElementById('share-btn').addEventListener('click', shareSlip);
+});
+
+// ─── Load predictions ─────────────────────────────────────────────────────
+
+async function loadPredictions() {
+  const todayDate    = new Date();
+  const tomorrowDate = new Date(); tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+  const fmt = d => d.toISOString().slice(0,10);
+
+  const [todayRes, tomorrowRes] = await Promise.all([
+    fetch(`/api/predictions?date=${fmt(todayDate)}&limit=100`).then(r=>r.json()).catch(()=>null),
+    fetch(`/api/predictions?date=${fmt(tomorrowDate)}&limit=100`).then(r=>r.json()).catch(()=>null),
+  ]);
+
+  allPredictions.today    = (todayRes?.data?.predictions || []).filter(p => p.tip && p.tip !== 'TBD');
+  allPredictions.tomorrow = (tomorrowRes?.data?.predictions || []).filter(p => p.tip && p.tip !== 'TBD');
+
+  renderGames();
+}
+
+// ─── Render game list ─────────────────────────────────────────────────────
+
+function renderGames() {
+  let games = allPredictions[activeTab];
+  if (activeMarket) games = games.filter(g => g.market === activeMarket || g.tip === activeMarket);
+
+  // Sort by confidence DESC
+  games = [...games].sort((a,b) => (b.confidence_score||0)-(a.confidence_score||0));
+
+  const label = activeTab === 'today' ? "Today's Predictions" : "Tomorrow's Predictions";
+  document.getElementById('games-title').textContent = label;
+  document.getElementById('games-count').textContent = games.length ? `${games.length} available` : '';
+
+  if (!games.length) {
+    document.getElementById('games-list').innerHTML = `
+      <div style="text-align:center;padding:48px 0;color:var(--text-soft)">
+        <span class="material-icons-round" style="font-size:36px;display:block;margin-bottom:10px;opacity:.4">sports_soccer</span>
+        <strong>No predictions available</strong><br>
+        <span style="font-size:13px">Check back closer to kick-off or try tomorrow's games.</span>
+      </div>`;
+    return;
+  }
+
+  document.getElementById('games-list').innerHTML = games.map(g => {
+    const isSelected = selectedIds.has(g.id);
+    const conf = g.confidence_score || 0;
+    const confColor = conf >= 70 ? 'var(--primary)' : conf >= 60 ? 'var(--warning)' : 'var(--danger)';
+    const odds = confToOdds(conf);
+    const ko = g.match_date ? new Date(g.match_date).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '—';
+    const league = g.league_name || '';
+
+    return `<div class="game-card${isSelected?' selected':''}" data-id="${g.id}" onclick="toggleGame(${g.id})">
+      <div class="game-chk">
+        <span class="material-icons-round game-chk-icon" style="font-size:14px;font-weight:900">check</span>
+      </div>
+      <div class="game-info">
+        <div class="game-match">${escapeHtml(g.home_team)} <span style="color:var(--text-soft);font-weight:400">vs</span> ${escapeHtml(g.away_team)}</div>
+        <div class="game-meta">
+          ${league ? `<span>${escapeHtml(league)}</span> · ` : ''}
+          <span>KO ${ko}</span>
+          · <span style="color:${confColor}"><span class="conf-dot" style="background:${confColor}"></span>${conf}% conf.</span>
+        </div>
+      </div>
+      <div class="game-pick">
+        <div class="game-tip">${escapeHtml(g.tip || g.market || '—')}</div>
+        <div class="game-odds">${odds.toFixed(2)}</div>
+        <div class="game-conf" style="color:var(--text-soft);font-size:10px">${escapeHtml(g.market || '')}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── Toggle selection ─────────────────────────────────────────────────────
+
+function toggleGame(id) {
+  if (selectedIds.has(id)) selectedIds.delete(id);
+  else selectedIds.add(id);
+  updateSlip();
+  renderGames();
+}
+
+// ─── Auto-generate ────────────────────────────────────────────────────────
+
+function autoGenerate() {
+  const count  = parseInt(document.getElementById('auto-count').value);
+  const minConf = parseInt(document.getElementById('auto-conf').value);
+
+  const pool = [...allPredictions.today, ...allPredictions.tomorrow]
+    .filter(g => (g.confidence_score||0) >= minConf && g.tip && g.tip !== 'TBD')
+    .sort((a,b) => (b.confidence_score||0)-(a.confidence_score||0));
+
+  selectedIds.clear();
+  pool.slice(0, count).forEach(g => selectedIds.add(g.id));
+  updateSlip();
+  renderGames();
+}
+
+// ─── Bet slip ─────────────────────────────────────────────────────────────
+
+function updateSlip() {
+  const allGames = [...allPredictions.today, ...allPredictions.tomorrow];
+  const selected = allGames.filter(g => selectedIds.has(g.id));
+
+  document.getElementById('slip-count').textContent = selected.length;
+
+  if (!selected.length) {
+    document.getElementById('slip-items').innerHTML = `
+      <div class="slip-empty">
+        <span class="material-icons-round" style="font-size:32px;display:block;margin-bottom:8px;opacity:.4">add_circle_outline</span>
+        Select games or use Auto-Generate
+      </div>`;
+    document.getElementById('slip-stats-divider').style.display = 'none';
+    document.getElementById('slip-stats').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('slip-items').innerHTML = selected.map(g => {
+    const odds = confToOdds(g.confidence_score||60);
+    return `<div class="slip-item">
+      <div class="slip-item-left">
+        <div class="slip-item-match">${escapeHtml(g.home_team)} vs ${escapeHtml(g.away_team)}</div>
+        <div class="slip-item-pick">${escapeHtml(g.tip||g.market||'—')}</div>
+      </div>
+      <span class="slip-item-odds">${odds.toFixed(2)}</span>
+      <button class="slip-remove" onclick="event.stopPropagation();removeFromSlip(${g.id})" title="Remove">
+        <span class="material-icons-round" style="font-size:18px">close</span>
+      </button>
+    </div>`;
+  }).join('');
+
+  const combinedOdds = selected.reduce((acc, g) => acc * confToOdds(g.confidence_score||60), 1);
+  const avgConf = selected.reduce((a,g)=>a+(g.confidence_score||0),0) / selected.length;
+
+  document.getElementById('slip-stats-divider').style.display = 'block';
+  document.getElementById('slip-stats').style.display = 'block';
+  document.getElementById('slip-sel-count').textContent = selected.length;
+  document.getElementById('slip-odds').textContent = combinedOdds.toFixed(2);
+  document.getElementById('slip-avg-conf').textContent = `${Math.round(avgConf)}%`;
+
+  updatePayout();
+}
+
+function removeFromSlip(id) {
+  selectedIds.delete(id);
+  updateSlip();
+  renderGames();
+}
+
+function updatePayout() {
+  const allGames = [...allPredictions.today, ...allPredictions.tomorrow];
+  const selected = allGames.filter(g => selectedIds.has(g.id));
+  if (!selected.length) return;
+
+  const stake = parseFloat(document.getElementById('stake-input').value) || 0;
+  const combinedOdds = selected.reduce((acc, g) => acc * confToOdds(g.confidence_score||60), 1);
+  const payout = stake * combinedOdds;
+  document.getElementById('payout-val').textContent = `$${payout.toFixed(2)}`;
+}
+
+// ─── Odds estimation from confidence ──────────────────────────────────────
+// Maps confidence % → implied decimal odds
+// conf=65 → ~1.54, conf=70 → ~1.43, conf=80 → ~1.25
+function confToOdds(conf) {
+  const prob = Math.max(0.35, Math.min(0.95, conf / 100));
+  // Add a ~5% bookmaker margin
+  const impliedProb = prob * 0.95;
+  return Math.max(1.10, 1 / impliedProb);
+}
+
+// ─── Share / Copy ─────────────────────────────────────────────────────────
+
+function buildSlipText() {
+  const allGames = [...allPredictions.today, ...allPredictions.tomorrow];
+  const selected = allGames.filter(g => selectedIds.has(g.id));
+  if (!selected.length) return '';
+
+  const stake  = parseFloat(document.getElementById('stake-input').value) || 10;
+  const combined = selected.reduce((acc, g) => acc * confToOdds(g.confidence_score||60), 1);
+  const payout = stake * combined;
+
+  const lines = [
+    `🎯 Oddslander Accumulator — ${new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short'})}`,
+    '',
+    ...selected.map((g,i) => {
+      const ko = g.match_date ? new Date(g.match_date).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '';
+      return `${i+1}. ${g.home_team} vs ${g.away_team}${ko?' ('+ko+')':''}\n   Pick: ${g.tip||g.market} @ ${confToOdds(g.confidence_score||60).toFixed(2)}`;
+    }),
+    '',
+    `Combined Odds: ${combined.toFixed(2)}`,
+    `Stake: $${stake.toFixed(2)} → Potential: $${payout.toFixed(2)}`,
+    '',
+    '🔗 oddslander.com/bet-builder',
+  ];
+
+  return lines.join('\n');
+}
+
+function copySlip() {
+  const text = buildSlipText();
+  if (!text) { showToast('Add picks to your slip first', 'error'); return; }
+  navigator.clipboard.writeText(text).then(() => showToast('Slip copied!', 'success')).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+    showToast('Slip copied!', 'success');
+  });
+}
+
+function shareSlip() {
+  const text = buildSlipText();
+  if (!text) { showToast('Add picks to your slip first', 'error'); return; }
+  if (navigator.share) {
+    navigator.share({ title:'My Oddslander Acca', text, url: window.location.href }).catch(()=>{});
+  } else {
+    copySlip();
+  }
+}
+
+function showToast(msg, type='info') {
+  let tc = document.getElementById('toast-container');
+  if (!tc) { tc = document.createElement('div'); tc.id='toast-container'; tc.className='toast-container'; document.body.appendChild(tc); }
+  const t = document.createElement('div');
+  t.className = `toast toast-${type}`; t.textContent = msg; tc.appendChild(t);
+  setTimeout(()=>t.classList.add('show'),10);
+  setTimeout(()=>{ t.classList.remove('show'); setTimeout(()=>t.remove(),300); },3000);
+}
+</script>
+</body>
+</html>

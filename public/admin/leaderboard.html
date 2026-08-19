@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Leaderboard — OL Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<link rel="icon" href="/images/logo.png">
+<link rel="apple-touch-icon" href="/images/logo.png">
+<link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="admin.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+.lb-card { background:#0d1520; border:1px solid rgba(173,223,241,0.08); border-radius:14px; overflow:hidden; margin-bottom:20px; }
+.lb-card-head { padding:14px 18px; border-bottom:1px solid rgba(173,223,241,0.08); display:flex; align-items:center; justify-content:space-between; }
+.lb-card-head h3 { font-size:14px; font-weight:700; margin:0; }
+.lb-card-body { padding:18px; }
+.lb-chart-box { height:280px; display:flex; align-items:center; justify-content:center; position:relative; }
+.lb-empty-chart { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; color:rgba(173,223,241,0.3); font-size:13px; gap:8px; }
+.lb-empty-chart span { font-size:32px; }
+</style>
+</head>
+<body>
+<div id="admin-sidebar"></div>
+<div id="admin-topbar"></div>
+<main id="admin-main">
+
+  <h1 class="admin-section-title"><span class="material-icons-round">emoji_events</span> Prediction Leaderboard</h1>
+
+  <!-- Filters -->
+  <div class="lb-card mb-3" style="margin-bottom:20px">
+    <div class="lb-card-body" style="padding:14px 18px">
+      <div class="flex gap-2" style="flex-wrap:wrap">
+        <select class="form-control" style="max-width:160px" id="lb-market">
+          <option value="">All Markets</option>
+          <option>1X2</option><option>Over/Under</option><option>BTTS</option><option>Double Chance</option>
+        </select>
+        <select class="form-control" style="max-width:160px" id="lb-league">
+          <option value="">All Leagues</option>
+        </select>
+        <select class="form-control" style="max-width:150px" id="lb-period">
+          <option value="30">Last 30 days</option>
+          <option value="7">Last 7 days</option>
+          <option value="90">Last 90 days</option>
+          <option value="">All Time</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table + Chart -->
+  <div class="grid-2 mb-3">
+
+    <!-- Table -->
+    <div class="lb-card">
+      <div class="lb-card-head">
+        <h3><span class="material-icons-round">content_paste</span> Rankings</h3>
+        <span class="text-muted" id="row-count" style="font-size:12px">0 entries</span>
+      </div>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width:36px">#</th>
+              <th>Market / Category</th>
+              <th>Total</th>
+              <th>Won</th>
+              <th>Win %</th>
+              <th>Avg Conf</th>
+            </tr>
+          </thead>
+          <tbody id="lb-body">
+            <tr><td colspan="6" class="empty-cell">No data yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Chart -->
+    <div class="lb-card">
+      <div class="lb-card-head">
+        <h3><span class="material-icons-round">analytics</span> Win Rate by Market</h3>
+        <span class="text-muted" id="market-count" style="font-size:12px">0 entries</span>
+      </div>
+      <div class="lb-card-body">
+        <div class="lb-chart-box">
+          <div class="lb-empty-chart" id="chart-empty">
+            <span class="material-icons-round" style="font-size:32px">analytics</span>
+            <p>No data to chart yet</p>
+          </div>
+          <canvas id="lb-chart" style="display:none"></canvas>
+        </div>
+      </div>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Market</th>
+              <th>Category</th>
+              <th>Total</th>
+              <th>Won</th>
+              <th>Win %</th>
+              <th>Avg Conf</th>
+            </tr>
+          </thead>
+          <tbody id="market-body">
+            <tr><td colspan="6" class="empty-cell">No data yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Accuracy Trend -->
+  <div class="lb-card">
+    <div class="lb-card-head">
+      <h3><span class="material-icons-round">trending_up</span> 30-Day Accuracy Trend</h3>
+      <span class="text-muted" id="trend-count" style="font-size:12px">0 days</span>
+    </div>
+    <div class="lb-card-body">
+      <div class="lb-chart-box">
+        <div class="lb-empty-chart" id="trend-empty">
+          <span class="material-icons-round" style="font-size:32px">trending_up</span>
+          <p>Trend data will appear once results are logged</p>
+        </div>
+        <canvas id="trend-chart" style="display:none;width:100%;height:100%"></canvas>
+      </div>
+    </div>
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Predictions</th>
+            <th>Correct</th>
+            <th>Win %</th>
+          </tr>
+        </thead>
+        <tbody id="trend-body">
+          <tr><td colspan="4" class="empty-cell">No data yet</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<script src="admin.js"></script>
+<script>
+injectAdminShell('leaderboard.html');
+let lbChart, trendChart;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await populateLeagues();
+  load();
+  loadTrend();
+  document.getElementById('lb-market').addEventListener('change', load);
+  document.getElementById('lb-league').addEventListener('change', load);
+  document.getElementById('lb-period').addEventListener('change', load);
+});
+
+async function populateLeagues() {
+  try {
+    const d = await api('/leagues');
+    const all = Object.values(d.data?.leagues || {}).flat();
+    const sel = document.getElementById('lb-league');
+    all.forEach(l => sel.appendChild(new Option(l.name, l.id)));
+  } catch {}
+}
+
+async function load() {
+  const market = document.getElementById('lb-market').value;
+  const league = document.getElementById('lb-league').value;
+  const days = document.getElementById('lb-period').value;
+  const params = new URLSearchParams({ ...(market && { market }), ...(league && { league_id: league }), ...(days && { days }) });
+  try {
+    const d = await api(`/admin/leaderboard?${params}`);
+    const rows = d.data?.rows || [];
+
+    document.getElementById('row-count').textContent = `${rows.length} entries`;
+
+    document.getElementById('lb-body').innerHTML = rows.length
+      ? rows.map((r, i) => `<tr>
+          <td style="font-weight:700;color:${i<3?'var(--primary)':'inherit'}">${i < 3 ? ['<span style="color:#FFD700;font-weight:900">1st</span>','<span style="color:#C0C0C0;font-weight:900">2nd</span>','<span style="color:#CD7F32;font-weight:900">3rd</span>'][i] : i + 1}</td>
+          <td>
+            <strong>${escHtml(r.market || r.category || '—')}</strong>
+            ${r.category && r.market ? `<br><span class="text-muted" style="font-size:11px">${escHtml(r.category)}</span>` : ''}
+          </td>
+          <td>${r.total}</td>
+          <td style="color:var(--primary);font-weight:600">${r.won}</td>
+          <td><strong style="color:${r.win_rate >= 70 ? 'var(--primary)' : r.win_rate >= 50 ? 'var(--accent)' : 'var(--danger)'}">${(r.win_rate || 0).toFixed(1)}%</strong></td>
+          <td>${(r.avg_confidence || 0).toFixed(0)}</td>
+        </tr>`).join('')
+      : '<tr><td colspan="6" class="empty-cell">No data yet — add predictions and log results to see rankings</td></tr>';
+
+    // Chart
+    const chartEmpty = document.getElementById('chart-empty');
+    const chartCanvas = document.getElementById('lb-chart');
+    if (rows.length) {
+      chartEmpty.style.display = 'none';
+      chartCanvas.style.display = 'block';
+      if (lbChart) lbChart.destroy();
+      lbChart = new Chart(chartCanvas.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: rows.slice(0, 8).map(r => r.market || r.category),
+          datasets: [{ label: 'Win Rate %', data: rows.slice(0, 8).map(r => r.win_rate || 0), backgroundColor: 'rgba(2,245,161,0.7)', borderRadius: 6 }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { min: 0, max: 100, ticks: { color: 'rgba(173,223,241,0.6)', callback: v => v + '%' }, grid: { color: 'rgba(173,223,241,0.05)' } },
+            x: { ticks: { color: 'rgba(173,223,241,0.6)', font: { size: 11 } }, grid: { display: false } }
+          }
+        }
+      });
+    } else {
+      chartEmpty.style.display = 'flex';
+      chartCanvas.style.display = 'none';
+    }
+
+    // Market table
+    document.getElementById('market-count').textContent = `${rows.length} entries`;
+    document.getElementById('market-body').innerHTML = rows.length
+      ? rows.map((r, i) => `<tr>
+          <td><strong>${escHtml(r.market || '—')}</strong></td>
+          <td class="text-muted" style="font-size:12px">${escHtml(r.category || '—')}</td>
+          <td>${r.total}</td>
+          <td style="color:var(--primary);font-weight:600">${r.won}</td>
+          <td><strong style="color:${r.win_rate >= 70 ? 'var(--primary)' : r.win_rate >= 50 ? 'var(--accent)' : 'var(--danger)'}">${(r.win_rate || 0).toFixed(1)}%</strong></td>
+          <td>${(r.avg_confidence || 0).toFixed(0)}</td>
+        </tr>`).join('')
+      : '<tr><td colspan="6" class="empty-cell">No data yet — add predictions and log results</td></tr>';
+  } catch {}
+}
+
+async function loadTrend() {
+  try {
+    const d = await api('/analytics/accuracy-trend');
+    const rows = d.data?.rows || [];
+    const trendEmpty = document.getElementById('trend-empty');
+    const trendCanvas = document.getElementById('trend-chart');
+    // Trend table
+    document.getElementById('trend-count').textContent = `${rows.length} days`;
+    document.getElementById('trend-body').innerHTML = rows.length
+      ? rows.map(r => `<tr>
+          <td>${escHtml(r.date || r.week || '—')}</td>
+          <td>${r.count || 0}</td>
+          <td style="color:var(--primary);font-weight:600">${r.correct || 0}</td>
+          <td><strong style="color:${(r.win_rate||0) >= 70 ? 'var(--primary)' : (r.win_rate||0) >= 50 ? 'var(--accent)' : 'var(--danger)'}">${(r.win_rate || 0).toFixed(1)}%</strong></td>
+        </tr>`).join('')
+      : '<tr><td colspan="4" class="empty-cell">No data yet</td></tr>';
+
+    if (!rows.length) { trendEmpty.style.display = 'flex'; trendCanvas.style.display = 'none'; return; }
+    trendEmpty.style.display = 'none';
+    trendCanvas.style.display = 'block';
+    if (trendChart) trendChart.destroy();
+    trendChart = new Chart(trendCanvas.getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: rows.map(r => r.date || r.week),
+        datasets: [
+          { label: 'Win Rate %', data: rows.map(r => r.win_rate || 0), borderColor: '#02f5a1', backgroundColor: 'rgba(2,245,161,0.08)', tension: 0.4, fill: true, pointRadius: 3 },
+          { label: 'Predictions', data: rows.map(r => r.count || 0), borderColor: 'rgba(173,223,241,0.4)', backgroundColor: 'transparent', tension: 0.3, yAxisID: 'y2', pointRadius: 2 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        scales: {
+          y: { min: 0, max: 100, ticks: { color: 'rgba(173,223,241,0.6)', callback: v => v + '%' }, grid: { color: 'rgba(173,223,241,0.05)' } },
+          y2: { position: 'right', ticks: { color: 'rgba(173,223,241,0.4)' }, grid: { display: false } },
+          x: { ticks: { color: 'rgba(173,223,241,0.6)' }, grid: { display: false } }
+        },
+        plugins: { legend: { labels: { color: 'rgba(173,223,241,0.75)', font: { size: 12 } } } }
+      }
+    });
+  } catch {}
+}
+</script>
+</body>
+</html>

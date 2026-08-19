@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Football Blog — Oddslander</title>
+<meta name="description" content="Football analysis, betting guides, and expert insights from the Oddslander team.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<link rel="icon" href="/images/logo.png">
+<link rel="apple-touch-icon" href="/images/logo.png">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="header-placeholder"></div>
+<main>
+  <section>
+    <div class="container">
+      <div class="flex-between mb-3" style="flex-wrap:wrap;gap:12px">
+        <h1 class="section-title mb-0">Football <span>Blog</span></h1>
+        <div class="flex gap-2" style="flex-wrap:wrap">
+          <select class="form-control" style="max-width:180px" id="cat-filter" onchange="applyFilter()">
+            <option value="">All Categories</option>
+            <option value="Analysis">Match Analysis</option>
+            <option value="Tips">Betting Tips</option>
+            <option value="News">Football News</option>
+            <option value="Guide">Guides</option>
+          </select>
+          <input type="text" class="form-control" style="max-width:220px" id="search" placeholder="Search posts…" oninput="debounce()">
+        </div>
+      </div>
+      <div class="grid-3" id="blog-grid"></div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </section>
+</main>
+<div id="footer-placeholder"></div>
+<script src="/js/app.js"></script>
+<script>
+let page = 1, searchTimer;
+
+document.addEventListener('DOMContentLoaded', () => loadPosts());
+
+function debounce() { clearTimeout(searchTimer); searchTimer = setTimeout(() => { page=1; loadPosts(); }, 400); }
+function applyFilter() { page=1; loadPosts(); }
+
+async function loadPosts() {
+  const grid = document.getElementById('blog-grid');
+  grid.innerHTML = `<div class="skeleton" style="height:300px;border-radius:14px"></div>`.repeat(6);
+  const cat = document.getElementById('cat-filter').value;
+  const search = document.getElementById('search').value;
+  const qs = new URLSearchParams({ page, limit: 9, published: 'true', ...(cat && {category:cat}), ...(search && {search}) });
+  try {
+    const r = await fetch(`/api/blog?${qs}`);
+    const data = await r.json();
+    const posts = data.data?.posts || [];
+    const pg = data.data?.pagination || {};
+    if (!posts.length) { grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon"><span class="material-icons-round" style="font-size:48px">edit_note</span></div><h3>No posts yet</h3></div>`; document.getElementById('pagination').innerHTML=''; return; }
+    grid.innerHTML = posts.map(p => `
+      <div class="blog-card">
+        ${p.featured_image ? `<img class="blog-card-img" src="${p.featured_image.startsWith('data:') ? p.featured_image : escapeHtml(p.featured_image)}" alt="${escapeHtml(p.title)}" loading="lazy">` : `<div class="blog-card-img" style="background:var(--bg-2);display:flex;align-items:center;justify-content:center;font-size:48px"><span class="material-icons-round" style="font-size:48px;opacity:.4">article</span></div>`}
+        <div class="blog-card-body">
+          ${p.category ? `<div class="blog-card-cat">${escapeHtml(p.category)}</div>` : ''}
+          <h3>${escapeHtml(p.title)}</h3>
+          <p>${escapeHtml(p.excerpt || '')}</p>
+        </div>
+        <div class="blog-card-footer">
+          <span>${formatDate(p.published_at)}</span>
+          <a href="/blog/${p.slug}" class="btn btn-sm btn-outline">Read →</a>
+        </div>
+      </div>`).join('');
+    renderPagination(pg);
+  } catch { grid.innerHTML = `<p class="text-soft" style="grid-column:1/-1">Failed to load posts.</p>`; }
+}
+
+function renderPagination(pg) {
+  const el = document.getElementById('pagination');
+  if (!pg || pg.totalPages <= 1) { el.innerHTML=''; return; }
+  let html = '';
+  for (let i=1; i<=pg.totalPages; i++) html += `<button class="page-btn ${i===pg.page?'active':''}" onclick="goPage(${i})">${i}</button>`;
+  el.innerHTML = html;
+}
+function goPage(p) { page=p; loadPosts(); window.scrollTo(0,0); }
+</script>
+</body>
+</html>

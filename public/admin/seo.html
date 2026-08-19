@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SEO — OL Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<link rel="icon" href="/images/logo.png">
+<link rel="apple-touch-icon" href="/images/logo.png">
+<link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<div id="admin-sidebar"></div>
+<div id="admin-topbar"></div>
+<main id="admin-main">
+  <h1 class="admin-section-title"><span class="material-icons-round">manage_search</span> SEO Settings</h1>
+  <p class="text-soft mb-3" style="font-size:13px">Per-page meta title, description, keywords and Open Graph settings. Used by the sitemap and server-rendered meta tags.</p>
+
+  <div class="data-table-wrap admin-card" style="padding:0">
+    <table class="data-table">
+      <thead><tr><th>Page Key</th><th>Meta Title</th><th>Description (preview)</th><th>Keywords</th><th>Actions</th></tr></thead>
+      <tbody id="seo-body"></tbody>
+    </table>
+  </div>
+</main>
+
+<!-- Edit Modal -->
+<div class="modal-overlay" id="seo-modal">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header"><h3 id="seo-modal-title">Edit SEO</h3><button class="modal-close" id="seo-close-btn"><span class="material-icons-round">close</span></button></div>
+    <div class="modal-body">
+      <input type="hidden" id="s-key">
+      <div class="form-group"><label class="form-label">Page Key</label><input type="text" class="form-control" id="s-page-key" readonly style="opacity:.5"></div>
+      <div class="form-group"><label class="form-label">Meta Title</label><input type="text" class="form-control" id="s-title" placeholder="Page title for search engines (50–60 chars)" maxlength="80"></div>
+      <div class="form-group"><label class="form-label">Meta Description</label><textarea class="form-control" id="s-desc" rows="3" placeholder="Description shown in search results (120–160 chars)" maxlength="200"></textarea></div>
+      <div class="form-group"><label class="form-label">Keywords</label><input type="text" class="form-control" id="s-keywords" placeholder="comma, separated, keywords"></div>
+      <div class="form-group"><label class="form-label">OG Title (optional)</label><input type="text" class="form-control" id="s-og-title" placeholder="Leave blank to use Meta Title"></div>
+      <div class="form-group"><label class="form-label">OG Description (optional)</label><textarea class="form-control" id="s-og-desc" rows="2" placeholder="Leave blank to use Meta Description"></textarea></div>
+      <div class="form-group"><label class="form-label">OG Image URL</label><input type="text" class="form-control" id="s-og-img" placeholder="https://oddslander.com/og-image.png"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="seo-cancel-btn">Cancel</button>
+      <button class="btn btn-primary" id="seo-save-btn">Save SEO</button>
+    </div>
+  </div>
+</div>
+
+<script src="admin.js"></script>
+<script>
+injectAdminShell('seo.html');
+let seoMap = {};
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadSeo();
+  document.getElementById('seo-close-btn').addEventListener('click', closeModal);
+  document.getElementById('seo-cancel-btn').addEventListener('click', closeModal);
+  document.getElementById('seo-save-btn').addEventListener('click', saveSeo);
+});
+
+async function loadSeo() {
+  const d = await api('/admin/seo');
+  const rows = d.data?.seo || [];
+  seoMap = {};
+  rows.forEach(s => { seoMap[s.id] = s; });
+
+  document.getElementById('seo-body').innerHTML = rows.length
+    ? rows.map(s => `<tr>
+        <td><code style="font-size:12px;color:var(--primary)">${escHtml(s.page_key)}</code></td>
+        <td style="max-width:200px;font-size:13px">${escHtml(s.meta_title||'—')}</td>
+        <td style="max-width:240px;font-size:12px;color:var(--text-soft)">${escHtml((s.meta_description||'').slice(0,80))}${(s.meta_description||'').length>80?'…':''}</td>
+        <td style="font-size:12px;max-width:160px">${escHtml((s.keywords||'').slice(0,50))}${(s.keywords||'').length>50?'…':''}</td>
+        <td><button class="btn btn-sm btn-ghost" data-seo-id="${s.id}"><span class="material-icons-round">edit</span> Edit</button></td>
+      </tr>`).join('')
+    : '<tr><td colspan="5" class="empty-cell">No SEO settings found — run migration to seed defaults.</td></tr>';
+
+  document.querySelectorAll('[data-seo-id]').forEach(btn => btn.addEventListener('click', () => openEdit(seoMap[btn.dataset.seoId])));
+}
+
+function openEdit(s) {
+  if (!s) return;
+  document.getElementById('seo-modal').classList.add('open');
+  document.getElementById('seo-modal-title').textContent = `Edit: ${s.page_key}`;
+  document.getElementById('s-key').value = s.id;
+  document.getElementById('s-page-key').value = s.page_key;
+  document.getElementById('s-title').value = s.meta_title || '';
+  document.getElementById('s-desc').value = s.meta_description || '';
+  document.getElementById('s-keywords').value = s.keywords || '';
+  document.getElementById('s-og-title').value = s.og_title || '';
+  document.getElementById('s-og-desc').value = s.og_description || '';
+  document.getElementById('s-og-img').value = s.og_image || '';
+}
+function closeModal() { document.getElementById('seo-modal').classList.remove('open'); }
+
+async function saveSeo() {
+  const id = document.getElementById('s-key').value;
+  const body = {
+    meta_title: document.getElementById('s-title').value.trim(),
+    meta_description: document.getElementById('s-desc').value.trim(),
+    keywords: document.getElementById('s-keywords').value.trim(),
+    og_title: document.getElementById('s-og-title').value.trim() || null,
+    og_description: document.getElementById('s-og-desc').value.trim() || null,
+    og_image: document.getElementById('s-og-img').value.trim() || null,
+  };
+  const d = await api(`/admin/seo/${id}`, {method:'PUT', body:JSON.stringify(body)});
+  if (d.success) { closeModal(); showToast('SEO saved!','success'); loadSeo(); }
+  else showToast(d.message,'error');
+}
+</script>
+</body>
+</html>

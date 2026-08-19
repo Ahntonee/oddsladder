@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Oddslander — Football Intelligence Predictions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+<link rel="icon" href="/images/logo.png">
+</head>
+<body>
+<div id="header-placeholder"></div>
+
+<main>
+  <section style="padding:32px 0 16px">
+    <div class="container" style="max-width:900px">
+      <div id="article-loading" style="text-align:center;padding:60px;color:var(--text-soft)">
+        <div class="skeleton" style="height:36px;border-radius:8px;max-width:500px;margin:0 auto 16px"></div>
+        <div class="skeleton" style="height:16px;border-radius:6px;max-width:300px;margin:0 auto"></div>
+      </div>
+      <article id="article-body" style="display:none">
+        <h1 id="art-title" style="font-size:28px;font-weight:900;margin-bottom:12px;line-height:1.3"></h1>
+        <div id="art-meta" style="font-size:13px;color:var(--text-soft);margin-bottom:28px;display:flex;gap:16px;flex-wrap:wrap"></div>
+        <div id="art-content" class="article-content" style="font-size:16px;line-height:1.8;color:var(--text)"></div>
+      </article>
+    </div>
+  </section>
+
+  <!-- Live predictions section (injected if show_live_predictions=true) -->
+  <section id="live-preds-section" style="display:none;padding-bottom:40px">
+    <div class="container" style="max-width:900px">
+      <h2 class="section-title" style="margin-bottom:16px">Today's <span>Live Predictions</span></h2>
+      <p style="color:var(--text-soft);font-size:14px;margin-bottom:20px">These are today's AI-generated picks from the Oddslander Intelligence Engine.</p>
+      <div id="live-preds-grid" class="grid-2"></div>
+      <div style="text-align:center;margin-top:24px">
+        <a href="/predictions.html" class="btn btn-primary">View All Today's Tips →</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="footer-placeholder"></div>
+<script src="/js/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  await injectHeader();
+  await injectFooter();
+  await loadArticle();
+});
+
+async function loadArticle() {
+  const slug = window.location.pathname.replace('/tips/', '').replace(/\//g,'');
+  try {
+    const r = await fetch(`/api/backlinks/public`); // just a health check reuse; load page data via inline script
+    // Page data is server-injected via <title> meta — read the slug from URL
+    // Load article data
+    const ar = await fetch(`/api/seo-article-public/${encodeURIComponent(slug)}`);
+    const data = ar.ok ? await ar.json() : null;
+
+    if (!data?.data?.page) {
+      document.getElementById('article-loading').innerHTML = '<p style="color:var(--text-soft)">Article not found.</p>';
+      return;
+    }
+
+    const page = data.data.page;
+    document.getElementById('article-loading').style.display = 'none';
+    document.getElementById('article-body').style.display = 'block';
+    document.getElementById('art-title').textContent = page.title;
+    document.getElementById('art-meta').innerHTML = `
+      <span><span class="material-icons-round" style="font-size:14px;vertical-align:middle">calendar_today</span> ${new Date(page.updated_at).toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})}</span>
+      <span><span class="material-icons-round" style="font-size:14px;vertical-align:middle">psychology</span> AI-Generated Predictions</span>
+    `;
+    document.getElementById('art-content').innerHTML = page.content || '';
+
+    if (page.show_live_predictions) {
+      document.getElementById('live-preds-section').style.display = 'block';
+      const filter = page.market ? { market: page.market, date: 'today', limit: 8 } : { date: 'today', limit: 8 };
+      await loadPredictions(filter, document.getElementById('live-preds-grid'));
+    }
+  } catch(e) {
+    document.getElementById('article-loading').innerHTML = '<p style="color:var(--text-soft)">Could not load article.</p>';
+  }
+}
+</script>
+</body>
+</html>

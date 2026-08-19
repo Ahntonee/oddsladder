@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Backlinks — OL Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<link rel="icon" href="/images/logo.png">
+<link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<div id="admin-sidebar"></div>
+<div id="admin-topbar"></div>
+<main id="admin-main">
+
+  <div class="flex-between mb-3">
+    <h1 class="admin-section-title mb-0"><span class="material-icons-round">link</span> Textlinks / Backlinks</h1>
+    <button class="btn btn-primary btn-sm" onclick="openModal()">
+      <span class="material-icons-round">add</span> Add Backlink
+    </button>
+  </div>
+
+  <div class="admin-card mb-3" style="padding:14px 16px;background:rgba(2,245,161,.06);border-color:rgba(2,245,161,.2)">
+    <span class="material-icons-round" style="color:var(--primary);vertical-align:middle;margin-right:6px">info</span>
+    <span style="font-size:13px;color:var(--text-soft)">Active backlinks display in the <strong style="color:var(--text)">footer "Other Sites" section</strong>. Links expire automatically on their set date. You can renew, update, or remove at any time.</span>
+  </div>
+
+  <div class="admin-card" style="padding:0;overflow-x:auto">
+    <table class="data-table" id="links-table">
+      <thead>
+        <tr>
+          <th>Keyword / Anchor</th>
+          <th>URL</th>
+          <th>Site Name</th>
+          <th>Category</th>
+          <th>Expires</th>
+          <th>Days Left</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="links-body">
+        <tr><td colspan="8" class="empty-cell"><div class="skeleton" style="height:36px;border-radius:6px"></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<!-- Modal -->
+<div id="bl-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center;padding:16px">
+  <div class="admin-card" style="width:100%;max-width:520px;padding:28px">
+    <div class="flex-between mb-3">
+      <h2 style="font-size:16px;font-weight:800;margin:0" id="modal-title">Add Backlink</h2>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal()"><span class="material-icons-round">close</span></button>
+    </div>
+    <input type="hidden" id="edit-id">
+    <div class="form-group">
+      <label class="form-label">Keyword / Anchor Text *</label>
+      <input type="text" class="form-control" id="f-keyword" placeholder="e.g. Football Predictions Today">
+    </div>
+    <div class="form-group">
+      <label class="form-label">URL *</label>
+      <input type="url" class="form-control" id="f-url" placeholder="https://example.com">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Site Name</label>
+      <input type="text" class="form-control" id="f-site" placeholder="e.g. Example Tips">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Category</label>
+      <select class="form-control" id="f-cat">
+        <option value="general">General</option>
+        <option value="prediction">Prediction Site</option>
+        <option value="betting">Betting Site</option>
+        <option value="news">News / Blog</option>
+        <option value="partner">Partner</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Expires On (leave blank = permanent)</label>
+      <input type="date" class="form-control" id="f-expires">
+    </div>
+    <div class="flex gap-2 mt-3">
+      <button class="btn btn-primary" onclick="saveBacklink()">Save</button>
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Renew Modal -->
+<div id="renew-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center;padding:16px">
+  <div class="admin-card" style="width:100%;max-width:360px;padding:28px">
+    <h2 style="font-size:16px;font-weight:800;margin-bottom:16px">Renew Subscription</h2>
+    <input type="hidden" id="renew-id">
+    <div class="form-group">
+      <label class="form-label">Extend by (days)</label>
+      <select class="form-control" id="renew-days">
+        <option value="30">30 days</option>
+        <option value="60">60 days</option>
+        <option value="90">90 days</option>
+        <option value="180">180 days</option>
+        <option value="365">365 days</option>
+      </select>
+    </div>
+    <div class="flex gap-2 mt-3">
+      <button class="btn btn-primary" onclick="confirmRenew()">Renew</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('renew-modal').style.display='none'">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script src="admin.js"></script>
+<script>
+injectAdminShell('backlinks.html');
+
+document.addEventListener('DOMContentLoaded', loadLinks);
+
+async function loadLinks() {
+  const d = await api('/backlinks');
+  const links = d.data?.backlinks || [];
+  document.getElementById('links-body').innerHTML = links.length
+    ? links.map(l => {
+        const isExpired = l.expires_at && new Date(l.expires_at) < new Date();
+        const daysLeft = l.days_left;
+        const status = !l.is_active ? '<span class="badge badge-loss">Inactive</span>'
+          : isExpired ? '<span class="badge badge-loss">Expired</span>'
+          : daysLeft !== null && daysLeft <= 7 ? '<span class="badge badge-draw">Expiring Soon</span>'
+          : '<span class="badge badge-win">Active</span>';
+
+        return `<tr>
+          <td><strong>${escHtml(l.keyword)}</strong></td>
+          <td style="font-size:12px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+            <a href="${escHtml(l.url)}" target="_blank" rel="noopener" style="color:var(--primary)">${escHtml(l.url)}</a>
+          </td>
+          <td style="font-size:12px">${escHtml(l.site_name||'—')}</td>
+          <td><span class="badge" style="background:var(--bg);border:1px solid var(--border);color:var(--text-soft)">${escHtml(l.category||'—')}</span></td>
+          <td style="font-size:12px">${l.expires_at ? new Date(l.expires_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '—'}</td>
+          <td style="font-size:12px;color:${daysLeft<=7?'var(--danger)':'var(--text-soft)'}">${daysLeft !== null ? daysLeft+'d' : '∞'}</td>
+          <td>${status}</td>
+          <td>
+            <div class="flex gap-1" style="flex-wrap:nowrap">
+              <button class="btn btn-sm btn-ghost" onclick="openRenew(${l.id})" title="Renew"><span class="material-icons-round" style="font-size:14px">autorenew</span></button>
+              <button class="btn btn-sm btn-ghost" onclick="editLink(${JSON.stringify(l).replace(/"/g,'&quot;')})" title="Edit"><span class="material-icons-round" style="font-size:14px">edit</span></button>
+              <button class="btn btn-sm btn-ghost" onclick="toggleLink(${l.id},${l.is_active})" title="${l.is_active?'Disable':'Enable'}">
+                <span class="material-icons-round" style="font-size:14px">${l.is_active?'toggle_on':'toggle_off'}</span>
+              </button>
+              <button class="btn btn-sm btn-ghost" style="color:var(--danger)" onclick="deleteLink(${l.id})" title="Delete"><span class="material-icons-round" style="font-size:14px">delete</span></button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('')
+    : '<tr><td colspan="8" class="empty-cell">No backlinks yet — add your first one</td></tr>';
+}
+
+function openModal(data) {
+  document.getElementById('edit-id').value = data?.id || '';
+  document.getElementById('modal-title').textContent = data ? 'Edit Backlink' : 'Add Backlink';
+  document.getElementById('f-keyword').value = data?.keyword || '';
+  document.getElementById('f-url').value = data?.url || '';
+  document.getElementById('f-site').value = data?.site_name || '';
+  document.getElementById('f-cat').value = data?.category || 'general';
+  document.getElementById('f-expires').value = data?.expires_at ? data.expires_at.slice(0,10) : '';
+  document.getElementById('bl-modal').style.display = 'flex';
+}
+function closeModal() { document.getElementById('bl-modal').style.display = 'none'; }
+function editLink(l) { openModal(l); }
+
+async function saveBacklink() {
+  const id = document.getElementById('edit-id').value;
+  const body = {
+    keyword: document.getElementById('f-keyword').value.trim(),
+    url: document.getElementById('f-url').value.trim(),
+    site_name: document.getElementById('f-site').value.trim(),
+    category: document.getElementById('f-cat').value,
+    expires_at: document.getElementById('f-expires').value || null,
+  };
+  if (!body.keyword || !body.url) return showToast('Keyword and URL are required', 'error');
+  const d = await api(id ? `/backlinks/${id}` : '/backlinks', { method: id ? 'PUT' : 'POST', body: JSON.stringify(body) });
+  if (d.success) { showToast(id ? 'Updated' : 'Added', 'success'); closeModal(); loadLinks(); }
+  else showToast(d.message || 'Error', 'error');
+}
+
+function openRenew(id) {
+  document.getElementById('renew-id').value = id;
+  document.getElementById('renew-modal').style.display = 'flex';
+}
+async function confirmRenew() {
+  const id = document.getElementById('renew-id').value;
+  const days = document.getElementById('renew-days').value;
+  const d = await api(`/backlinks/${id}/renew`, { method: 'POST', body: JSON.stringify({ days }) });
+  if (d.success) { showToast(d.message, 'success'); document.getElementById('renew-modal').style.display='none'; loadLinks(); }
+  else showToast(d.message || 'Error', 'error');
+}
+
+async function toggleLink(id, current) {
+  const d = await api(`/backlinks/${id}`, { method: 'PUT', body: JSON.stringify({ is_active: current ? 0 : 1 }) });
+  if (d.success) { showToast(current ? 'Disabled' : 'Enabled', 'success'); loadLinks(); }
+  else showToast(d.message||'Error','error');
+}
+
+async function deleteLink(id) {
+  if (!confirm2('Delete this backlink permanently?')) return;
+  const d = await api(`/backlinks/${id}`, { method: 'DELETE' });
+  if (d.success) { showToast('Deleted','success'); loadLinks(); }
+  else showToast(d.message||'Error','error');
+}
+</script>
+</body>
+</html>

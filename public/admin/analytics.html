@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Analytics — OL Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<link rel="icon" href="/images/logo.png">
+<link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="admin.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+.tab-bar { display:flex; gap:0; border-bottom:1px solid var(--border); margin-bottom:24px; overflow-x:auto; }
+.tab-btn { padding:10px 20px; background:none; border:none; color:var(--text-soft); font-size:13px; font-weight:600; cursor:pointer; border-bottom:2px solid transparent; white-space:nowrap; transition:color .15s,border-color .15s; }
+.tab-btn:hover { color:var(--text); }
+.tab-btn.active { color:var(--primary); border-bottom-color:var(--primary); }
+.tab-pane { display:none; }
+.tab-pane.active { display:block; }
+.kpi-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:16px; margin-bottom:24px; }
+.kpi-card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:18px 20px; }
+.kpi-val { font-size:26px; font-weight:800; color:var(--text); }
+.kpi-lbl { font-size:12px; color:var(--text-soft); margin-top:2px; }
+.kpi-icon { font-size:18px; color:var(--primary); margin-bottom:6px; }
+.chart-wrap { position:relative; height:260px; }
+.tbl-sortable th { cursor:pointer; user-select:none; }
+.tbl-sortable th:hover { color:var(--primary); }
+.win-bar { width:60px; height:6px; border-radius:3px; background:var(--border); display:inline-block; vertical-align:middle; overflow:hidden; }
+.win-bar-fill { height:100%; border-radius:3px; background:var(--primary); }
+.conf-pill { padding:2px 7px; border-radius:12px; font-size:11px; font-weight:700; }
+.conf-high { background:rgba(2,245,161,.15); color:var(--primary); }
+.conf-med  { background:rgba(250,249,42,.12); color:var(--warning); }
+.conf-low  { background:rgba(255,71,87,.12);  color:var(--danger);  }
+.empty-hint { text-align:center; padding:40px; color:var(--text-soft); font-size:13px; }
+</style>
+</head>
+<body>
+<div id="admin-sidebar"></div>
+<div id="admin-topbar"></div>
+<main id="admin-main">
+
+  <!-- Header -->
+  <div class="flex-between mb-3" style="flex-wrap:wrap;gap:12px">
+    <h1 class="admin-section-title mb-0"><span class="material-icons-round">analytics</span> Analytics</h1>
+    <div class="flex gap-2" style="align-items:center">
+      <select class="form-control" style="max-width:140px" id="a-days">
+        <option value="7">Last 7 days</option>
+        <option value="30" selected>Last 30 days</option>
+        <option value="90">Last 90 days</option>
+      </select>
+      <button class="btn btn-ghost btn-sm" id="refresh-btn" onclick="loadActiveTab()">
+        <span class="material-icons-round">refresh</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="traffic">
+      <span class="material-icons-round" style="font-size:15px;vertical-align:middle;margin-right:4px">traffic</span>Traffic
+    </button>
+    <button class="tab-btn" data-tab="revenue">
+      <span class="material-icons-round" style="font-size:15px;vertical-align:middle;margin-right:4px">payments</span>Revenue
+    </button>
+    <button class="tab-btn" data-tab="predictions">
+      <span class="material-icons-round" style="font-size:15px;vertical-align:middle;margin-right:4px">psychology</span>Prediction Performance
+    </button>
+    <button class="tab-btn" data-tab="leagues">
+      <span class="material-icons-round" style="font-size:15px;vertical-align:middle;margin-right:4px">public</span>League & Team Stats
+    </button>
+  </div>
+
+  <!-- ═══ TAB: TRAFFIC ═══ -->
+  <div class="tab-pane active" id="tab-traffic">
+    <div class="kpi-grid" id="traffic-kpis">
+      <div class="kpi-card skeleton" style="height:80px"></div>
+      <div class="kpi-card skeleton" style="height:80px"></div>
+      <div class="kpi-card skeleton" style="height:80px"></div>
+      <div class="kpi-card skeleton" style="height:80px"></div>
+    </div>
+
+    <div class="grid-2 mb-3">
+      <div class="admin-card">
+        <h3 style="font-size:14px;margin-bottom:14px">Daily Traffic</h3>
+        <div class="chart-wrap"><canvas id="visitors-chart"></canvas></div>
+      </div>
+      <div class="admin-card">
+        <h3 style="font-size:14px;margin-bottom:14px">Devices</h3>
+        <div style="display:flex;align-items:center;justify-content:center;height:260px">
+          <canvas id="devices-chart" width="260" height="260"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2 mb-3">
+      <div class="admin-card">
+        <h3 style="font-size:14px;margin-bottom:14px">Top Pages</h3>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead><tr><th>#</th><th>Page</th><th>Views</th></tr></thead>
+            <tbody id="top-pages"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="admin-card">
+        <h3 style="font-size:14px;margin-bottom:14px">Top Referrers</h3>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead><tr><th>#</th><th>Source</th><th>Visits</th></tr></thead>
+            <tbody id="top-refs"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-card mb-3">
+      <h3 style="font-size:14px;margin-bottom:14px">Top Countries</h3>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead><tr><th>#</th><th>Country</th><th>Views</th><th>Share</th></tr></thead>
+          <tbody id="top-countries"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB: REVENUE ═══ -->
+  <div class="tab-pane" id="tab-revenue">
+    <div class="kpi-grid" id="revenue-kpis">
+      <div class="kpi-card skeleton" style="height:80px"></div>
+      <div class="kpi-card skeleton" style="height:80px"></div>
+      <div class="kpi-card skeleton" style="height:80px"></div>
+      <div class="kpi-card skeleton" style="height:80px"></div>
+    </div>
+
+    <div class="grid-2 mb-3">
+      <div class="admin-card">
+        <h3 style="font-size:14px;margin-bottom:14px">Monthly Revenue</h3>
+        <div class="chart-wrap"><canvas id="revenue-chart"></canvas></div>
+      </div>
+      <div class="admin-card">
+        <h3 style="font-size:14px;margin-bottom:14px">Churn Rate</h3>
+        <div class="chart-wrap"><canvas id="churn-chart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="admin-card mb-3">
+      <h3 style="font-size:14px;margin-bottom:14px">Revenue by Plan</h3>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Plan</th><th>Subscribers</th><th>Total Revenue</th><th>Avg/Sub</th></tr></thead>
+          <tbody id="plans-table"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB: PREDICTION PERFORMANCE ═══ -->
+  <div class="tab-pane" id="tab-predictions">
+    <div class="admin-card mb-3">
+      <div class="flex-between mb-3">
+        <h3 style="font-size:14px;margin-bottom:0">Market Win Rates</h3>
+        <span class="text-soft" style="font-size:12px">Min. 3 predictions per market</span>
+      </div>
+      <div class="data-table-wrap">
+        <table class="data-table tbl-sortable" id="market-table">
+          <thead>
+            <tr>
+              <th>Market</th>
+              <th>Category</th>
+              <th>Total Picks</th>
+              <th>Correct</th>
+              <th>Win Rate</th>
+              <th>Avg Confidence</th>
+            </tr>
+          </thead>
+          <tbody id="market-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="grid-2 mb-3">
+      <div class="admin-card">
+        <h3 style="font-size:14px;margin-bottom:14px">Best League + Market Combos</h3>
+        <div class="data-table-wrap">
+          <table class="data-table" id="best-combos-table">
+            <thead><tr><th>League</th><th>Market</th><th>Win%</th><th>Picks</th></tr></thead>
+            <tbody id="best-combos-body"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="admin-card">
+        <h3 style="font-size:14px;margin-bottom:14px">Best Teams (by prediction win rate)</h3>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Team</th><th>Picks</th><th>Win%</th></tr></thead>
+            <tbody id="best-teams-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-card mb-3">
+      <h3 style="font-size:14px;margin-bottom:14px">Market Performance Chart</h3>
+      <div class="chart-wrap"><canvas id="market-chart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB: LEAGUE & TEAM STATS ═══ -->
+  <div class="tab-pane" id="tab-leagues">
+    <!-- Sub-tabs -->
+    <div class="flex gap-2 mb-3" style="flex-wrap:wrap">
+      <button class="btn btn-primary btn-sm" id="sub-leagues-btn" onclick="switchSubTab('leagues')">Leagues</button>
+      <button class="btn btn-ghost btn-sm" id="sub-profiles-btn" onclick="switchSubTab('profiles')">Goal Profiles</button>
+      <button class="btn btn-ghost btn-sm" id="sub-teams-btn" onclick="switchSubTab('teams')">Teams</button>
+    </div>
+
+    <!-- League Stats -->
+    <div id="sub-leagues" class="sub-pane">
+      <div class="admin-card" style="padding:0;overflow-x:auto">
+        <table class="data-table tbl-sortable" id="league-stats-table">
+          <thead>
+            <tr>
+              <th>League</th>
+              <th>Country</th>
+              <th title="Goals per game">Goals/G</th>
+              <th title="Both Teams To Score %">BTTS%</th>
+              <th title="Over 1.5 Goals %">O1.5%</th>
+              <th title="Over 2.5 Goals %">O2.5%</th>
+              <th title="Over 3.5 Goals %">O3.5%</th>
+              <th title="Home Win %">HW%</th>
+              <th title="Draw %">D%</th>
+              <th title="Away Win %">AW%</th>
+              <th title="Our prediction win rate">Pred Win%</th>
+              <th>Matches</th>
+            </tr>
+          </thead>
+          <tbody id="league-stats-body">
+            <tr><td colspan="12" class="empty-cell skeleton" style="height:40px"></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Goal Profiles -->
+    <div id="sub-profiles" class="sub-pane" style="display:none">
+      <div class="admin-card mb-3" style="padding:0;overflow-x:auto">
+        <table class="data-table" id="profiles-table">
+          <thead>
+            <tr>
+              <th>League</th>
+              <th>Country</th>
+              <th>Goals/G</th>
+              <th>BTTS%</th>
+              <th>O1.5%</th>
+              <th>O2.5%</th>
+              <th>O3.5%</th>
+              <th>HW%</th>
+              <th>D%</th>
+              <th>AW%</th>
+              <th>Matches</th>
+            </tr>
+          </thead>
+          <tbody id="profiles-body">
+            <tr><td colspan="11" class="empty-cell skeleton" style="height:40px"></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Team Stats -->
+    <div id="sub-teams" class="sub-pane" style="display:none">
+      <div class="flex gap-2 mb-3" style="flex-wrap:wrap;align-items:center">
+        <select class="form-control" id="team-sort" style="max-width:180px">
+          <option value="scored">Sort: Most Goals Scored</option>
+          <option value="conceded">Sort: Most Goals Conceded</option>
+          <option value="home_scored">Sort: Home Goals Scored</option>
+          <option value="away_scored">Sort: Away Goals Scored</option>
+          <option value="clean_sheets">Sort: Clean Sheets</option>
+          <option value="btts">Sort: BTTS Count</option>
+          <option value="wins">Sort: Most Wins</option>
+        </select>
+        <select class="form-control" id="team-filter" style="max-width:200px">
+          <option value="">All Teams</option>
+          <option value="score2plus">Score 2+ avg</option>
+          <option value="concede2plus">Concede 2+ avg</option>
+          <option value="under2">Score &lt; 2 avg</option>
+          <option value="under3">Score &lt; 3 avg</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" onclick="loadTeamStats()">Apply</button>
+        <span class="text-soft" style="font-size:12px;margin-left:auto" id="team-count"></span>
+      </div>
+      <div class="admin-card" style="padding:0;overflow-x:auto">
+        <table class="data-table" id="team-stats-table">
+          <thead>
+            <tr>
+              <th>Team</th>
+              <th>League</th>
+              <th>P</th>
+              <th>W</th>
+              <th>D</th>
+              <th>L</th>
+              <th>Win%</th>
+              <th title="Goals Scored Avg">GSA</th>
+              <th title="Goals Conceded Avg">GCA</th>
+              <th title="Home Scored Avg">HmSc</th>
+              <th title="Away Scored Avg">AwSc</th>
+              <th title="Clean Sheets">CS</th>
+              <th>CS%</th>
+              <th>BTTS</th>
+            </tr>
+          </thead>
+          <tbody id="team-stats-body">
+            <tr><td colspan="14" class="empty-cell skeleton" style="height:40px"></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script src="admin.js"></script>
+<script>
+injectAdminShell('analytics.html');
+
+let visitorsChart, devicesChart, revenueChart, churnChart, marketChart;
+let loadedTabs = new Set();
+let activeTab = 'traffic';
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Tab switching
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+  });
+
+  document.getElementById('a-days').addEventListener('change', () => {
+    loadedTabs.clear();
+    loadActiveTab();
+  });
+
+  document.getElementById('team-sort').addEventListener('change', loadTeamStats);
+  document.getElementById('team-filter').addEventListener('change', loadTeamStats);
+
+  loadActiveTab();
+});
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.id === `tab-${tab}`));
+  loadActiveTab();
+}
+
+function loadActiveTab() {
+  if (loadedTabs.has(activeTab)) return;
+  loadedTabs.add(activeTab);
+
+  if (activeTab === 'traffic')     loadTrafficTab();
+  if (activeTab === 'revenue')     loadRevenueTab();
+  if (activeTab === 'predictions') loadPredictionsTab();
+  if (activeTab === 'leagues')     { loadLeagueStats(); loadLeagueProfiles(); }
+}
+
+// ─── TRAFFIC TAB ───────────────────────────────────────────────────────────
+
+async function loadTrafficTab() {
+  const days = document.getElementById('a-days').value;
+  const [overviewRes, pagesRes, devicesRes, refsRes, countriesRes] = await Promise.all([
+    api(`/admin/analytics/overview?days=${days}`),
+    api(`/admin/analytics/pages`),
+    api(`/admin/analytics/devices`),
+    api(`/admin/analytics/referrers`),
+    api(`/admin/analytics/countries`),
+  ]);
+
+  renderTrafficKpis(overviewRes.data);
+  renderVisitorsChart(overviewRes.data?.daily || []);
+  renderDevicesChart(devicesRes.data?.devices || []);
+  renderTopPages(pagesRes.data?.pages || []);
+  renderReferrers(refsRes.data?.referrers || []);
+  renderCountries(countriesRes.data?.countries || []);
+}
+
+function renderTrafficKpis(d) {
+  const totals = d?.totals || {};
+  const daily = d?.daily || [];
+  const avgViews = daily.length ? Math.round(daily.reduce((a,r)=>a+(r.views||0),0)/daily.length) : 0;
+  const avgSessions = daily.length ? Math.round(daily.reduce((a,r)=>a+(r.sessions||0),0)/daily.length) : 0;
+
+  document.getElementById('traffic-kpis').innerHTML = [
+    { icon:'visibility',   val: (totals.total_views||0).toLocaleString(),    lbl: 'Total Page Views'   },
+    { icon:'person',       val: (totals.unique_sessions||0).toLocaleString(), lbl: 'Unique Sessions'    },
+    { icon:'trending_up',  val: avgViews.toLocaleString(),                    lbl: 'Avg Views/Day'      },
+    { icon:'bar_chart',    val: avgSessions.toLocaleString(),                 lbl: 'Avg Sessions/Day'   },
+  ].map(k => `
+    <div class="kpi-card">
+      <div class="kpi-icon"><span class="material-icons-round">${k.icon}</span></div>
+      <div class="kpi-val">${k.val}</div>
+      <div class="kpi-lbl">${k.lbl}</div>
+    </div>`).join('');
+}
+
+function renderVisitorsChart(daily) {
+  if (visitorsChart) visitorsChart.destroy();
+  const ctx = document.getElementById('visitors-chart').getContext('2d');
+  visitorsChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: daily.map(r => r.date),
+      datasets: [
+        { label:'Views',    data:daily.map(r=>r.views||0),    borderColor:'#02f5a1', backgroundColor:'rgba(2,245,161,0.08)', tension:0.4, fill:true },
+        { label:'Sessions', data:daily.map(r=>r.sessions||0), borderColor:'rgba(173,223,241,0.5)', backgroundColor:'transparent', tension:0.3 }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      scales:{ y:{ticks:{color:'rgba(173,223,241,0.6)'}}, x:{ticks:{color:'rgba(173,223,241,0.6)',font:{size:10}}} },
+      plugins:{legend:{labels:{color:'rgba(173,223,241,0.75)'}}}
+    }
+  });
+}
+
+function renderDevicesChart(devs) {
+  if (devicesChart) devicesChart.destroy();
+  if (!devs.length) return;
+  const ctx = document.getElementById('devices-chart').getContext('2d');
+  devicesChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: devs.map(d=>d.device_type||'Unknown'),
+      datasets: [{ data:devs.map(d=>d.views), backgroundColor:['#02f5a1','#99cc33','#addff1','#faf92a','#ff6b6b'], borderWidth:0 }]
+    },
+    options: { responsive:false, plugins:{ legend:{ position:'bottom', labels:{ color:'rgba(173,223,241,0.75)', font:{size:12} } } } }
+  });
+}
+
+function renderTopPages(pages) {
+  document.getElementById('top-pages').innerHTML = pages.length
+    ? pages.map((r,i)=>`<tr><td>${i+1}</td><td style="font-size:12px">${escHtml(r.path)}</td><td>${(r.views||0).toLocaleString()}</td></tr>`).join('')
+    : '<tr><td colspan="3" class="empty-cell">No data</td></tr>';
+}
+
+function renderReferrers(refs) {
+  document.getElementById('top-refs').innerHTML = refs.length
+    ? refs.map((r,i)=>`<tr><td>${i+1}</td><td style="font-size:12px">${escHtml(r.referrer||'Direct')}</td><td>${(r.views||0).toLocaleString()}</td></tr>`).join('')
+    : '<tr><td colspan="3" class="empty-cell">No data</td></tr>';
+}
+
+function renderCountries(countries) {
+  const total = countries.reduce((a,r)=>a+(r.views||0),0);
+  document.getElementById('top-countries').innerHTML = countries.length
+    ? countries.map((r,i)=>`<tr><td>${i+1}</td><td>${escHtml(r.country||'Unknown')}</td><td>${(r.views||0).toLocaleString()}</td><td>${total?((r.views/total)*100).toFixed(1)+'%':'—'}</td></tr>`).join('')
+    : '<tr><td colspan="4" class="empty-cell">No data</td></tr>';
+}
+
+// ─── REVENUE TAB ──────────────────────────────────────────────────────────
+
+async function loadRevenueTab() {
+  const [ovRes, mthRes, planRes, churnRes] = await Promise.all([
+    api('/admin/analytics/revenue/overview'),
+    api('/admin/analytics/revenue/by-month'),
+    api('/admin/analytics/revenue/plans'),
+    api('/admin/analytics/revenue/churn'),
+  ]);
+
+  renderRevenueKpis(ovRes.data);
+  renderRevenueChart(mthRes.data?.data || []);
+  renderChurnChart(churnRes.data?.data || []);
+  renderPlansTable(planRes.data?.plans || []);
+}
+
+function renderRevenueKpis(d) {
+  if (!d) return;
+  const m = d.thisMonth || {};
+  const a = d.allTime   || {};
+  document.getElementById('revenue-kpis').innerHTML = [
+    { icon:'payments',    val:`$${(m.revenue||0).toLocaleString()}`,     lbl:'This Month Revenue'    },
+    { icon:'account_balance', val:`$${(a.revenue||0).toLocaleString()}`, lbl:'All-Time Revenue'      },
+    { icon:'people',      val:(d.activeSubscribers||0).toLocaleString(), lbl:'Active Subscribers'    },
+    { icon:'auto_graph',  val:`$${(+d.avgLtv||0).toFixed(2)}`,          lbl:'Avg Lifetime Value'    },
+  ].map(k => `
+    <div class="kpi-card">
+      <div class="kpi-icon"><span class="material-icons-round">${k.icon}</span></div>
+      <div class="kpi-val">${k.val}</div>
+      <div class="kpi-lbl">${k.lbl}</div>
+    </div>`).join('');
+}
+
+function renderRevenueChart(data) {
+  if (revenueChart) revenueChart.destroy();
+  if (!data.length) {
+    document.getElementById('revenue-chart').parentElement.innerHTML = '<div class="empty-hint">No revenue data yet</div>';
+    return;
+  }
+  const months = [...new Set(data.map(r=>r.month))].sort();
+  const plans  = [...new Set(data.map(r=>r.plan))];
+  const colors = ['#02f5a1','#addff1','#faf92a','#ff6b6b','#99cc33'];
+  const ctx = document.getElementById('revenue-chart').getContext('2d');
+  revenueChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: months,
+      datasets: plans.map((plan, i) => ({
+        label: plan,
+        data: months.map(m => { const row = data.find(r=>r.month===m&&r.plan===plan); return row?.revenue||0; }),
+        backgroundColor: colors[i % colors.length] + '99',
+        borderColor: colors[i % colors.length],
+        borderWidth: 1,
+      }))
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      scales:{ x:{stacked:true,ticks:{color:'rgba(173,223,241,0.6)',font:{size:10}}}, y:{stacked:true,ticks:{color:'rgba(173,223,241,0.6)'}} },
+      plugins:{legend:{labels:{color:'rgba(173,223,241,0.75)'}}}
+    }
+  });
+}
+
+function renderChurnChart(data) {
+  if (churnChart) churnChart.destroy();
+  if (!data.length) {
+    document.getElementById('churn-chart').parentElement.innerHTML = '<div class="empty-hint">No churn data yet</div>';
+    return;
+  }
+  const ctx = document.getElementById('churn-chart').getContext('2d');
+  churnChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: data.map(r=>r.month),
+      datasets: [{
+        label: 'Churn Rate %',
+        data: data.map(r => r.total > 0 ? ((r.churned/r.total)*100).toFixed(1) : 0),
+        borderColor: '#ff4757',
+        backgroundColor: 'rgba(255,71,87,0.1)',
+        tension: 0.4,
+        fill: true,
+      }]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      scales:{ y:{ticks:{color:'rgba(173,223,241,0.6)'},max:100}, x:{ticks:{color:'rgba(173,223,241,0.6)',font:{size:10}}} },
+      plugins:{legend:{labels:{color:'rgba(173,223,241,0.75)'}}}
+    }
+  });
+}
+
+function renderPlansTable(plans) {
+  document.getElementById('plans-table').innerHTML = plans.length
+    ? plans.map(p => {
+        const avg = p.count > 0 ? (p.revenue/p.count).toFixed(2) : '0.00';
+        return `<tr>
+          <td><strong>${escHtml(p.plan||'—')}</strong></td>
+          <td>${(p.count||0).toLocaleString()}</td>
+          <td>$${(p.revenue||0).toLocaleString()}</td>
+          <td>$${avg}</td>
+        </tr>`;
+      }).join('')
+    : '<tr><td colspan="4" class="empty-hint">No subscription data yet</td></tr>';
+}
+
+// ─── PREDICTION PERFORMANCE TAB ───────────────────────────────────────────
+
+async function loadPredictionsTab() {
+  const [mktRes, bpRes] = await Promise.all([
+    api('/admin/analytics/intel/market-stats'),
+    api('/admin/analytics/intel/best-picks'),
+  ]);
+  renderMarketTable(mktRes.data?.markets || []);
+  renderBestCombos(bpRes.data?.byLeagueMarket || []);
+  renderBestTeams(bpRes.data?.byTeam || []);
+  renderMarketChart(mktRes.data?.markets || []);
+}
+
+function renderMarketTable(markets) {
+  document.getElementById('market-body').innerHTML = markets.length
+    ? markets.map(m => {
+        const wr = parseFloat(m.win_rate)||0;
+        const color = wr>=65 ? 'var(--primary)' : wr>=50 ? 'var(--warning)' : 'var(--danger)';
+        const c = parseFloat(m.avg_confidence)||0;
+        const confClass = c>=70 ? 'conf-high' : c>=60 ? 'conf-med' : 'conf-low';
+        return `<tr>
+          <td><strong>${escHtml(m.market||'—')}</strong></td>
+          <td style="font-size:12px;color:var(--text-soft)">${escHtml(m.category||'—')}</td>
+          <td>${m.total||0}</td>
+          <td>${m.correct||0}</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:6px">
+              <strong style="color:${color}">${wr}%</strong>
+              <div class="win-bar"><div class="win-bar-fill" style="width:${Math.min(wr,100)}%;background:${color}"></div></div>
+            </div>
+          </td>
+          <td><span class="conf-pill ${confClass}">${c}%</span></td>
+        </tr>`;
+      }).join('')
+    : '<tr><td colspan="6" class="empty-hint">No market data yet — needs graded predictions</td></tr>';
+}
+
+function renderBestCombos(combos) {
+  document.getElementById('best-combos-body').innerHTML = combos.length
+    ? combos.slice(0,15).map(c => {
+        const wr = parseFloat(c.win_rate)||0;
+        const color = wr>=65 ? 'var(--primary)' : wr>=50 ? 'var(--warning)' : 'var(--danger)';
+        return `<tr>
+          <td style="font-size:12px">${escHtml(c.league_name||'—')} <span class="text-soft">${escHtml(c.country||'')}</span></td>
+          <td style="font-size:12px">${escHtml(c.market||'—')}</td>
+          <td><strong style="color:${color}">${wr}%</strong></td>
+          <td style="color:var(--text-soft)">${c.total||0}</td>
+        </tr>`;
+      }).join('')
+    : '<tr><td colspan="4" class="empty-hint">Needs 5+ graded picks per combo</td></tr>';
+}
+
+function renderBestTeams(teams) {
+  document.getElementById('best-teams-body').innerHTML = teams.length
+    ? teams.slice(0,15).map(t => {
+        const wr = parseFloat(t.win_rate)||0;
+        const color = wr>=65 ? 'var(--primary)' : wr>=50 ? 'var(--warning)' : 'var(--danger)';
+        return `<tr>
+          <td style="font-size:12px">${escHtml(t.team||'—')}</td>
+          <td style="color:var(--text-soft)">${t.total||0}</td>
+          <td><strong style="color:${color}">${wr}%</strong></td>
+        </tr>`;
+      }).join('')
+    : '<tr><td colspan="3" class="empty-hint">Needs 5+ graded picks per team</td></tr>';
+}
+
+function renderMarketChart(markets) {
+  if (marketChart) marketChart.destroy();
+  if (!markets.length) {
+    document.getElementById('market-chart').parentElement.innerHTML = '<div class="empty-hint">No market data yet</div>';
+    return;
+  }
+  const top = markets.slice(0, 12);
+  const ctx = document.getElementById('market-chart').getContext('2d');
+  marketChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: top.map(m=>m.market),
+      datasets: [
+        { label:'Win Rate %', data:top.map(m=>parseFloat(m.win_rate)||0), backgroundColor:'rgba(2,245,161,0.7)', borderColor:'#02f5a1', borderWidth:1, yAxisID:'y' },
+        { label:'Avg Confidence', data:top.map(m=>parseFloat(m.avg_confidence)||0), type:'line', borderColor:'#addff1', backgroundColor:'transparent', tension:0.4, yAxisID:'y' },
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      scales:{
+        y:{ ticks:{color:'rgba(173,223,241,0.6)'}, max:100 },
+        x:{ ticks:{color:'rgba(173,223,241,0.6)',font:{size:10}} }
+      },
+      plugins:{legend:{labels:{color:'rgba(173,223,241,0.75)'}}}
+    }
+  });
+}
+
+// ─── LEAGUE & TEAM STATS TAB ──────────────────────────────────────────────
+
+function switchSubTab(name) {
+  ['leagues','profiles','teams'].forEach(t => {
+    document.getElementById(`sub-${t}`).style.display = t===name ? 'block' : 'none';
+    document.getElementById(`sub-${t}-btn`).className = `btn btn-sm ${t===name?'btn-primary':'btn-ghost'}`;
+  });
+  if (name === 'teams' && !document.getElementById('team-stats-body').innerHTML.includes('<td>')) {
+    loadTeamStats();
+  }
+}
+
+async function loadLeagueStats() {
+  const d = await api('/admin/analytics/intel/league-stats');
+  const leagues = d.data?.leagues || [];
+  document.getElementById('league-stats-body').innerHTML = leagues.length
+    ? leagues.map(l => {
+        const wr = parseFloat(l.prediction_win_rate)||0;
+        const wrColor = wr>=65?'var(--primary)':wr>=50?'var(--warning)':'var(--danger)';
+        return `<tr>
+          <td><strong style="font-size:12px">${escHtml(l.league_name||'—')}</strong></td>
+          <td style="font-size:12px;color:var(--text-soft)">${escHtml(l.country||'—')}</td>
+          <td>${l.goals_per_game||'—'}</td>
+          <td>${l.btts_pct||'—'}${l.btts_pct?'%':''}</td>
+          <td>${l.over15_pct||'—'}${l.over15_pct?'%':''}</td>
+          <td>${l.over25_pct||'—'}${l.over25_pct?'%':''}</td>
+          <td>${l.over35_pct||'—'}${l.over35_pct?'%':''}</td>
+          <td>${l.home_win_pct||'—'}${l.home_win_pct?'%':''}</td>
+          <td>${l.draw_pct||'—'}${l.draw_pct?'%':''}</td>
+          <td>${l.away_win_pct||'—'}${l.away_win_pct?'%':''}</td>
+          <td>
+            ${l.total_predictions > 0
+              ? `<strong style="color:${wrColor}">${wr}%</strong> <span class="text-soft" style="font-size:11px">(${l.total_predictions})</span>`
+              : '<span class="text-soft">—</span>'}
+          </td>
+          <td style="color:var(--text-soft)">${l.stat_matches||'—'}</td>
+        </tr>`;
+      }).join('')
+    : '<tr><td colspan="12" class="empty-hint">No league statistics yet</td></tr>';
+}
+
+async function loadLeagueProfiles() {
+  const d = await api('/admin/analytics/intel/league-profiles');
+  const leagues = d.data?.leagues || [];
+  document.getElementById('profiles-body').innerHTML = leagues.length
+    ? leagues.map(l => `<tr>
+        <td><strong style="font-size:12px">${escHtml(l.league_name||'—')}</strong></td>
+        <td style="font-size:12px;color:var(--text-soft)">${escHtml(l.country||'—')}</td>
+        <td><strong>${l.goals_per_game||'—'}</strong></td>
+        <td>${l.btts_pct||'—'}${l.btts_pct?'%':''}</td>
+        <td>${l.over15_pct||'—'}${l.over15_pct?'%':''}</td>
+        <td>${l.over25_pct||'—'}${l.over25_pct?'%':''}</td>
+        <td>${l.over35_pct||'—'}${l.over35_pct?'%':''}</td>
+        <td>${l.home_win_pct||'—'}${l.home_win_pct?'%':''}</td>
+        <td>${l.draw_pct||'—'}${l.draw_pct?'%':''}</td>
+        <td>${l.away_win_pct||'—'}${l.away_win_pct?'%':''}</td>
+        <td style="color:var(--text-soft)">${l.matches_played||'—'}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="11" class="empty-hint">No league goal profiles yet</td></tr>';
+}
+
+async function loadTeamStats() {
+  const sort   = document.getElementById('team-sort').value;
+  const filter = document.getElementById('team-filter').value;
+  document.getElementById('team-stats-body').innerHTML =
+    '<tr><td colspan="14" class="empty-cell"><div class="skeleton" style="height:40px;border-radius:6px"></div></td></tr>';
+
+  const d = await api(`/admin/analytics/intel/team-stats?sort=${sort}&filter=${filter}`);
+  const teams = d.data?.teams || [];
+  document.getElementById('team-count').textContent = `${teams.length} teams`;
+  document.getElementById('team-stats-body').innerHTML = teams.length
+    ? teams.map(t => `<tr>
+        <td style="font-size:12px"><strong>${escHtml(t.team_name||'—')}</strong></td>
+        <td style="font-size:11px;color:var(--text-soft)">${escHtml(t.league_name||'—')}</td>
+        <td>${t.matches_played||0}</td>
+        <td>${t.wins||0}</td>
+        <td>${t.draws||0}</td>
+        <td>${t.losses||0}</td>
+        <td><strong style="color:${(t.win_pct||0)>=50?'var(--primary)':'var(--text-soft)'}">${t.win_pct||0}%</strong></td>
+        <td>${t.goals_scored_avg||'—'}</td>
+        <td>${t.goals_conceded_avg||'—'}</td>
+        <td>${t.home_scored_avg||'—'}</td>
+        <td>${t.away_scored_avg||'—'}</td>
+        <td>${t.clean_sheets||0}</td>
+        <td style="color:var(--text-soft)">${t.clean_sheet_pct||0}%</td>
+        <td>${t.btts_count||0}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="14" class="empty-hint">No team statistics found</td></tr>';
+}
+</script>
+</body>
+</html>

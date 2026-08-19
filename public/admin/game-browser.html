@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Game Browser — OL Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<link rel="icon" href="/images/logo.png">
+<link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="admin.css">
+<style>
+.form-dots span {
+  display:inline-flex;align-items:center;justify-content:center;
+  width:15px;height:15px;border-radius:50%;font-size:8px;font-weight:800;margin:0 1px;
+}
+.stat-pill {
+  display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700;
+  background:rgba(2,245,161,0.1);color:var(--primary);border:1px solid rgba(2,245,161,0.2);
+}
+.conf-bar {
+  width:60px;height:5px;border-radius:3px;background:var(--border);display:inline-block;vertical-align:middle;overflow:hidden;
+}
+.conf-bar-fill { height:100%; border-radius:3px; background:var(--primary); }
+</style>
+</head>
+<body>
+<div id="admin-sidebar"></div>
+<div id="admin-topbar"></div>
+<main id="admin-main">
+  <div class="flex-between mb-3" style="flex-wrap:wrap;gap:12px">
+    <h1 class="admin-section-title mb-0"><span class="material-icons-round">grid_view</span> Game Browser</h1>
+    <div class="flex gap-2" style="flex-wrap:wrap;align-items:center">
+      <input type="date" class="form-control" id="date-picker" style="max-width:160px">
+      <button class="btn btn-ghost btn-sm" id="sync-btn"><span class="material-icons-round">sync</span> Sync Fixtures</button>
+      <button class="btn btn-ghost btn-sm" id="run-intel-btn"><span class="material-icons-round">psychology</span> Run Intelligence</button>
+      <button class="btn btn-primary btn-sm" id="bulk-pub-btn" style="display:none"><span class="material-icons-round">check_circle</span> Publish Selected (<span id="sel-count">0</span>)</button>
+    </div>
+  </div>
+
+  <!-- Filter bar -->
+  <div class="admin-card mb-3" style="padding:12px 16px">
+    <div class="flex gap-2" style="flex-wrap:wrap;align-items:center">
+      <input type="text" class="form-control" id="f-search" placeholder="Search teams…" style="max-width:180px">
+      <select class="form-control" id="f-status" style="max-width:140px">
+        <option value="">All</option>
+        <option value="published">Published</option>
+        <option value="draft">Draft / Unscored</option>
+      </select>
+      <select class="form-control" id="f-league" style="max-width:180px">
+        <option value="">All Leagues</option>
+      </select>
+      <span class="text-soft" style="font-size:12px;margin-left:auto" id="result-count"></span>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="admin-card" style="padding:0;overflow-x:auto">
+    <table class="data-table" id="games-table">
+      <thead>
+        <tr>
+          <th style="width:32px"><input type="checkbox" id="chk-all"></th>
+          <th>Match</th>
+          <th>League</th>
+          <th>KO</th>
+          <th>Home Form</th>
+          <th>Away Form</th>
+          <th>λH / λA</th>
+          <th>Tip</th>
+          <th>Conf</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="games-body">
+        <tr><td colspan="11" class="empty-cell"><div class="skeleton" style="height:40px"></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<script src="admin.js"></script>
+<script>
+injectAdminShell('game-browser.html');
+
+let allGames = [];
+let selectedIds = new Set();
+
+// Set default date to today
+const picker = document.getElementById('date-picker');
+picker.value = new Date().toISOString().slice(0, 10);
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadGames();
+
+  picker.addEventListener('change', loadGames);
+  document.getElementById('f-search').addEventListener('input', renderTable);
+  document.getElementById('f-status').addEventListener('change', renderTable);
+  document.getElementById('f-league').addEventListener('change', renderTable);
+  document.getElementById('sync-btn').addEventListener('click', syncFixtures);
+  document.getElementById('run-intel-btn').addEventListener('click', runIntelligence);
+  document.getElementById('bulk-pub-btn').addEventListener('click', bulkPublish);
+  document.getElementById('chk-all').addEventListener('change', function() {
+    const filtered = filteredGames();
+    filtered.forEach(g => this.checked ? selectedIds.add(g.id) : selectedIds.delete(g.id));
+    updateBulkBar();
+    renderTable();
+  });
+});
+
+async function loadGames() {
+  selectedIds.clear();
+  updateBulkBar();
+  document.getElementById('games-body').innerHTML = '<tr><td colspan="11" class="empty-cell"><div class="skeleton" style="height:40px;border-radius:6px"></div></td></tr>';
+
+  const date = picker.value;
+  const d = await api(`/predictions?date=${date}&limit=200&admin_view=1`);
+  allGames = d.data?.predictions || [];
+
+  // Populate league filter
+  const leagues = [...new Map(allGames.map(g => [g.league_id, g.league_name])).entries()];
+  const lf = document.getElementById('f-league');
+  lf.innerHTML = '<option value="">All Leagues</option>' +
+    leagues.filter(([,n])=>n).map(([id,name]) => `<option value="${id}">${escHtml(name)}</option>`).join('');
+
+  renderTable();
+}
+
+function filteredGames() {
+  const search = document.getElementById('f-search').value.toLowerCase();
+  const status = document.getElementById('f-status').value;
+  const league = document.getElementById('f-league').value;
+  return allGames.filter(g => {
+    if (search && !`${g.home_team} ${g.away_team}`.toLowerCase().includes(search)) return false;
+    if (status === 'published' && !g.published_at) return false;
+    if (status === 'draft' && g.published_at) return false;
+    if (league && String(g.league_id) !== league) return false;
+    return true;
+  });
+}
+
+function renderTable() {
+  const games = filteredGames();
+  document.getElementById('result-count').textContent = `${games.length} game${games.length !== 1 ? 's' : ''}`;
+
+  if (!games.length) {
+    document.getElementById('games-body').innerHTML = '<tr><td colspan="11" class="empty-cell">No games found — try syncing fixtures first</td></tr>';
+    return;
+  }
+
+  document.getElementById('games-body').innerHTML = games.map(g => {
+    const isPublished = !!g.published_at;
+    const lh = g.home_goals_avg ? parseFloat(g.home_goals_avg).toFixed(2) : '—';
+    const la = g.away_goals_avg ? parseFloat(g.away_goals_avg).toFixed(2) : '—';
+    const conf = g.confidence_score || 0;
+    const confColor = conf >= 70 ? 'var(--primary)' : conf >= 60 ? 'var(--warning)' : 'var(--text-soft)';
+    const tip = g.tip && g.tip !== 'TBD' ? g.tip : '<span class="text-soft">TBD</span>';
+    const checked = selectedIds.has(g.id) ? 'checked' : '';
+
+    return `<tr data-id="${g.id}">
+      <td><input type="checkbox" class="row-chk" data-id="${g.id}" ${checked}></td>
+      <td>
+        <strong style="font-size:13px">${escHtml(g.home_team)} <span class="text-soft">vs</span> ${escHtml(g.away_team)}</strong>
+        ${g.result !== 'pending' ? `<span class="badge badge-${g.result}" style="margin-left:6px;font-size:10px">${g.result.toUpperCase()}</span>` : ''}
+      </td>
+      <td style="font-size:12px;color:var(--text-soft)">${escHtml(g.league_name || '—')}</td>
+      <td style="font-size:12px;white-space:nowrap">${g.match_date ? new Date(g.match_date).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '—'}</td>
+      <td><div class="form-dots">${formDots(g.home_form)}</div>${g.home_form ? `<div style="font-size:10px;color:var(--text-soft);margin-top:2px">${escHtml(g.home_form)}</div>` : '<span class="text-soft" style="font-size:11px">—</span>'}</td>
+      <td><div class="form-dots">${formDots(g.away_form)}</div>${g.away_form ? `<div style="font-size:10px;color:var(--text-soft);margin-top:2px">${escHtml(g.away_form)}</div>` : '<span class="text-soft" style="font-size:11px">—</span>'}</td>
+      <td style="font-size:12px;white-space:nowrap">
+        ${lh !== '—' ? `<span class="stat-pill">${lh}</span> / <span class="stat-pill">${la}</span>` : '<span class="text-soft">No data</span>'}
+      </td>
+      <td style="font-size:13px;font-weight:700">${tip}</td>
+      <td>
+        ${conf ? `<div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:13px;font-weight:700;color:${confColor}">${conf}</span>
+          <div class="conf-bar"><div class="conf-bar-fill" style="width:${conf}%;background:${confColor}"></div></div>
+        </div>` : '<span class="text-soft" style="font-size:11px">—</span>'}
+      </td>
+      <td>
+        ${isPublished
+          ? '<span class="badge badge-win">Live</span>'
+          : '<span class="badge badge-pending">Draft</span>'}
+      </td>
+      <td>
+        <div class="flex gap-1" style="flex-wrap:nowrap">
+          <button class="btn btn-sm ${isPublished?'btn-ghost':'btn-primary'}" onclick="togglePublish(${g.id},${isPublished})" title="${isPublished?'Unpublish':'Publish'}">
+            <span class="material-icons-round" style="font-size:14px">${isPublished?'visibility_off':'publish'}</span>
+          </button>
+          <a href="/prediction/${escHtml(g.slug)}" target="_blank" class="btn btn-sm btn-ghost" title="View on site">
+            <span class="material-icons-round" style="font-size:14px">open_in_new</span>
+          </a>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  // Row checkbox listeners
+  document.querySelectorAll('.row-chk').forEach(chk => {
+    chk.addEventListener('change', function() {
+      const id = parseInt(this.dataset.id);
+      this.checked ? selectedIds.add(id) : selectedIds.delete(id);
+      updateBulkBar();
+    });
+  });
+}
+
+function formDots(form) {
+  if (!form) return '';
+  return form.split('').map(r => {
+    const bg = r==='W'?'#02f5a1':r==='L'?'#ff4757':'#faf92a';
+    const fg = r==='L'?'#fff':'#07191e';
+    return `<span style="background:${bg};color:${fg}">${r}</span>`;
+  }).join('');
+}
+
+function updateBulkBar() {
+  const btn = document.getElementById('bulk-pub-btn');
+  document.getElementById('sel-count').textContent = selectedIds.size;
+  btn.style.display = selectedIds.size > 0 ? 'inline-flex' : 'none';
+}
+
+async function togglePublish(id, isPublished) {
+  const d = await api(`/predictions/admin/${id}/publish`, { method: 'PUT' });
+  if (d.success) {
+    showToast(isPublished ? 'Unpublished' : 'Published', 'success');
+    loadGames();
+  } else showToast(d.message, 'error');
+}
+
+async function bulkPublish() {
+  const ids = [...selectedIds];
+  if (!ids.length) return;
+  let ok = 0;
+  for (const id of ids) {
+    const d = await api(`/predictions/admin/${id}/publish`, { method: 'PUT' });
+    if (d.success) ok++;
+  }
+  showToast(`Published ${ok} of ${ids.length} predictions`, 'success');
+  selectedIds.clear();
+  loadGames();
+}
+
+async function syncFixtures() {
+  const btn = document.getElementById('sync-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="material-icons-round">sync</span> Syncing…';
+  const d = await api('/sync/fixtures', { method: 'POST' });
+  btn.disabled = false; btn.innerHTML = '<span class="material-icons-round">sync</span> Sync Fixtures';
+  if (d.success) { showToast(`Synced ${d.data?.synced || 0} fixtures`, 'success'); loadGames(); }
+  else showToast(d.message || 'Sync failed', 'error');
+}
+
+async function runIntelligence() {
+  const btn = document.getElementById('run-intel-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="material-icons-round">psychology</span> Running…';
+  const d = await api('/admin/intelligence/run', { method: 'POST' });
+  btn.disabled = false; btn.innerHTML = '<span class="material-icons-round">psychology</span> Run Intelligence';
+  if (d.success) { showToast(`${d.data?.generated || 0} generated, ${d.data?.autoPublished || 0} auto-published`, 'success'); loadGames(); }
+  else showToast(d.message || 'Failed', 'error');
+}
+</script>
+</body>
+</html>

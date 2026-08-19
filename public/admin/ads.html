@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ads Management — OL Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<link rel="icon" href="/images/logo.png">
+<link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="admin.css">
+<style>
+.ad-type-pill { padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700; }
+.ad-type-banner { background:rgba(2,245,161,.15);color:var(--primary); }
+.ad-type-link   { background:rgba(173,223,241,.15);color:#addff1; }
+.ad-type-code   { background:rgba(250,249,42,.12);color:var(--warning); }
+.ad-type-native { background:rgba(153,204,51,.12);color:#99cc33; }
+.pos-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:24px; }
+.pos-card { background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;cursor:pointer; }
+.pos-card.active { border-color:var(--primary);background:rgba(2,245,161,.06); }
+.pos-card-name { font-size:12px;font-weight:700;color:var(--text); }
+.pos-card-count { font-size:20px;font-weight:900;color:var(--primary);margin-top:4px; }
+</style>
+</head>
+<body>
+<div id="admin-sidebar"></div>
+<div id="admin-topbar"></div>
+<main id="admin-main">
+
+  <div class="flex-between mb-3">
+    <h1 class="admin-section-title mb-0"><span class="material-icons-round">campaign</span> Ads Management</h1>
+    <button class="btn btn-primary btn-sm" onclick="openModal()">
+      <span class="material-icons-round">add</span> New Ad
+    </button>
+  </div>
+
+  <!-- Position overview -->
+  <div class="admin-card mb-3">
+    <h3 style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--text-soft)">ACTIVE ADS BY POSITION</h3>
+    <div class="pos-grid" id="pos-overview">
+      <div class="skeleton pos-card" style="height:64px"></div>
+      <div class="skeleton pos-card" style="height:64px"></div>
+      <div class="skeleton pos-card" style="height:64px"></div>
+    </div>
+  </div>
+
+  <!-- Filter -->
+  <div class="flex gap-2 mb-3" style="flex-wrap:wrap;align-items:center">
+    <select class="form-control" id="f-pos" style="max-width:180px">
+      <option value="">All Positions</option>
+      <option>header</option>
+      <option>predictions_top</option>
+      <option>predictions_bottom</option>
+      <option>sidebar</option>
+      <option>detail_top</option>
+      <option>detail_bottom</option>
+      <option>footer</option>
+      <option>popup</option>
+      <option>homepage_mid</option>
+    </select>
+    <select class="form-control" id="f-type" style="max-width:140px">
+      <option value="">All Types</option>
+      <option value="banner">Banner</option>
+      <option value="link">Link</option>
+      <option value="code">Code / Script</option>
+      <option value="native">Native</option>
+    </select>
+    <select class="form-control" id="f-status" style="max-width:140px">
+      <option value="">All</option>
+      <option value="1">Active</option>
+      <option value="0">Inactive</option>
+    </select>
+    <button class="btn btn-ghost btn-sm" onclick="loadAds()">Filter</button>
+  </div>
+
+  <div class="admin-card" style="padding:0;overflow-x:auto">
+    <table class="data-table" id="ads-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Position</th>
+          <th>Impressions</th>
+          <th>Clicks</th>
+          <th>CTR</th>
+          <th>Schedule</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="ads-body">
+        <tr><td colspan="9" class="empty-cell"><div class="skeleton" style="height:36px;border-radius:6px"></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<!-- Ad Modal -->
+<div id="ad-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto">
+  <div class="admin-card" style="width:100%;max-width:600px;padding:28px;margin:auto">
+    <div class="flex-between mb-3">
+      <h2 style="font-size:16px;font-weight:800;margin:0" id="modal-title">New Ad</h2>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal()"><span class="material-icons-round">close</span></button>
+    </div>
+    <input type="hidden" id="edit-id">
+
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">Name *</label>
+        <input type="text" class="form-control" id="f-name" placeholder="e.g. Header Banner 728x90">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Ad Type</label>
+        <select class="form-control" id="f-type-sel" onchange="toggleFields()">
+          <option value="banner">Banner Image</option>
+          <option value="link">Link Ad</option>
+          <option value="code">Custom Code / Script</option>
+          <option value="native">Native / Sponsored</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Position *</label>
+      <select class="form-control" id="f-pos-sel">
+        <option value="header">Header</option>
+        <option value="predictions_top">Predictions Top</option>
+        <option value="predictions_bottom">Predictions Bottom</option>
+        <option value="sidebar">Sidebar</option>
+        <option value="homepage_mid">Homepage Middle</option>
+        <option value="detail_top">Prediction Detail Top</option>
+        <option value="detail_bottom">Prediction Detail Bottom</option>
+        <option value="footer">Footer</option>
+        <option value="popup">Popup</option>
+      </select>
+    </div>
+
+    <!-- Banner/Link fields -->
+    <div id="img-fields">
+      <div class="form-group">
+        <label class="form-label">Image URL</label>
+        <input type="url" class="form-control" id="f-img" placeholder="https://...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Link URL</label>
+        <input type="url" class="form-control" id="f-link" placeholder="https://...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Alt Text</label>
+        <input type="text" class="form-control" id="f-alt" placeholder="Ad description">
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Width (px)</label>
+          <input type="number" class="form-control" id="f-w" placeholder="728">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Height (px)</label>
+          <input type="number" class="form-control" id="f-h" placeholder="90">
+        </div>
+      </div>
+    </div>
+
+    <!-- Code field -->
+    <div id="code-fields" style="display:none">
+      <div class="form-group">
+        <label class="form-label">Ad Code / HTML / Script</label>
+        <textarea class="form-control" id="f-code" rows="6" placeholder="Paste your ad code here…" style="font-family:monospace;font-size:12px"></textarea>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">Start Date</label>
+        <input type="date" class="form-control" id="f-start">
+      </div>
+      <div class="form-group">
+        <label class="form-label">End Date</label>
+        <input type="date" class="form-control" id="f-end">
+      </div>
+    </div>
+
+    <div class="form-group" style="display:flex;align-items:center;gap:10px">
+      <input type="checkbox" id="f-active" checked style="width:18px;height:18px">
+      <label for="f-active" style="font-size:13px;cursor:pointer">Active (show on site)</label>
+    </div>
+
+    <div class="flex gap-2 mt-3">
+      <button class="btn btn-primary" onclick="saveAd()">Save Ad</button>
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script src="admin.js"></script>
+<script>
+injectAdminShell('ads.html');
+
+const POSITIONS = ['header','predictions_top','predictions_bottom','sidebar','homepage_mid','detail_top','detail_bottom','footer','popup'];
+let allAds = [];
+
+document.addEventListener('DOMContentLoaded', loadAds);
+
+async function loadAds() {
+  const d = await api('/ads');
+  allAds = d.data?.ads || [];
+  renderPosOverview();
+  renderTable();
+}
+
+function renderPosOverview() {
+  const counts = {};
+  POSITIONS.forEach(p => counts[p] = 0);
+  allAds.filter(a => a.is_active).forEach(a => { if (counts[a.position] !== undefined) counts[a.position]++; });
+  document.getElementById('pos-overview').innerHTML = POSITIONS.map(p => `
+    <div class="pos-card" onclick="filterByPos('${p}')">
+      <div class="pos-card-name">${p.replace(/_/g,' ').toUpperCase()}</div>
+      <div class="pos-card-count">${counts[p]}</div>
+    </div>`).join('');
+}
+
+function filterByPos(pos) {
+  document.getElementById('f-pos').value = pos;
+  renderTable();
+}
+
+function renderTable() {
+  const pos    = document.getElementById('f-pos').value;
+  const type   = document.getElementById('f-type').value;
+  const status = document.getElementById('f-status').value;
+
+  const filtered = allAds.filter(a => {
+    if (pos && a.position !== pos) return false;
+    if (type && a.type !== type) return false;
+    if (status !== '' && String(a.is_active) !== status) return false;
+    return true;
+  });
+
+  document.getElementById('ads-body').innerHTML = filtered.length
+    ? filtered.map(a => {
+        const ctr = a.impressions > 0 ? ((a.clicks/a.impressions)*100).toFixed(1)+'%' : '—';
+        const sched = a.starts_at || a.ends_at
+          ? `${a.starts_at ? new Date(a.starts_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) : '∞'} → ${a.ends_at ? new Date(a.ends_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) : '∞'}`
+          : 'Always';
+        const statusBadge = a.is_active
+          ? '<span class="badge badge-win">Active</span>'
+          : '<span class="badge badge-loss">Inactive</span>';
+        return `<tr>
+          <td><strong style="font-size:13px">${escHtml(a.name)}</strong></td>
+          <td><span class="ad-type-pill ad-type-${a.type}">${a.type}</span></td>
+          <td style="font-size:12px;color:var(--text-soft)">${a.position.replace(/_/g,' ')}</td>
+          <td>${(a.impressions||0).toLocaleString()}</td>
+          <td>${(a.clicks||0).toLocaleString()}</td>
+          <td style="color:var(--primary)">${ctr}</td>
+          <td style="font-size:11px;color:var(--text-soft)">${sched}</td>
+          <td>${statusBadge}</td>
+          <td>
+            <div class="flex gap-1" style="flex-wrap:nowrap">
+              <button class="btn btn-sm btn-ghost" onclick="editAd(${a.id})" title="Edit"><span class="material-icons-round" style="font-size:14px">edit</span></button>
+              <button class="btn btn-sm btn-ghost" onclick="toggleAd(${a.id})" title="${a.is_active?'Deactivate':'Activate'}">
+                <span class="material-icons-round" style="font-size:14px">${a.is_active?'toggle_on':'toggle_off'}</span>
+              </button>
+              <button class="btn btn-sm btn-ghost" style="color:var(--danger)" onclick="deleteAd(${a.id})" title="Delete"><span class="material-icons-round" style="font-size:14px">delete</span></button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('')
+    : '<tr><td colspan="9" class="empty-cell">No ads found</td></tr>';
+}
+
+function toggleFields() {
+  const t = document.getElementById('f-type-sel').value;
+  document.getElementById('img-fields').style.display = t === 'code' ? 'none' : 'block';
+  document.getElementById('code-fields').style.display = t === 'code' ? 'block' : 'none';
+}
+
+function openModal(data) {
+  document.getElementById('edit-id').value = data?.id || '';
+  document.getElementById('modal-title').textContent = data ? 'Edit Ad' : 'New Ad';
+  document.getElementById('f-name').value = data?.name || '';
+  document.getElementById('f-type-sel').value = data?.type || 'banner';
+  document.getElementById('f-pos-sel').value = data?.position || 'predictions_top';
+  document.getElementById('f-img').value = data?.image_url || '';
+  document.getElementById('f-link').value = data?.link_url || '';
+  document.getElementById('f-alt').value = data?.alt_text || '';
+  document.getElementById('f-w').value = data?.width || '';
+  document.getElementById('f-h').value = data?.height || '';
+  document.getElementById('f-code').value = data?.code || '';
+  document.getElementById('f-start').value = data?.starts_at ? data.starts_at.slice(0,10) : '';
+  document.getElementById('f-end').value = data?.ends_at ? data.ends_at.slice(0,10) : '';
+  document.getElementById('f-active').checked = data ? !!data.is_active : true;
+  toggleFields();
+  document.getElementById('ad-modal').style.display = 'flex';
+}
+function closeModal() { document.getElementById('ad-modal').style.display = 'none'; }
+
+function editAd(id) {
+  const a = allAds.find(x => x.id === id);
+  if (a) openModal(a);
+}
+
+async function saveAd() {
+  const id = document.getElementById('edit-id').value;
+  const type = document.getElementById('f-type-sel').value;
+  const body = {
+    name: document.getElementById('f-name').value.trim(),
+    type,
+    position: document.getElementById('f-pos-sel').value,
+    image_url: document.getElementById('f-img').value.trim() || null,
+    link_url: document.getElementById('f-link').value.trim() || null,
+    alt_text: document.getElementById('f-alt').value.trim() || null,
+    width: parseInt(document.getElementById('f-w').value) || null,
+    height: parseInt(document.getElementById('f-h').value) || null,
+    code: document.getElementById('f-code').value.trim() || null,
+    starts_at: document.getElementById('f-start').value || null,
+    ends_at: document.getElementById('f-end').value || null,
+    is_active: document.getElementById('f-active').checked,
+  };
+  if (!body.name) return showToast('Name is required', 'error');
+  const d = await api(id ? `/ads/${id}` : '/ads', { method: id ? 'PUT' : 'POST', body: JSON.stringify(body) });
+  if (d.success) { showToast(id ? 'Updated' : 'Created', 'success'); closeModal(); loadAds(); }
+  else showToast(d.message || 'Error', 'error');
+}
+
+async function toggleAd(id) {
+  const d = await api(`/ads/${id}/toggle`, { method: 'POST' });
+  if (d.success) { showToast('Toggled', 'success'); loadAds(); }
+  else showToast(d.message||'Error','error');
+}
+
+async function deleteAd(id) {
+  if (!confirm2('Delete this ad?')) return;
+  const d = await api(`/ads/${id}`, { method: 'DELETE' });
+  if (d.success) { showToast('Deleted','success'); loadAds(); }
+  else showToast(d.message||'Error','error');
+}
+</script>
+</body>
+</html>

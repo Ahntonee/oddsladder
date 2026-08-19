@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prediction Intelligence — OL Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<link rel="icon" href="/images/logo.png">
+<link rel="apple-touch-icon" href="/images/logo.png">
+<link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<div id="admin-sidebar"></div>
+<div id="admin-topbar"></div>
+<main id="admin-main">
+  <h1 class="admin-section-title"><span class="material-icons-round">psychology</span> Prediction Intelligence</h1>
+  <p class="text-soft mb-3" style="font-size:13px">Deep analytics on league profiles, team scoring, market performance, and best prediction combinations. Seed historical data first for maximum accuracy.</p>
+
+  <!-- Tabs -->
+  <div class="flex gap-2 mb-4" style="flex-wrap:wrap;border-bottom:1px solid var(--border);padding-bottom:0">
+    <button class="pi-tab active" data-tab="league">
+      <span class="material-icons-round">emoji_events</span> League Intelligence
+    </button>
+    <button class="pi-tab" data-tab="team">
+      <span class="material-icons-round">groups</span> Team Stats
+    </button>
+    <button class="pi-tab" data-tab="market">
+      <span class="material-icons-round">bar_chart</span> Market Performance
+    </button>
+    <button class="pi-tab" data-tab="picks">
+      <span class="material-icons-round">auto_awesome</span> Best Picks
+    </button>
+    <button class="pi-tab" data-tab="profiles">
+      <span class="material-icons-round">speed</span> Goal Profiles
+    </button>
+  </div>
+
+  <!-- ── LEAGUE INTELLIGENCE ── -->
+  <div id="tab-league" class="pi-panel">
+    <div class="flex-between mb-3" style="flex-wrap:wrap;gap:10px">
+      <div>
+        <span class="badge" style="background:rgba(2,245,161,0.15);color:var(--primary);margin-right:6px">■ &lt;2 goals/game</span>
+        <span class="badge" style="background:rgba(250,163,7,0.12);color:var(--warning)">■ &lt;3 goals/game</span>
+      </div>
+      <input class="form-control" id="league-search" placeholder="Filter league…" style="max-width:200px;height:34px;font-size:13px">
+    </div>
+    <div style="overflow-x:auto">
+      <table class="pi-table" id="league-table">
+        <thead><tr>
+          <th>League</th><th>Country</th>
+          <th class="num" title="Average goals per game">Goals/G</th>
+          <th class="num" title="Both teams scored %">BTTS%</th>
+          <th class="num" title="Matches with 2+ goals">O1.5%</th>
+          <th class="num" title="Matches with 3+ goals">O2.5%</th>
+          <th class="num" title="Matches with 4+ goals">O3.5%</th>
+          <th class="num" title="Home win %">HW%</th>
+          <th class="num" title="Draw %">D%</th>
+          <th class="num" title="Away win %">AW%</th>
+          <th class="num">Matches</th>
+          <th class="num">Our Preds</th>
+          <th class="num">Win Rate</th>
+        </tr></thead>
+        <tbody id="league-tbody"><tr><td colspan="13" class="loading-cell">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── TEAM STATS ── -->
+  <div id="tab-team" class="pi-panel" style="display:none">
+    <div class="flex gap-2 mb-3" style="flex-wrap:wrap;align-items:center">
+      <select class="form-control" id="team-sort" style="max-width:180px;height:34px;font-size:13px">
+        <option value="scored">Goals Scored Avg ↓</option>
+        <option value="conceded">Goals Conceded Avg ↓</option>
+        <option value="home_scored">Home Scored ↓</option>
+        <option value="away_scored">Away Scored ↓</option>
+        <option value="home_conceded">Home Conceded ↓</option>
+        <option value="away_conceded">Away Conceded ↓</option>
+        <option value="clean_sheets">Clean Sheets ↓</option>
+        <option value="wins">Wins ↓</option>
+      </select>
+      <select class="form-control" id="team-filter" style="max-width:200px;height:34px;font-size:13px">
+        <option value="">All teams</option>
+        <option value="score2plus">Scoring ≥ 2/game</option>
+        <option value="concede2plus">Conceding ≥ 2/game</option>
+        <option value="under2">Scoring &lt; 2/game</option>
+        <option value="under3">Scoring &lt; 3/game</option>
+      </select>
+      <button class="btn btn-primary btn-sm" onclick="loadTeamStats()">Apply</button>
+      <input class="form-control" id="team-search" placeholder="Search team…" style="max-width:180px;height:34px;font-size:13px">
+    </div>
+    <div style="overflow-x:auto">
+      <table class="pi-table" id="team-table">
+        <thead><tr>
+          <th>Team</th><th>League</th>
+          <th class="num">MP</th><th class="num">W</th><th class="num">D</th><th class="num">L</th>
+          <th class="num" title="Overall goals scored per game">Scr</th>
+          <th class="num" title="Overall goals conceded per game">Con</th>
+          <th class="num" title="Home goals scored per game">H-Scr</th>
+          <th class="num" title="Away goals scored per game">A-Scr</th>
+          <th class="num" title="Home goals conceded per game">H-Con</th>
+          <th class="num" title="Away goals conceded per game">A-Con</th>
+          <th class="num" title="Clean sheets">CS</th>
+          <th class="num" title="Win percentage">Win%</th>
+        </tr></thead>
+        <tbody id="team-tbody"><tr><td colspan="14" class="loading-cell">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── MARKET PERFORMANCE ── -->
+  <div id="tab-market" class="pi-panel" style="display:none">
+    <div class="grid-2" style="gap:24px" id="market-grid">
+      <div class="loading-cell">Loading…</div>
+    </div>
+  </div>
+
+  <!-- ── BEST PICKS ── -->
+  <div id="tab-picks" class="pi-panel" style="display:none">
+    <div class="grid-2" style="gap:24px">
+      <div>
+        <h3 style="font-size:15px;margin-bottom:14px;color:var(--primary)">
+          <span class="material-icons-round" style="font-size:18px;vertical-align:middle">leaderboard</span> Best League × Market Combos
+        </h3>
+        <div style="overflow-x:auto">
+          <table class="pi-table" id="picks-league-table">
+            <thead><tr>
+              <th>League</th><th>Market</th><th>Pick</th>
+              <th class="num">Preds</th><th class="num">Correct</th><th class="num">Win%</th><th class="num">Avg Conf</th>
+            </tr></thead>
+            <tbody id="picks-league-tbody"><tr><td colspan="7" class="loading-cell">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div>
+        <h3 style="font-size:15px;margin-bottom:14px;color:var(--accent)">
+          <span class="material-icons-round" style="font-size:18px;vertical-align:middle">groups</span> Teams with Best Prediction Record
+        </h3>
+        <div style="overflow-x:auto">
+          <table class="pi-table" id="picks-team-table">
+            <thead><tr>
+              <th>Team</th><th class="num">Preds</th><th class="num">Correct</th><th class="num">Win%</th>
+            </tr></thead>
+            <tbody id="picks-team-tbody"><tr><td colspan="4" class="loading-cell">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── GOAL PROFILES ── -->
+  <div id="tab-profiles" class="pi-panel" style="display:none">
+    <div class="flex gap-2 mb-3" style="flex-wrap:wrap">
+      <button class="btn btn-outline btn-sm profile-filter active" data-filter="all">All</button>
+      <button class="btn btn-outline btn-sm profile-filter" data-filter="under2" style="border-color:rgba(2,245,161,0.4);color:var(--primary)">Under 2 goals/game</button>
+      <button class="btn btn-outline btn-sm profile-filter" data-filter="under3" style="border-color:rgba(250,163,7,0.4);color:var(--warning)">Under 3 goals/game</button>
+      <button class="btn btn-outline btn-sm profile-filter" data-filter="over3" style="border-color:rgba(255,80,80,0.4);color:var(--danger)">Over 3 goals/game</button>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="pi-table" id="profiles-table">
+        <thead><tr>
+          <th>League</th><th>Country</th>
+          <th class="num">Goals/G</th>
+          <th class="num">BTTS%</th>
+          <th class="num">O1.5%</th>
+          <th class="num">O2.5%</th>
+          <th class="num">O3.5%</th>
+          <th class="num">HW%</th>
+          <th class="num">D%</th>
+          <th class="num">AW%</th>
+          <th class="num">Matches</th>
+          <th>Profile</th>
+        </tr></thead>
+        <tbody id="profiles-tbody"><tr><td colspan="12" class="loading-cell">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<style>
+.pi-tab {
+  display:inline-flex;align-items:center;gap:6px;
+  padding:8px 16px;border:none;background:transparent;cursor:pointer;
+  color:var(--text-soft);font-size:13px;font-weight:500;font-family:inherit;
+  border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .2s,border-color .2s
+}
+.pi-tab .material-icons-round{font-size:16px}
+.pi-tab:hover{color:var(--text)}
+.pi-tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+
+.pi-table {
+  width:100%;border-collapse:collapse;font-size:13px
+}
+.pi-table th {
+  padding:8px 12px;text-align:left;font-size:11px;font-weight:700;
+  letter-spacing:.5px;text-transform:uppercase;color:var(--text-soft);
+  border-bottom:1px solid var(--border);white-space:nowrap
+}
+.pi-table th.num,.pi-table td.num{text-align:right}
+.pi-table td {
+  padding:8px 12px;border-bottom:1px solid rgba(173,223,241,0.05);
+  color:var(--text);font-size:13px;white-space:nowrap
+}
+.pi-table tbody tr:hover{background:rgba(173,223,241,0.03)}
+.pi-table tbody tr.row-under2{background:rgba(2,245,161,0.05)}
+.pi-table tbody tr.row-under3{background:rgba(250,163,7,0.05)}
+.pi-table tbody tr.row-high{background:rgba(255,80,80,0.05)}
+
+.loading-cell{text-align:center;padding:24px;color:var(--text-soft);font-size:13px}
+.win-bar-wrap{display:flex;align-items:center;gap:8px;min-width:100px}
+.win-bar{height:6px;border-radius:3px;background:var(--primary)}
+.badge-rate{
+  display:inline-block;padding:2px 8px;border-radius:12px;font-size:12px;font-weight:700
+}
+.badge-rate.good{background:rgba(2,245,161,0.15);color:var(--primary)}
+.badge-rate.ok  {background:rgba(250,163,7,0.12);color:var(--warning)}
+.badge-rate.bad {background:rgba(255,80,80,0.12);color:var(--danger)}
+.badge-rate.none{background:rgba(173,223,241,0.07);color:var(--text-soft)}
+.market-card{
+  background:var(--bg-2);border:1px solid var(--border);border-radius:12px;padding:18px
+}
+.market-bar-row{
+  display:flex;align-items:center;gap:10px;margin-bottom:12px
+}
+.profile-chip{
+  display:inline-block;padding:2px 10px;border-radius:12px;font-size:11px;font-weight:700
+}
+</style>
+
+<script src="admin.js"></script>
+<script>
+injectAdminShell('prediction-stats.html');
+
+// ── Tab switching ──────────────────────────────────────────────────────────────
+document.querySelectorAll('.pi-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.pi-tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.pi-panel').forEach(p => p.style.display = 'none');
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).style.display = 'block';
+  });
+});
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function rateBadge(rate) {
+  if (rate === null || rate === undefined || rate === '') return `<span class="badge-rate none">N/A</span>`;
+  const r = parseFloat(rate);
+  const cls = r >= 60 ? 'good' : r >= 45 ? 'ok' : 'bad';
+  return `<span class="badge-rate ${cls}">${r}%</span>`;
+}
+
+function winBar(rate, max = 100) {
+  const pct = Math.min(100, Math.max(0, parseFloat(rate || 0)));
+  const color = pct >= 60 ? 'var(--primary)' : pct >= 45 ? 'var(--warning)' : 'var(--danger)';
+  return `<div class="win-bar-wrap"><div style="flex:1;background:rgba(255,255,255,0.07);border-radius:3px;height:6px;overflow:hidden"><div style="width:${pct}%;height:100%;background:${color};border-radius:3px"></div></div><span style="width:34px;text-align:right;font-size:12px;font-weight:700">${pct}%</span></div>`;
+}
+
+function goalsBadge(gpg) {
+  if (!gpg) return '';
+  const g = parseFloat(gpg);
+  if (g < 2)  return `<span class="profile-chip" style="background:rgba(2,245,161,0.15);color:var(--primary)">Low</span>`;
+  if (g < 3)  return `<span class="profile-chip" style="background:rgba(250,163,7,0.12);color:var(--warning)">Med</span>`;
+  return       `<span class="profile-chip" style="background:rgba(255,80,80,0.12);color:var(--danger)">High</span>`;
+}
+
+function categoryLabel(cat) {
+  const map = {
+    home:'Home Win', draw:'Draw', away:'Away Win',
+    gg:'BTTS Yes', ng:'BTTS No',
+    over15:'Over 1.5', under15:'Under 1.5',
+    over25:'Over 2.5', under25:'Under 2.5',
+    over35:'Over 3.5', under35:'Under 3.5',
+    dc_1x:'1X (Home/Draw)', dc_x2:'X2 (Draw/Away)', dc_12:'12 (Home/Away)',
+    dnb_home:'DNB Home', dnb_away:'DNB Away',
+    corners_over:'Corners Over', corners_under:'Corners Under',
+  };
+  return map[cat] || cat;
+}
+
+// ── League Intelligence ───────────────────────────────────────────────────────
+let leagueData = [];
+
+async function loadLeagueStats() {
+  const tbody = document.getElementById('league-tbody');
+  tbody.innerHTML = '<tr><td colspan="13" class="loading-cell">Loading…</td></tr>';
+  try {
+    const { data } = await api('/admin/analytics/intel/league-stats');
+    leagueData = data.leagues || [];
+    renderLeagueTable(leagueData);
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="13" class="loading-cell" style="color:var(--danger)">Error: ${esc(e.message)}</td></tr>`;
+  }
+}
+
+const pct = (v, highlight, hi_color='var(--primary)', lo_color='var(--text)') =>
+  v != null ? `<span style="color:${parseFloat(v) >= highlight ? hi_color : lo_color}">${v}%</span>` : '<span class="text-soft">—</span>';
+
+function renderLeagueTable(rows) {
+  const tbody = document.getElementById('league-tbody');
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="13" class="loading-cell">No data — run the historical seed first.</td></tr>'; return; }
+  tbody.innerHTML = rows.map(r => {
+    const gpg = parseFloat(r.goals_per_game);
+    const rowCls = !r.goals_per_game ? '' : gpg < 2 ? 'row-under2' : gpg < 3 ? 'row-under3' : '';
+    const rate = r.total_predictions > 0 ? r.prediction_win_rate : null;
+    const gpgColor = !r.goals_per_game ? 'var(--text-soft)' : gpg < 2 ? 'var(--primary)' : gpg < 3 ? 'var(--warning)' : 'var(--danger)';
+    return `<tr class="${rowCls}">
+      <td><strong>${esc(r.league_name)}</strong></td>
+      <td class="text-soft">${esc(r.country)}</td>
+      <td class="num"><strong style="color:${gpgColor}">${r.goals_per_game ?? '—'}</strong></td>
+      <td class="num">${pct(r.btts_pct,   50)}</td>
+      <td class="num">${pct(r.over15_pct, 70)}</td>
+      <td class="num">${pct(r.over25_pct, 50)}</td>
+      <td class="num">${pct(r.over35_pct, 30)}</td>
+      <td class="num">${pct(r.home_win_pct, 45)}</td>
+      <td class="num">${pct(r.draw_pct,     30, 'var(--warning)')}</td>
+      <td class="num">${pct(r.away_win_pct, 35, 'var(--accent)')}</td>
+      <td class="num text-soft">${r.stat_matches ?? '—'}</td>
+      <td class="num">${r.total_predictions || '—'}</td>
+      <td class="num">${rateBadge(rate)}</td>
+    </tr>`;
+  }).join('');
+}
+
+document.getElementById('league-search').addEventListener('input', function() {
+  const q = this.value.toLowerCase();
+  renderLeagueTable(leagueData.filter(r => r.league_name.toLowerCase().includes(q) || r.country.toLowerCase().includes(q)));
+});
+
+// ── Team Stats ────────────────────────────────────────────────────────────────
+let teamData = [];
+
+async function loadTeamStats() {
+  const tbody = document.getElementById('team-tbody');
+  tbody.innerHTML = '<tr><td colspan="14" class="loading-cell">Loading…</td></tr>';
+  const sort   = document.getElementById('team-sort').value;
+  const filter = document.getElementById('team-filter').value;
+  try {
+    const params = new URLSearchParams({ sort });
+    if (filter) params.set('filter', filter);
+    const { data } = await api(`/admin/analytics/intel/team-stats?${params}`);
+    teamData = data.teams || [];
+    renderTeamTable(teamData);
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="14" class="loading-cell" style="color:var(--danger)">Error: ${esc(e.message)}</td></tr>`;
+  }
+}
+
+function renderTeamTable(rows) {
+  const tbody = document.getElementById('team-tbody');
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="14" class="loading-cell">No data — run the historical seed first.</td></tr>'; return; }
+  tbody.innerHTML = rows.map(r => {
+    const scored   = parseFloat(r.goals_scored_avg);
+    const conceded = parseFloat(r.goals_conceded_avg);
+    const scoreCls = scored >= 2 ? 'color:var(--primary);font-weight:700' : '';
+    const concCls  = conceded >= 2 ? 'color:var(--danger);font-weight:700' : '';
+    const f = v => v != null ? v : '—';
+    return `<tr>
+      <td><strong>${esc(r.team_name)}</strong></td>
+      <td class="text-soft" style="max-width:130px;overflow:hidden;text-overflow:ellipsis">${esc(r.league_name)}</td>
+      <td class="num">${f(r.matches_played)}</td>
+      <td class="num" style="color:var(--primary)">${f(r.wins)}</td>
+      <td class="num text-soft">${f(r.draws)}</td>
+      <td class="num" style="color:var(--danger)">${f(r.losses)}</td>
+      <td class="num"><span style="${scoreCls}">${f(r.goals_scored_avg)}</span></td>
+      <td class="num"><span style="${concCls}">${f(r.goals_conceded_avg)}</span></td>
+      <td class="num">${f(r.home_scored_avg)}</td>
+      <td class="num">${f(r.away_scored_avg)}</td>
+      <td class="num">${f(r.home_conceded_avg)}</td>
+      <td class="num">${f(r.away_conceded_avg)}</td>
+      <td class="num">${f(r.clean_sheets)}</td>
+      <td class="num">${r.win_pct != null ? `<strong>${r.win_pct}%</strong>` : '—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+document.getElementById('team-search').addEventListener('input', function() {
+  const q = this.value.toLowerCase();
+  renderTeamTable(teamData.filter(r => r.team_name.toLowerCase().includes(q)));
+});
+
+// ── Market Performance ────────────────────────────────────────────────────────
+async function loadMarketStats() {
+  const grid = document.getElementById('market-grid');
+  grid.innerHTML = '<div class="loading-cell">Loading…</div>';
+  try {
+    const { data } = await api('/admin/analytics/intel/market-stats');
+    const markets = data.markets || [];
+    if (!markets.length) {
+      grid.innerHTML = '<div class="loading-cell">No data yet — graded predictions needed.</div>';
+      return;
+    }
+
+    // Group by market
+    const groups = {};
+    markets.forEach(m => {
+      if (!groups[m.market]) groups[m.market] = [];
+      groups[m.market].push(m);
+    });
+
+    const maxTotal = Math.max(...markets.map(m => parseInt(m.total) || 0), 1);
+
+    grid.innerHTML = Object.entries(groups).map(([mkt, picks]) => `
+      <div class="market-card">
+        <h4 style="font-size:14px;font-weight:700;margin-bottom:16px;color:var(--primary)">${esc(mkt)}</h4>
+        ${picks.map(p => {
+          const pct = parseFloat(p.win_rate) || 0;
+          const barColor = pct >= 60 ? 'var(--primary)' : pct >= 45 ? 'var(--warning)' : 'var(--danger)';
+          return `<div class="market-bar-row">
+            <span style="width:130px;font-size:12px;color:var(--text-soft);flex-shrink:0">${categoryLabel(p.category)}</span>
+            <div style="flex:1;background:rgba(255,255,255,0.07);border-radius:3px;height:8px;overflow:hidden">
+              <div style="width:${pct}%;height:100%;background:${barColor};border-radius:3px"></div>
+            </div>
+            <span style="width:40px;text-align:right;font-size:13px;font-weight:700;color:${barColor}">${pct}%</span>
+            <span class="text-soft" style="font-size:11px;width:50px;text-align:right">${p.total} pred</span>
+          </div>`;
+        }).join('')}
+      </div>
+    `).join('');
+  } catch(e) {
+    grid.innerHTML = `<div class="loading-cell" style="color:var(--danger)">Error: ${esc(e.message)}</div>`;
+  }
+}
+
+// ── Best Picks ─────────────────────────────────────────────────────────────────
+async function loadBestPicks() {
+  document.getElementById('picks-league-tbody').innerHTML = '<tr><td colspan="7" class="loading-cell">Loading…</td></tr>';
+  document.getElementById('picks-team-tbody').innerHTML   = '<tr><td colspan="4" class="loading-cell">Loading…</td></tr>';
+  try {
+    const { data } = await api('/admin/analytics/intel/best-picks');
+
+    // League × market table
+    const lTbody = document.getElementById('picks-league-tbody');
+    const lRows = data.byLeagueMarket || [];
+    if (!lRows.length) {
+      lTbody.innerHTML = '<tr><td colspan="7" class="loading-cell">No data yet (need ≥5 graded predictions per combo).</td></tr>';
+    } else {
+      lTbody.innerHTML = lRows.map((r, i) => {
+        const rank = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}.`;
+        return `<tr>
+          <td><span style="margin-right:6px">${rank}</span>${esc(r.league_name)}<br><span class="text-soft" style="font-size:11px">${esc(r.country)}</span></td>
+          <td class="text-soft">${esc(r.market)}</td>
+          <td><strong>${categoryLabel(r.category)}</strong></td>
+          <td class="num">${r.total}</td>
+          <td class="num" style="color:var(--primary)">${r.correct}</td>
+          <td class="num">${rateBadge(r.win_rate)}</td>
+          <td class="num text-soft">${r.avg_conf}%</td>
+        </tr>`;
+      }).join('');
+    }
+
+    // Team table
+    const tTbody = document.getElementById('picks-team-tbody');
+    const tRows = data.byTeam || [];
+    if (!tRows.length) {
+      tTbody.innerHTML = '<tr><td colspan="4" class="loading-cell">No data yet.</td></tr>';
+    } else {
+      tTbody.innerHTML = tRows.map((r, i) => {
+        const rank = i < 3 ? ['🥇','🥈','🥉'][i] : `${i+1}.`;
+        return `<tr>
+          <td><span style="margin-right:6px">${rank}</span><strong>${esc(r.team)}</strong></td>
+          <td class="num">${r.total}</td>
+          <td class="num" style="color:var(--primary)">${r.correct}</td>
+          <td class="num">${winBar(r.win_rate)}</td>
+        </tr>`;
+      }).join('');
+    }
+  } catch(e) {
+    const msg = `<tr><td colspan="7" class="loading-cell" style="color:var(--danger)">Error: ${esc(e.message)}</td></tr>`;
+    document.getElementById('picks-league-tbody').innerHTML = msg;
+    document.getElementById('picks-team-tbody').innerHTML   = msg;
+  }
+}
+
+// ── Goal Profiles ─────────────────────────────────────────────────────────────
+let profileData = [];
+let profileFilter = 'all';
+
+async function loadProfiles() {
+  const tbody = document.getElementById('profiles-tbody');
+  tbody.innerHTML = '<tr><td colspan="7" class="loading-cell">Loading…</td></tr>';
+  try {
+    const { data } = await api('/admin/analytics/intel/league-profiles');
+    profileData = data.leagues || [];
+    renderProfileTable(profileFilter);
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="12" class="loading-cell" style="color:var(--danger)">Error: ${esc(e.message)}</td></tr>`;
+  }
+}
+
+function renderProfileTable(filter) {
+  const tbody = document.getElementById('profiles-tbody');
+  let rows = profileData;
+  if (filter === 'under2') rows = rows.filter(r => parseFloat(r.goals_per_game) < 2);
+  else if (filter === 'under3') rows = rows.filter(r => parseFloat(r.goals_per_game) < 3);
+  else if (filter === 'over3') rows = rows.filter(r => parseFloat(r.goals_per_game) >= 3);
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="12" class="loading-cell">No leagues in this range.</td></tr>'; return; }
+  tbody.innerHTML = rows.map(r => {
+    const gpg = parseFloat(r.goals_per_game);
+    const rowCls = gpg < 2 ? 'row-under2' : gpg < 3 ? 'row-under3' : 'row-high';
+    const f = (v, hi, hiColor='var(--primary)') => v != null
+      ? `<span style="color:${parseFloat(v)>=hi?hiColor:'var(--text)'}">${v}%</span>`
+      : '<span class="text-soft">—</span>';
+    return `<tr class="${rowCls}">
+      <td><strong>${esc(r.league_name)}</strong></td>
+      <td class="text-soft">${esc(r.country)}</td>
+      <td class="num"><strong>${r.goals_per_game}</strong></td>
+      <td class="num">${f(r.btts_pct,   50)}</td>
+      <td class="num">${f(r.over15_pct, 70)}</td>
+      <td class="num">${f(r.over25_pct, 50)}</td>
+      <td class="num">${f(r.over35_pct, 30)}</td>
+      <td class="num">${f(r.home_win_pct, 45)}</td>
+      <td class="num">${f(r.draw_pct,     30, 'var(--warning)')}</td>
+      <td class="num">${f(r.away_win_pct, 35, 'var(--accent)')}</td>
+      <td class="num text-soft">${r.matches_played ?? '—'}</td>
+      <td>${goalsBadge(r.goals_per_game)}</td>
+    </tr>`;
+  }).join('');
+}
+
+document.querySelectorAll('.profile-filter').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.profile-filter').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    profileFilter = btn.dataset.filter;
+    renderProfileTable(profileFilter);
+  });
+});
+
+// ── Initial load ──────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  loadLeagueStats();
+
+  document.querySelectorAll('.pi-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tab = btn.dataset.tab;
+      if (tab === 'team'    && !teamData.length)    loadTeamStats();
+      if (tab === 'market')                          loadMarketStats();
+      if (tab === 'picks')                           loadBestPicks();
+      if (tab === 'profiles' && !profileData.length) loadProfiles();
+    });
+  });
+});
+</script>
+</body>
+</html>

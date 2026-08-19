@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pages — OL Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<link rel="icon" href="/images/logo.png">
+<link rel="apple-touch-icon" href="/images/logo.png">
+<link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="admin.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+<script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+</head>
+<body>
+<div id="admin-sidebar"></div>
+<div id="admin-topbar"></div>
+<main id="admin-main">
+  <div class="flex-between mb-3">
+    <h1 class="admin-section-title mb-0"><span class="material-icons-round">article</span> Static Pages</h1>
+  </div>
+
+  <!-- List view -->
+  <div id="list-view">
+    <div class="data-table-wrap admin-card" style="padding:0">
+      <table class="data-table">
+        <thead><tr><th>Slug</th><th>Title</th><th>Last Updated</th><th>Actions</th></tr></thead>
+        <tbody id="pages-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Editor view -->
+  <div id="editor-view" style="display:none">
+    <div class="flex-between mb-3">
+      <h2 style="font-size:18px" id="editor-title">Edit Page</h2>
+      <button class="btn btn-ghost btn-sm" id="back-btn">← Back to list</button>
+    </div>
+    <div class="admin-card">
+      <input type="hidden" id="edit-id">
+      <div class="form-group"><label class="form-label">Slug (read-only)</label><input type="text" class="form-control" id="p-slug" readonly style="opacity:.5"></div>
+      <div class="form-group"><label class="form-label">Title *</label><input type="text" class="form-control" id="p-title" placeholder="Page title"></div>
+      <div class="form-group"><label class="form-label">Content (Markdown) *</label><textarea id="p-content"></textarea></div>
+      <div class="form-group mt-2"><label class="form-label">Social Links (for pages that display them)</label>
+        <div class="grid-2" style="gap:10px">
+          <input type="url" class="form-control" id="sl-twitter" placeholder="Twitter URL">
+          <input type="url" class="form-control" id="sl-facebook" placeholder="Facebook URL">
+          <input type="url" class="form-control" id="sl-instagram" placeholder="Instagram URL">
+          <input type="url" class="form-control" id="sl-telegram" placeholder="Telegram URL">
+          <input type="url" class="form-control" id="sl-youtube" placeholder="YouTube URL">
+          <input type="url" class="form-control" id="sl-tiktok" placeholder="TikTok URL">
+        </div>
+        <button class="btn btn-ghost btn-sm mt-2" id="save-social-btn">Save Social Links</button>
+      </div>
+      <div class="flex gap-2 mt-3">
+        <button class="btn btn-primary" id="save-page-btn">Save Page</button>
+        <button class="btn btn-ghost" id="cancel-btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="admin.js"></script>
+<script>
+injectAdminShell('pages.html');
+let mde = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadPages();
+  loadSocialLinks();
+
+  document.getElementById('back-btn').addEventListener('click', hideEditor);
+  document.getElementById('cancel-btn').addEventListener('click', hideEditor);
+  document.getElementById('save-page-btn').addEventListener('click', savePage);
+  document.getElementById('save-social-btn').addEventListener('click', saveSocialLinks);
+});
+
+async function loadPages() {
+  const d = await api('/pages');
+  const pages = d.data?.pages || [];
+  document.getElementById('pages-body').innerHTML = pages.length
+    ? pages.map(p => `<tr>
+        <td><code style="font-size:12px;color:var(--primary)">${escHtml(p.slug)}</code></td>
+        <td>${escHtml(p.title)}</td>
+        <td>${p.updated_at ? fmtDate(p.updated_at) : '—'}</td>
+        <td><button class="btn btn-sm btn-ghost" data-edit-slug="${p.slug}"><span class="material-icons-round">edit</span> Edit</button></td>
+      </tr>`).join('')
+    : '<tr><td colspan="4" class="empty-cell">No pages found.</td></tr>';
+
+  document.querySelectorAll('[data-edit-slug]').forEach(btn => btn.addEventListener('click', () => editPage(btn.dataset.editSlug)));
+}
+
+async function editPage(slug) {
+  const d = await api(`/pages/${slug}`);
+  const p = d.data?.page;
+  if (!p) return;
+  document.getElementById('list-view').style.display = 'none';
+  document.getElementById('editor-view').style.display = 'block';
+  document.getElementById('editor-title').textContent = `Edit: ${p.title}`;
+  document.getElementById('edit-id').value = p.slug;
+  document.getElementById('p-slug').value = p.slug;
+  document.getElementById('p-title').value = p.title;
+  if (mde) { mde.toTextArea(); mde = null; }
+  mde = new EasyMDE({ element: document.getElementById('p-content'), initialValue: p.content || '', spellChecker: false, autofocus: false, toolbar: ['bold','italic','heading','|','quote','unordered-list','ordered-list','|','link','|','preview','side-by-side','fullscreen','|','guide'] });
+  applyEditorStyles(mde);
+}
+
+function applyEditorStyles(editor) {
+  const cm = editor.codemirror.getWrapperElement();
+  const container = cm.closest('.EasyMDEContainer');
+
+  cm.style.setProperty('background-color', '#0d1a26', 'important');
+  cm.style.border = '1px solid rgba(173,223,241,0.14)';
+  cm.style.borderRadius = '0 0 8px 8px';
+  const scroll = cm.querySelector('.CodeMirror-scroll');
+  if (scroll) scroll.style.minHeight = '220px';
+
+  function paintLines() {
+    cm.querySelectorAll('.CodeMirror-line, .CodeMirror-line *').forEach(el => {
+      el.style.setProperty('color', 'silver', 'important');
+    });
+  }
+  paintLines();
+
+  let paintTimer;
+  const obs = new MutationObserver(() => { clearTimeout(paintTimer); paintTimer = setTimeout(paintLines, 0); });
+  obs.observe(cm, { childList: true, subtree: true });
+
+  if (container) {
+    const toolbar = container.querySelector('.editor-toolbar');
+    if (toolbar) {
+      toolbar.style.setProperty('background-color', '#111', 'important');
+      toolbar.style.border = '1px solid rgba(255,255,255,0.08)';
+      toolbar.style.borderBottom = 'none';
+      toolbar.style.borderRadius = '8px 8px 0 0';
+      toolbar.querySelectorAll('button, a').forEach(b => b.style.setProperty('color', '#e8f4f8', 'important'));
+    }
+  }
+}
+
+function hideEditor() {
+  document.getElementById('editor-view').style.display = 'none';
+  document.getElementById('list-view').style.display = 'block';
+  if (mde) { mde.toTextArea(); mde = null; }
+}
+
+async function savePage() {
+  const slug = document.getElementById('edit-id').value;
+  const body = { title: document.getElementById('p-title').value.trim(), content: mde ? mde.value() : '' };
+  if (!body.title || !body.content) { showToast('Title and content required','error'); return; }
+  const d = await api(`/pages/${slug}`, {method:'PUT', body:JSON.stringify(body)});
+  if (d.success) { showToast('Page saved!','success'); hideEditor(); loadPages(); }
+  else showToast(d.message,'error');
+}
+
+async function loadSocialLinks() {
+  const d = await api('/pages/social-links');
+  const links = d.data?.links || {};
+  ['twitter','facebook','instagram','telegram','youtube','tiktok'].forEach(k => {
+    const el = document.getElementById('sl-'+k);
+    if (el) el.value = links[k] || '';
+  });
+}
+
+async function saveSocialLinks() {
+  const links = {};
+  ['twitter','facebook','instagram','telegram','youtube','tiktok'].forEach(k => {
+    const v = document.getElementById('sl-'+k).value.trim();
+    if (v) links[k] = v;
+  });
+  const d = await api('/pages/social-links', {method:'PUT', body:JSON.stringify(links)});
+  if (d.success) showToast('Social links saved!','success');
+  else showToast(d.message,'error');
+}
+</script>
+</body>
+</html>

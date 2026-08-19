@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Leagues — OL Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<link rel="icon" href="/images/logo.png">
+<link rel="apple-touch-icon" href="/images/logo.png">
+<link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<div id="admin-sidebar"></div>
+<div id="admin-topbar"></div>
+<main id="admin-main">
+  <div class="flex-between mb-3">
+    <h1 class="admin-section-title mb-0">Leagues</h1>
+    <button class="btn btn-primary" id="add-league-btn">+ Add League</button>
+  </div>
+
+  <div class="search-bar mb-2">
+    <input type="text" class="form-control" style="max-width:220px" placeholder="Search leagues…" id="l-search">
+    <select class="form-control" style="max-width:150px" id="l-continent">
+      <option value="">All Continents</option>
+      <option>Europe</option><option>South America</option><option>Africa</option><option>Asia</option><option>North America</option><option>Oceania</option><option>World</option>
+    </select>
+    <select class="form-control" style="max-width:130px" id="l-enabled">
+      <option value="">All</option><option value="1">Enabled</option><option value="0">Disabled</option>
+    </select>
+  </div>
+
+  <div class="data-table-wrap admin-card" style="padding:0">
+    <table class="data-table">
+      <thead><tr><th>Name</th><th>Country</th><th>Continent</th><th>Tier</th><th>API ID</th><th>Popular</th><th>Enabled</th><th>Actions</th></tr></thead>
+      <tbody id="leagues-body"></tbody>
+    </table>
+  </div>
+  <div class="pager" id="pager"></div>
+</main>
+
+<!-- Add/Edit Modal -->
+<div class="modal-overlay" id="league-modal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header"><h3 id="modal-title">Add League</h3><button class="modal-close" id="modal-close-btn"><span class="material-icons-round">close</span></button></div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-id">
+      <div class="form-group"><label class="form-label">League Name *</label><input type="text" class="form-control" id="l-name" placeholder="Premier League"></div>
+      <div class="grid-2">
+        <div class="form-group"><label class="form-label">Country</label><input type="text" class="form-control" id="l-country" placeholder="England"></div>
+        <div class="form-group"><label class="form-label">Continent</label>
+          <select class="form-control" id="l-cont">
+            <option>Europe</option><option>South America</option><option>Africa</option><option>Asia</option><option>North America</option><option>Oceania</option><option>World</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group"><label class="form-label">Tier (1–5)</label><input type="number" class="form-control" id="l-tier" min="1" max="5" value="1"></div>
+        <div class="form-group"><label class="form-label">API Football ID</label><input type="number" class="form-control" id="l-api-id" placeholder="39"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Logo URL</label><input type="text" class="form-control" id="l-logo" placeholder="https://..."></div>
+      <div class="flex gap-3 mt-1">
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="l-popular"> Mark as Popular</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="l-enabled-chk" checked> Enabled</label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="modal-cancel-btn">Cancel</button>
+      <button class="btn btn-primary" id="modal-save-btn">Save League</button>
+    </div>
+  </div>
+</div>
+
+<script src="admin.js"></script>
+<script>
+injectAdminShell('leagues.html');
+let debTimer, currentPage = 1;
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadLeagues();
+
+  document.getElementById('add-league-btn').addEventListener('click', () => openModal());
+  document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+  document.getElementById('modal-cancel-btn').addEventListener('click', closeModal);
+  document.getElementById('modal-save-btn').addEventListener('click', saveLeague);
+  document.getElementById('l-search').addEventListener('input', () => { clearTimeout(debTimer); debTimer = setTimeout(loadLeagues, 400); });
+  document.getElementById('l-continent').addEventListener('change', loadLeagues);
+  document.getElementById('l-enabled').addEventListener('change', loadLeagues);
+});
+
+async function loadLeagues(page = 1) {
+  if (typeof page !== 'number') page = 1;
+  currentPage = page;
+  const search = document.getElementById('l-search').value;
+  const continent = document.getElementById('l-continent').value;
+  const enabled = document.getElementById('l-enabled').value;
+  const params = new URLSearchParams({ page, limit: 30, ...(search&&{search}), ...(continent&&{continent}), ...(enabled!==''&&{is_enabled:enabled}) });
+  const d = await api(`/leagues/list?${params}`);
+  const leagues = d.data?.leagues || [];
+  document.getElementById('leagues-body').innerHTML = leagues.length
+    ? leagues.map(l => `<tr>
+        <td><strong>${escHtml(l.name)}</strong></td>
+        <td>${escHtml(l.country||'—')}</td>
+        <td>${escHtml(l.continent||'—')}</td>
+        <td>${l.tier||1}</td>
+        <td>${l.api_football_id||'—'}</td>
+        <td><button class="btn btn-sm ${l.is_popular?'btn-primary':'btn-ghost'}" data-pop-id="${l.id}" data-pop-cur="${l.is_popular}">${l.is_popular?'<span class="material-icons-round" style="font-size:15px">star</span> Yes':'<span class="material-icons-round" style="font-size:15px">star_border</span> No'}</button></td>
+        <td><button class="btn btn-sm ${l.is_enabled?'btn-primary':'btn-ghost'}" data-en-id="${l.id}" data-en-cur="${l.is_enabled}">${l.is_enabled?'ON':'OFF'}</button></td>
+        <td>
+          <div class="flex gap-2">
+            <button class="btn btn-sm btn-ghost" data-edit-id="${l.id}"><span class="material-icons-round">edit</span></button>
+            <button class="btn btn-sm btn-danger" data-del-id="${l.id}"><span class="material-icons-round">delete</span></button>
+          </div>
+        </td>
+      </tr>`).join('')
+    : '<tr><td colspan="8" class="empty-cell">No leagues found</td></tr>';
+
+  document.querySelectorAll('[data-pop-id]').forEach(btn => btn.addEventListener('click', () => togglePop(btn.dataset.popId, parseInt(btn.dataset.popCur))));
+  document.querySelectorAll('[data-en-id]').forEach(btn => btn.addEventListener('click', () => toggleEnable(btn.dataset.enId, parseInt(btn.dataset.enCur))));
+  document.querySelectorAll('[data-edit-id]').forEach(btn => btn.addEventListener('click', () => editLeague(btn.dataset.editId)));
+  document.querySelectorAll('[data-del-id]').forEach(btn => btn.addEventListener('click', () => deleteLeague(btn.dataset.delId)));
+
+  renderPager(document.getElementById('pager'), page, d.data?.total||0, 30, 'loadLeagues');
+}
+
+function openModal(l = null) {
+  document.getElementById('league-modal').classList.add('open');
+  document.getElementById('modal-title').textContent = l ? 'Edit League' : 'Add League';
+  document.getElementById('edit-id').value = l?.id || '';
+  document.getElementById('l-name').value = l?.name || '';
+  document.getElementById('l-country').value = l?.country || '';
+  document.getElementById('l-cont').value = l?.continent || 'Europe';
+  document.getElementById('l-tier').value = l?.tier || 1;
+  document.getElementById('l-api-id').value = l?.api_football_id || '';
+  document.getElementById('l-logo').value = l?.logo || '';
+  document.getElementById('l-popular').checked = !!l?.is_popular;
+  document.getElementById('l-enabled-chk').checked = l ? !!l.is_enabled : true;
+}
+function closeModal() { document.getElementById('league-modal').classList.remove('open'); }
+
+async function editLeague(id) {
+  const d = await api(`/leagues/${id}`);
+  openModal(d.data?.league);
+}
+
+async function saveLeague() {
+  const id = document.getElementById('edit-id').value;
+  const body = {
+    name: document.getElementById('l-name').value.trim(),
+    country: document.getElementById('l-country').value.trim(),
+    continent: document.getElementById('l-cont').value,
+    tier: parseInt(document.getElementById('l-tier').value)||1,
+    api_football_id: parseInt(document.getElementById('l-api-id').value)||null,
+    logo: document.getElementById('l-logo').value.trim()||null,
+    is_popular: document.getElementById('l-popular').checked?1:0,
+    is_enabled: document.getElementById('l-enabled-chk').checked?1:0,
+  };
+  if (!body.name) { showToast('League name required','error'); return; }
+  const d = id ? await api(`/leagues/${id}`,{method:'PUT',body:JSON.stringify(body)}) : await api('/leagues',{method:'POST',body:JSON.stringify(body)});
+  if (d.success) { closeModal(); showToast('Saved!','success'); loadLeagues(currentPage); }
+  else showToast(d.message,'error');
+}
+
+async function togglePop(id, cur) {
+  await api(`/leagues/${id}`, {method:'PUT', body:JSON.stringify({is_popular:cur?0:1})});
+  loadLeagues(currentPage);
+}
+async function toggleEnable(id, cur) {
+  await api(`/leagues/${id}`, {method:'PUT', body:JSON.stringify({is_enabled:cur?0:1})});
+  loadLeagues(currentPage);
+}
+async function deleteLeague(id) {
+  if (!confirm('Delete this league?')) return;
+  const d = await api(`/leagues/${id}`,{method:'DELETE'});
+  if (d.success) { showToast('Deleted','info'); loadLeagues(currentPage); }
+  else showToast(d.message,'error');
+}
+</script>
+</body>
+</html>

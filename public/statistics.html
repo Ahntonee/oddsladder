@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Football Statistics & Analytics — Oddslander</title>
+<meta name="description" content="Front-tested football statistics: scoring averages, market reliability, and prediction track records.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<link rel="icon" href="/images/logo.png">
+<link rel="apple-touch-icon" href="/images/logo.png">
+<link rel="stylesheet" href="/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<div id="header-placeholder"></div>
+<main>
+  <section>
+    <div class="container">
+      <div class="flex-between mb-1">
+        <h1 class="section-title mb-0">Football <span>Statistics</span></h1>
+      </div>
+      <p class="text-soft mb-4" style="font-size:13px">Source: API-Football historical data + Oddslander prediction track record.</p>
+
+      <!-- Summary Tiles -->
+      <div class="stats-banner mb-4" id="summary-tiles">
+        <div class="stat-card skeleton" style="height:100px"></div>
+        <div class="stat-card skeleton" style="height:100px"></div>
+        <div class="stat-card skeleton" style="height:100px"></div>
+        <div class="stat-card skeleton" style="height:100px"></div>
+      </div>
+
+      <!-- Teams Section -->
+      <div class="card mb-3">
+        <div class="flex-between mb-3">
+          <h2 style="font-size:18px"><span class="material-icons-round">sports_soccer</span> Team Scoring</h2>
+          <div class="flex gap-2">
+            <button class="btn btn-sm btn-primary" id="btn-high-teams" onclick="loadTeams('highest')">Highest</button>
+            <button class="btn btn-sm btn-ghost" id="btn-low-teams" onclick="loadTeams('lowest')">Lowest</button>
+          </div>
+        </div>
+        <div class="grid-2" style="gap:24px">
+          <div class="data-table-wrap"><table class="data-table"><thead><tr><th>#</th><th>Team</th><th>Goals/Game</th><th>Played</th></tr></thead><tbody id="teams-body"></tbody></table></div>
+          <div class="stats-chart-card"><canvas id="teams-chart" height="280"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Leagues Section -->
+      <div class="card mb-3">
+        <div class="flex-between mb-3">
+          <h2 style="font-size:18px"><span class="material-icons-round">emoji_events</span> League Scoring</h2>
+          <div class="flex gap-2">
+            <button class="btn btn-sm btn-primary" id="btn-high-leagues" onclick="loadLeagues('highest')">Highest</button>
+            <button class="btn btn-sm btn-ghost" id="btn-low-leagues" onclick="loadLeagues('lowest')">Lowest</button>
+          </div>
+        </div>
+        <div class="grid-2" style="gap:24px">
+          <div class="data-table-wrap"><table class="data-table"><thead><tr><th>#</th><th>League</th><th>Goals/Game</th><th>BTTS%</th></tr></thead><tbody id="leagues-body"></tbody></table></div>
+          <div class="stats-chart-card"><canvas id="leagues-chart" height="280"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Market Reliability -->
+      <div class="card mb-3">
+        <h2 style="font-size:18px;margin-bottom:20px"><span class="material-icons-round">analytics</span> Market Reliability</h2>
+        <div class="grid-2" style="gap:24px">
+          <div class="data-table-wrap"><table class="data-table">
+            <thead><tr><th>Market</th><th>Total</th><th>Won</th><th>Win Rate</th><th>Avg Conf</th></tr></thead>
+            <tbody id="markets-body"></tbody>
+          </table></div>
+          <div class="stats-chart-card" style="display:flex;align-items:center;justify-content:center">
+            <canvas id="markets-chart" width="260" height="260"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Team by Market -->
+      <div class="card mb-3">
+        <div class="flex-between mb-3" style="flex-wrap:wrap;gap:10px">
+          <h2 style="font-size:18px"><span class="material-icons-round">manage_search</span> Most Reliable Teams by Market</h2>
+          <select class="form-control" style="max-width:180px" id="team-market-sel" onchange="loadTeamsByMarket()">
+            <option value="Over/Under">Over/Under</option>
+            <option value="1X2">1X2</option>
+            <option value="BTTS">BTTS</option>
+          </select>
+        </div>
+        <div class="data-table-wrap"><table class="data-table"><thead><tr><th>#</th><th>Team</th><th>Market</th><th>Win Rate</th><th>Total Tips</th></tr></thead><tbody id="teams-by-market-body"></tbody></table></div>
+      </div>
+
+      <!-- League by Market -->
+      <div class="card mb-3">
+        <div class="flex-between mb-3" style="flex-wrap:wrap;gap:10px">
+          <h2 style="font-size:18px"><span class="material-icons-round">workspace_premium</span> Most Reliable Leagues by Market</h2>
+          <select class="form-control" style="max-width:180px" id="league-market-sel" onchange="loadLeaguesByMarket()">
+            <option value="Over/Under">Over/Under</option>
+            <option value="1X2">1X2</option>
+            <option value="BTTS">BTTS</option>
+          </select>
+        </div>
+        <div class="data-table-wrap"><table class="data-table"><thead><tr><th>#</th><th>League</th><th>Win Rate</th><th>Total Tips</th></tr></thead><tbody id="leagues-by-market-body"></tbody></table></div>
+      </div>
+
+      <!-- Picks by Team -->
+      <div class="card mb-3">
+        <h2 style="font-size:18px;margin-bottom:16px"><span class="material-icons-round">saved_search</span> Most Effective Picks by Team</h2>
+        <div class="flex gap-2 mb-3">
+          <input type="text" class="form-control" style="max-width:280px" id="team-search" placeholder="Search team e.g. Arsenal">
+          <button class="btn btn-primary" onclick="loadTeamEffective()">Search</button>
+        </div>
+        <div class="data-table-wrap"><table class="data-table"><thead><tr><th>Market</th><th>Category</th><th>Total</th><th>Won</th></tr></thead><tbody id="team-effective-body"></tbody></table></div>
+      </div>
+
+      <!-- Picks by League -->
+      <div class="card">
+        <div class="flex-between mb-3" style="flex-wrap:wrap;gap:10px">
+          <h2 style="font-size:18px"><span class="material-icons-round">map</span> Most Effective Picks by League</h2>
+          <select class="form-control" style="max-width:220px" id="league-effective-sel" onchange="loadLeagueEffective()"><option value="">Select League</option></select>
+        </div>
+        <div class="data-table-wrap"><table class="data-table"><thead><tr><th>Market</th><th>Category</th><th>Total</th><th>Win Rate</th></tr></thead><tbody id="league-effective-body"></tbody></table></div>
+      </div>
+    </div>
+  </section>
+</main>
+<div id="footer-placeholder"></div>
+<script src="/js/app.js"></script>
+<script>
+let teamsChart, leaguesChart, marketsChart;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  loadSummary();
+  loadTeams('highest');
+  loadLeagues('highest');
+  loadMarkets();
+  loadTeamsByMarket();
+  loadLeaguesByMarket();
+  populateLeagueSelect();
+});
+
+async function loadSummary() {
+  const r = await fetch('/api/statistics/summary');
+  const d = (await r.json()).data || {};
+  document.getElementById('summary-tiles').innerHTML = [
+    { icon:'trending_up', val: d.totalPredictions||0, label:'Total Predictions' },
+    { icon:'gps_fixed', val: (d.winRate||0)+'%', label:'Overall Win Rate' },
+    { icon:'workspace_premium', val: (d.vipWinRate||0)+'%', label:'VIP Win Rate' },
+    { icon:'emoji_events', val: d.leaguesCovered||0, label:'Leagues Covered' },
+  ].map(s=>`<div class="stat-card"><span class="material-icons-round" style="font-size:32px;margin-bottom:6px;color:var(--primary)">${s.icon}</span><div class="stat-value">${s.val}</div><div class="stat-label">${s.label}</div></div>`).join('');
+}
+
+async function loadTeams(dir='highest') {
+  document.getElementById('btn-high-teams').className = `btn btn-sm ${dir==='highest'?'btn-primary':'btn-ghost'}`;
+  document.getElementById('btn-low-teams').className = `btn btn-sm ${dir==='lowest'?'btn-primary':'btn-ghost'}`;
+  const r = await fetch(`/api/statistics/teams/${dir}-scoring?limit=10`);
+  const teams = (await r.json()).data?.teams || [];
+  document.getElementById('teams-body').innerHTML = teams.length
+    ? teams.map((t,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(t.team_name)}</td><td>${(t.goals_scored_avg||0).toFixed(2)}</td><td>${t.matches_played||0}</td></tr>`).join('')
+    : '<tr><td colspan="4" class="text-soft text-center" style="padding:20px">No data yet</td></tr>';
+  if (teamsChart) teamsChart.destroy();
+  const ctx = document.getElementById('teams-chart').getContext('2d');
+  teamsChart = new Chart(ctx, { type:'bar', data:{ labels:teams.map(t=>t.team_name.slice(0,12)), datasets:[{ label:'Goals/Game', data:teams.map(t=>t.goals_scored_avg||0), backgroundColor:'rgba(2,245,161,0.7)', borderRadius:4 }] }, options:{ responsive:true, plugins:{ legend:{ display:false } }, scales:{ x:{ ticks:{ color:'rgba(173,223,241,0.6)', font:{size:10} } }, y:{ ticks:{ color:'rgba(173,223,241,0.6)' } } } } });
+}
+
+async function loadLeagues(dir='highest') {
+  document.getElementById('btn-high-leagues').className = `btn btn-sm ${dir==='highest'?'btn-primary':'btn-ghost'}`;
+  document.getElementById('btn-low-leagues').className = `btn btn-sm ${dir==='lowest'?'btn-primary':'btn-ghost'}`;
+  const r = await fetch(`/api/statistics/leagues/${dir}-scoring?limit=10`);
+  const leagues = (await r.json()).data?.leagues || [];
+  document.getElementById('leagues-body').innerHTML = leagues.length
+    ? leagues.map((l,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(l.league_name)}</td><td>${(l.goals_per_game||0).toFixed(2)}</td><td>${(l.btts_percentage||0).toFixed(1)}%</td></tr>`).join('')
+    : '<tr><td colspan="4" class="text-soft text-center" style="padding:20px">No data yet</td></tr>';
+  if (leaguesChart) leaguesChart.destroy();
+  const ctx = document.getElementById('leagues-chart').getContext('2d');
+  leaguesChart = new Chart(ctx, { type:'bar', data:{ labels:leagues.map(l=>l.league_name?.slice(0,14)), datasets:[{ label:'Goals/Game', data:leagues.map(l=>l.goals_per_game||0), backgroundColor:'rgba(153,204,51,0.7)', borderRadius:4 }] }, options:{ indexAxis:'y', responsive:true, plugins:{ legend:{ display:false } }, scales:{ x:{ ticks:{ color:'rgba(173,223,241,0.6)' } }, y:{ ticks:{ color:'rgba(173,223,241,0.6)', font:{size:10} } } } } });
+}
+
+async function loadMarkets() {
+  const r = await fetch('/api/statistics/markets/reliable');
+  const markets = (await r.json()).data?.markets || [];
+  document.getElementById('markets-body').innerHTML = markets.length
+    ? markets.map(m=>`<tr><td>${escapeHtml(m.market)} ${m.category?`<small class="text-muted">(${m.category})</small>`:''}</td><td>${m.total_predictions}</td><td>${m.correct_predictions}</td><td><strong style="color:${m.win_rate>=70?'var(--primary)':m.win_rate>=50?'var(--accent)':'var(--danger)'}">${(m.win_rate||0).toFixed(1)}%</strong></td><td>${(m.avg_confidence||0).toFixed(0)}</td></tr>`).join('')
+    : '<tr><td colspan="5" class="text-soft text-center" style="padding:20px">No data yet — predictions need results logged</td></tr>';
+  if (marketsChart) marketsChart.destroy();
+  const top = markets.slice(0,6);
+  if (top.length) {
+    const ctx = document.getElementById('markets-chart').getContext('2d');
+    marketsChart = new Chart(ctx, { type:'doughnut', data:{ labels:top.map(m=>m.market), datasets:[{ data:top.map(m=>m.win_rate||0), backgroundColor:['#02f5a1','#99cc33','#faf92a','#addff1','#003152','#ff4757'], borderWidth:0 }] }, options:{ responsive:true, plugins:{ legend:{ position:'bottom', labels:{ color:'rgba(173,223,241,0.75)', font:{size:11} } } } } });
+  }
+}
+
+async function loadTeamsByMarket() {
+  const market = document.getElementById('team-market-sel').value;
+  const r = await fetch(`/api/statistics/teams/reliable?market=${encodeURIComponent(market)}&limit=10`);
+  const teams = (await r.json()).data?.teams || [];
+  document.getElementById('teams-by-market-body').innerHTML = teams.length
+    ? teams.map((t,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(t.team_name)}</td><td>${escapeHtml(t.market)}</td><td><strong style="color:var(--primary)">${(t.win_rate||0).toFixed(1)}%</strong></td><td>${t.total_predictions}</td></tr>`).join('')
+    : '<tr><td colspan="5" class="text-soft text-center" style="padding:20px">No data yet</td></tr>';
+}
+
+async function loadLeaguesByMarket() {
+  const market = document.getElementById('league-market-sel').value;
+  const r = await fetch(`/api/statistics/leagues/reliable?market=${encodeURIComponent(market)}&limit=10`);
+  const leagues = (await r.json()).data?.leagues || [];
+  document.getElementById('leagues-by-market-body').innerHTML = leagues.length
+    ? leagues.map((l,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(l.name)}</td><td><strong style="color:var(--primary)">${(l.win_rate||0).toFixed(1)}%</strong></td><td>${l.total_predictions}</td></tr>`).join('')
+    : '<tr><td colspan="4" class="text-soft text-center" style="padding:20px">No data yet</td></tr>';
+}
+
+async function loadTeamEffective() {
+  const team = document.getElementById('team-search').value.trim();
+  if (!team) return;
+  const r = await fetch(`/api/statistics/teams/effective?team=${encodeURIComponent(team)}`);
+  const results = (await r.json()).data?.results || [];
+  document.getElementById('team-effective-body').innerHTML = results.length
+    ? results.map(r=>`<tr><td>${escapeHtml(r.market)}</td><td>${escapeHtml(r.category||'—')}</td><td>${r.total}</td><td>${r.correct||0}</td></tr>`).join('')
+    : `<tr><td colspan="4" class="text-soft text-center" style="padding:20px">No data found for "${escapeHtml(team)}"</td></tr>`;
+}
+
+async function populateLeagueSelect() {
+  const leagues = await fetchLeagues();
+  const sel = document.getElementById('league-effective-sel');
+  Object.values(leagues).flat().forEach(l => sel.appendChild(new Option(l.name, l.id)));
+}
+
+async function loadLeagueEffective() {
+  const id = document.getElementById('league-effective-sel').value;
+  if (!id) return;
+  const r = await fetch(`/api/statistics/leagues/effective?league_id=${id}`);
+  const results = (await r.json()).data?.results || [];
+  document.getElementById('league-effective-body').innerHTML = results.length
+    ? results.map(r=>`<tr><td>${escapeHtml(r.market)}</td><td>${escapeHtml(r.category||'—')}</td><td>${r.total}</td><td><strong style="color:var(--primary)">${(r.win_rate||0).toFixed(1)}%</strong></td></tr>`).join('')
+    : `<tr><td colspan="4" class="text-soft text-center" style="padding:20px">No data for this league yet</td></tr>`;
+}
+</script>
+</body>
+</html>

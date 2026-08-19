@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Predictions — OL Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<link rel="icon" href="/images/logo.png">
+<link rel="apple-touch-icon" href="/images/logo.png">
+<link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<div id="admin-sidebar"></div>
+<div id="admin-topbar"></div>
+<main id="admin-main">
+  <div class="flex-between mb-3">
+    <h1 class="admin-section-title mb-0">Predictions</h1>
+    <button class="btn btn-primary" id="add-pred-btn">+ Add Prediction</button>
+  </div>
+
+  <div class="search-bar admin-card" style="margin-bottom:16px;padding:14px;flex-wrap:wrap">
+    <input type="text" class="form-control" style="max-width:200px" placeholder="Search teams…" id="f-search">
+    <select class="form-control" style="max-width:140px" id="f-cat">
+      <option value="">All Categories</option>
+      <option>Free</option><option>VIP</option><option>Banker</option>
+    </select>
+    <select class="form-control" style="max-width:140px" id="f-result">
+      <option value="">All Results</option>
+      <option>pending</option><option>won</option><option>lost</option><option>void</option>
+    </select>
+    <select class="form-control" style="max-width:130px" id="f-pub">
+      <option value="">All</option><option value="1">Published</option><option value="0">Draft</option>
+    </select>
+    <input type="date" class="form-control" style="max-width:160px" id="f-date">
+  </div>
+
+  <div class="data-table-wrap admin-card" style="padding:0">
+    <table class="data-table">
+      <thead><tr><th><input type="checkbox" id="chk-all"></th><th>Match</th><th>Tip</th><th>Cat</th><th>Market</th><th>Odds</th><th>Conf</th><th>Date</th><th>Result</th><th>Pub</th><th>Actions</th></tr></thead>
+      <tbody id="preds-body"></tbody>
+    </table>
+  </div>
+  <div class="pager" id="pager"></div>
+
+  <div class="flex gap-2 mt-2" id="bulk-bar" style="display:none!important">
+    <button class="btn btn-ghost btn-sm" id="bulk-pub-btn"><span class="material-icons-round">check_circle</span> Publish Selected</button>
+    <button class="btn btn-ghost btn-sm" id="bulk-unpub-btn"><span class="material-icons-round">radio_button_unchecked</span> Unpublish</button>
+    <button class="btn btn-danger btn-sm" id="bulk-del-btn"><span class="material-icons-round">delete</span> Delete</button>
+  </div>
+</main>
+
+<!-- Add/Edit Modal -->
+<div class="modal-overlay" id="pred-modal">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-header"><h3 id="modal-title">Add Prediction</h3><button class="modal-close" id="modal-close-btn"><span class="material-icons-round">close</span></button></div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-id">
+      <div class="grid-2">
+        <div class="form-group"><label class="form-label">Home Team *</label><input type="text" class="form-control" id="f-home" placeholder="Arsenal"></div>
+        <div class="form-group"><label class="form-label">Away Team *</label><input type="text" class="form-control" id="f-away" placeholder="Chelsea"></div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group"><label class="form-label">League</label>
+          <select class="form-control" id="f-league"><option value="">Select league</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Match Date *</label><input type="datetime-local" class="form-control" id="f-matchdate"></div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group"><label class="form-label">Market</label>
+          <select class="form-control" id="f-market" onchange="updateTipOptions()">
+            <option>1X2</option>
+            <option>Over/Under</option>
+            <option>BTTS</option>
+            <option>Double Chance</option>
+            <option>Draw No Bet</option>
+            <option>Correct Score</option>
+            <option>Corners</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Tip *</label>
+          <select class="form-control" id="f-tip"></select>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group"><label class="form-label">Category</label>
+          <select class="form-control" id="f-category">
+            <option value="free">Free</option>
+            <option value="vip">VIP</option>
+            <option value="banker">Banker</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Odds</label><input type="number" class="form-control" id="f-odds" step="0.01" placeholder="1.85"></div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group"><label class="form-label">Confidence (1–99)</label><input type="number" class="form-control" id="f-conf" min="1" max="99" placeholder="Auto"></div>
+        <div class="form-group"><label class="form-label">Bookie</label><input type="text" class="form-control" id="f-bookie" placeholder="Bet9ja"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Analysis</label><textarea class="form-control" id="f-analysis" rows="4" placeholder="Match analysis…"></textarea></div>
+      <div class="flex gap-3 mt-1">
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="f-publish" checked> Publish immediately</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="f-banker"> Mark as Banker</label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="modal-cancel-btn">Cancel</button>
+      <button class="btn btn-primary" id="modal-save-btn">Save Prediction</button>
+    </div>
+  </div>
+</div>
+
+<!-- Set Result Modal -->
+<div class="modal-overlay" id="result-modal">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-header"><h3>Set Result</h3>
+      <button class="modal-close" id="result-close-btn">
+        <span class="material-icons-round">close</span>
+      </button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="result-id">
+      <div class="form-group"><label class="form-label">Home Score</label><input type="number" class="form-control" id="r-home" min="0"></div>
+      <div class="form-group"><label class="form-label">Away Score</label><input type="number" class="form-control" id="r-away" min="0"></div>
+      <div class="form-group"><label class="form-label">Override Result</label>
+        <select class="form-control" id="r-result"><option value="">Auto-grade</option><option value="won">Won</option><option value="lost">Lost</option><option value="void">Void</option></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="result-cancel-btn">Cancel</button>
+      <button class="btn btn-primary" id="result-save-btn">Save Result</button>
+    </div>
+  </div>
+</div>
+
+<script src="admin.js"></script>
+<script>
+injectAdminShell('predictions.html');
+let currentPage = 1, totalPreds = 0, debTimer;
+
+// Tip options per market
+const MARKET_TIPS = {
+  '1X2':          ['Home Win','Draw','Away Win'],
+  'Over/Under':   ['Over 1.5 Goals','Over 2.5 Goals','Over 3.5 Goals','Under 1.5 Goals','Under 2.5 Goals','Under 3.5 Goals'],
+  'BTTS':         ['BTTS Yes','BTTS No'],
+  'Double Chance':['Double Chance 1X','Double Chance X2','Double Chance 12'],
+  'Draw No Bet':  ['Draw No Bet Home','Draw No Bet Away'],
+  'Correct Score':['Score 1-0','Score 0-1','Score 1-1','Score 2-0','Score 0-2','Score 2-1','Score 1-2','Score 2-2','Score 3-0','Score 0-3','Score 3-1','Score 1-3','Score 3-2','Score 2-3','Score 0-0'],
+  'Corners':      ['Over 9.5 Corners','Over 10.5 Corners','Under 9.5 Corners','Under 8.5 Corners'],
+};
+
+function updateTipOptions(currentTip = '') {
+  const market = document.getElementById('f-market').value;
+  const tips = MARKET_TIPS[market] || [];
+  const sel = document.getElementById('f-tip');
+  sel.innerHTML = tips.map(t => `<option value="${t}" ${t === currentTip ? 'selected' : ''}>${t}</option>`).join('');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadLeagues();
+  loadPreds(1);
+  updateTipOptions();
+
+  document.getElementById('add-pred-btn').addEventListener('click', () => openModal());
+  document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+  document.getElementById('modal-cancel-btn').addEventListener('click', closeModal);
+  document.getElementById('modal-save-btn').addEventListener('click', savePred);
+  document.getElementById('result-close-btn').addEventListener('click', () => document.getElementById('result-modal').classList.remove('open'));
+  document.getElementById('result-cancel-btn').addEventListener('click', () => document.getElementById('result-modal').classList.remove('open'));
+  document.getElementById('result-save-btn').addEventListener('click', submitResult);
+  document.getElementById('chk-all').addEventListener('change', e => toggleAll(e.target));
+  document.getElementById('bulk-pub-btn').addEventListener('click', () => bulkPublish(1));
+  document.getElementById('bulk-unpub-btn').addEventListener('click', () => bulkPublish(0));
+  document.getElementById('bulk-del-btn').addEventListener('click', bulkDelete);
+
+  document.getElementById('f-search').addEventListener('input', () => { clearTimeout(debTimer); debTimer = setTimeout(() => loadPreds(1), 400); });
+  document.getElementById('f-cat').addEventListener('change', () => loadPreds(1));
+  document.getElementById('f-result').addEventListener('change', () => loadPreds(1));
+  document.getElementById('f-pub').addEventListener('change', () => loadPreds(1));
+  document.getElementById('f-date').addEventListener('change', () => loadPreds(1));
+});
+
+async function loadLeagues() {
+  const d = await api('/leagues');
+  const all = Object.values(d.data?.leagues||{}).flat();
+  const sel = document.getElementById('f-league');
+  all.forEach(l => sel.appendChild(new Option(l.name, l.id)));
+}
+
+function isPast(dateStr) {
+  return dateStr && new Date(dateStr) < new Date();
+}
+
+function fmtKickoff(dateStr) {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr);
+  const date = d.toLocaleDateString('en-GB', { day:'2-digit', month:'short' });
+  const time = d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+  return `${date} <span style="color:var(--primary);font-weight:700">${time}</span>`;
+}
+
+async function loadPreds(page = 1) {
+  currentPage = page;
+  const search = document.getElementById('f-search').value;
+  const cat = document.getElementById('f-cat').value;
+  const result = document.getElementById('f-result').value;
+  const pub = document.getElementById('f-pub').value;
+  const date = document.getElementById('f-date').value;
+  // Default: only show today + future unless a past date or result filter is set
+  const params = new URLSearchParams({
+    page, limit: 30, admin_view: 1,
+    ...(search && { search }),
+    ...(cat && { category: cat }),
+    ...(result && { result }),
+    ...(pub !== '' && { is_published: pub }),
+    ...(date && { date }),
+  });
+  const d = await api(`/predictions?${params}`);
+  const preds = d.data?.predictions || [];
+  totalPreds = d.data?.pagination?.total || 0;
+  const tbody = document.getElementById('preds-body');
+
+  tbody.innerHTML = preds.length ? preds.map(p => {
+    const past = isPast(p.match_date);
+    const rowStyle = past ? 'opacity:0.55' : '';
+    const pastTag = past ? '<span style="font-size:10px;color:#ff4757;font-weight:700;margin-left:4px">PAST</span>' : '';
+    return `
+    <tr style="${rowStyle}">
+      <td><input type="checkbox" class="row-chk" value="${p.id}"></td>
+      <td>
+        <strong>${escHtml(p.home_team)}</strong> vs <strong>${escHtml(p.away_team)}</strong>${pastTag}
+        <br><span class="text-muted" style="font-size:11px">${escHtml(p.league_name||'')}</span>
+      </td>
+      <td style="font-weight:600;color:var(--primary)">${escHtml(p.tip||'TBD')}</td>
+      <td><span class="badge" style="font-size:10px">${escHtml(p.category||'—')}</span></td>
+      <td style="font-size:11px">${escHtml(p.market||'—')}</td>
+      <td style="font-weight:600">${p.odds ? parseFloat(p.odds).toFixed(2) : '<span style="color:var(--text-soft)">—</span>'}</td>
+      <td>${p.confidence_score ? `<span style="color:${p.confidence_score>=80?'var(--primary)':p.confidence_score>=65?'var(--warning)':'var(--danger)'}">${p.confidence_score}%</span>` : '—'}</td>
+      <td style="font-size:12px">${fmtKickoff(p.match_date)}</td>
+      <td><span class="badge badge-${p.result||'pending'}" style="font-size:10px">${(p.result||'PEND').toUpperCase()}${p.home_score!=null?` ${p.home_score}-${p.away_score}`:''}</span></td>
+      <td>
+        <button class="btn btn-sm ${p.published_at?'btn-primary':'btn-ghost'}" data-pub-id="${p.id}" data-pub-cur="${p.published_at?1:0}" ${past&&!p.published_at?'title="Match already started — publish disabled" style="opacity:0.4;cursor:not-allowed"':''}>
+          <span class="material-icons-round" style="font-size:16px">${p.published_at?'check_circle':'radio_button_unchecked'}</span>
+        </button>
+      </td>
+      <td>
+        <div class="flex gap-1">
+          <button class="btn btn-sm btn-ghost" data-edit-id="${p.id}" title="Edit"><span class="material-icons-round">edit</span></button>
+          <button class="btn btn-sm btn-ghost" data-result-id="${p.id}" title="Set Result"><span class="material-icons-round">flag</span></button>
+          <button class="btn btn-sm btn-danger" data-del-id="${p.id}" title="Delete"><span class="material-icons-round">delete</span></button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="11" class="empty-cell">No predictions found</td></tr>`;
+
+  document.querySelectorAll('[data-pub-id]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const past = btn.style.opacity === '0.4';
+      if (past && parseInt(btn.dataset.pubCur) === 0) { showToast('Cannot publish — match has already started', 'error'); return; }
+      togglePub(btn.dataset.pubId, parseInt(btn.dataset.pubCur));
+    });
+  });
+  document.querySelectorAll('[data-edit-id]').forEach(btn => btn.addEventListener('click', () => editPred(btn.dataset.editId)));
+  document.querySelectorAll('[data-result-id]').forEach(btn => btn.addEventListener('click', () => openResult(btn.dataset.resultId)));
+  document.querySelectorAll('[data-del-id]').forEach(btn => btn.addEventListener('click', () => deletePred(btn.dataset.delId)));
+
+  renderPager(document.getElementById('pager'), page, totalPreds, 30, 'loadPreds');
+}
+
+function openModal(p = null) {
+  document.getElementById('pred-modal').classList.add('open');
+  document.getElementById('modal-title').textContent = p ? 'Edit Prediction' : 'Add Prediction';
+  document.getElementById('edit-id').value = p?.id || '';
+  document.getElementById('f-home').value = p?.home_team || '';
+  document.getElementById('f-away').value = p?.away_team || '';
+  document.getElementById('f-odds').value = p?.odds || '';
+  document.getElementById('f-conf').value = p?.confidence_score || '';
+  document.getElementById('f-bookie').value = p?.bookie || '';
+  document.getElementById('f-analysis').value = p?.analysis || '';
+  document.getElementById('f-market').value = p?.market || '1X2';
+  document.getElementById('f-category').value = (p?.category || 'free').toLowerCase();
+  document.getElementById('f-matchdate').value = p?.match_date ? p.match_date.slice(0,16) : '';
+  document.getElementById('f-league').value = p?.league_id || '';
+  // For new predictions: always pre-check "publish immediately"
+  document.getElementById('f-publish').checked = p ? !!p.published_at : true;
+  document.getElementById('f-banker').checked = !!p?.is_banker;
+  // Populate tip dropdown based on selected market
+  updateTipOptions(p?.tip || '');
+
+  if (p && isPast(p.match_date)) {
+    showToast('Warning: this match has already kicked off', 'error');
+  }
+}
+function closeModal() { document.getElementById('pred-modal').classList.remove('open'); }
+
+async function editPred(id) {
+  const d = await api(`/predictions/admin/${id}`);
+  openModal(d.data?.prediction);
+}
+
+async function savePred() {
+  const id = document.getElementById('edit-id').value;
+  const matchDate = document.getElementById('f-matchdate').value;
+  if (!id && matchDate && new Date(matchDate) < new Date()) {
+    if (!confirm('This match date is in the past. Publish anyway?')) return;
+  }
+  const body = {
+    home_team: document.getElementById('f-home').value.trim(),
+    away_team: document.getElementById('f-away').value.trim(),
+    tip: document.getElementById('f-tip').value,
+    market: document.getElementById('f-market').value,
+    category: document.getElementById('f-category').value,
+    odds: parseFloat(document.getElementById('f-odds').value)||null,
+    confidence_score: parseInt(document.getElementById('f-conf').value)||null,
+    bookie: document.getElementById('f-bookie').value.trim(),
+    analysis: document.getElementById('f-analysis').value.trim(),
+    match_date: matchDate,
+    league_id: document.getElementById('f-league').value||null,
+    is_published: document.getElementById('f-publish').checked ? 1 : 0,
+    is_banker: document.getElementById('f-banker').checked ? 1 : 0,
+  };
+  if (!body.home_team || !body.away_team || !body.tip || !body.match_date) { showToast('Fill required fields','error'); return; }
+  const d = id
+    ? await api(`/predictions/admin/${id}`, {method:'PUT', body:JSON.stringify(body)})
+    : await api('/predictions/admin', {method:'POST', body:JSON.stringify(body)});
+  if (d.success) { closeModal(); showToast(id ? 'Updated!' : 'Created & published!', 'success'); loadPreds(currentPage); }
+  else showToast(d.message,'error');
+}
+
+async function togglePub(id, cur) {
+  const d = await api(`/predictions/admin/${id}/publish`, {method:'PUT', body:JSON.stringify({is_published: cur ? 0 : 1})});
+  if (d.success) showToast(d.message || (cur ? 'Unpublished' : 'Published'), 'success');
+  else showToast(d.message || 'Toggle failed', 'error');
+  loadPreds(currentPage);
+}
+
+function openResult(id) {
+  document.getElementById('result-id').value = id;
+  document.getElementById('r-home').value = '';
+  document.getElementById('r-away').value = '';
+  document.getElementById('r-result').value = '';
+  document.getElementById('result-modal').classList.add('open');
+}
+
+async function submitResult() {
+  const id = document.getElementById('result-id').value;
+  const body = { home_score: parseInt(document.getElementById('r-home').value), away_score: parseInt(document.getElementById('r-away').value), result: document.getElementById('r-result').value||undefined };
+  const d = await api(`/predictions/admin/${id}/result`, {method:'PUT', body:JSON.stringify(body)});
+  if (d.success) { document.getElementById('result-modal').classList.remove('open'); showToast('Result saved','success'); loadPreds(currentPage); }
+  else showToast(d.message,'error');
+}
+
+async function deletePred(id) {
+  if (!confirm('Delete this prediction?')) return;
+  const d = await api(`/predictions/admin/${id}`, {method:'DELETE'});
+  if (d.success) { showToast('Deleted','info'); loadPreds(currentPage); }
+  else showToast(d.message,'error');
+}
+
+function toggleAll(chk) { document.querySelectorAll('.row-chk').forEach(c => c.checked = chk.checked); }
+function getSelected() { return [...document.querySelectorAll('.row-chk:checked')].map(c=>c.value); }
+
+async function bulkPublish(val) {
+  const ids = getSelected(); if (!ids.length) { showToast('Select predictions first','error'); return; }
+  await Promise.all(ids.map(id => api(`/predictions/admin/${id}/publish`, {method:'PUT', body:JSON.stringify({is_published:val})})));
+  showToast('Done','success'); loadPreds(currentPage);
+}
+async function bulkDelete() {
+  const ids = getSelected(); if (!ids.length) { showToast('Select predictions first','error'); return; }
+  if (!confirm(`Delete ${ids.length} predictions?`)) return;
+  await Promise.all(ids.map(id => api(`/predictions/admin/${id}`, {method:'DELETE'})));
+  showToast('Deleted','info'); loadPreds(currentPage);
+}
+</script>
+</body>
+</html>

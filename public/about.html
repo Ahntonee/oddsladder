@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>About Oddslander</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<link rel="icon" href="/images/logo.png">
+<link rel="apple-touch-icon" href="/images/logo.png">
+<link rel="stylesheet" href="/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/marked@4/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+</head>
+<body>
+<div id="header-placeholder"></div>
+<main>
+  <section><div class="container" style="max-width:780px">
+    <div id="about-content"><div class="skeleton" style="height:400px;border-radius:14px"></div></div>
+  </div></section>
+</main>
+<div id="footer-placeholder"></div>
+<script src="/js/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const r = await fetch('/api/pages/about');
+    const data = await r.json();
+    const page = data.data?.page;
+    if (!page) throw new Error();
+    document.title = `${page.title} — Oddslander`;
+    document.getElementById('about-content').innerHTML = `
+      <h1 style="font-size:clamp(28px,4vw,42px);font-weight:900;margin-bottom:28px">${escapeHtml(page.title)}</h1>
+      <div class="article-content">${DOMPurify.sanitize(marked.parse(page.content||''))}</div>`;
+  } catch {
+    document.getElementById('about-content').innerHTML = `<h1>About Oddslander</h1><div class="article-content"><h2>Our Mission</h2><p>Oddslander is a football predictions platform powered by a real-time data pipeline and an AI-driven Intelligence Engine targeting an 80–88% prediction win rate.</p><h2>The Intelligence Engine</h2><p>We combine Poisson statistical models, historical outcome learning, and live bookie odds to deliver the most accurate football tips.</p><h2>Responsible Gambling</h2><p>Oddslander tips are for entertainment only. Always gamble responsibly.</p></div>`;
+  }
+});
+</script>
+</body>
+</html>

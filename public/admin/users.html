@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Users — OL Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<link rel="icon" href="/images/logo.png">
+<link rel="apple-touch-icon" href="/images/logo.png">
+<link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<div id="admin-sidebar"></div>
+<div id="admin-topbar"></div>
+<main id="admin-main">
+  <h1 class="admin-section-title">Users</h1>
+
+  <div class="search-bar mb-2">
+    <input type="text" class="form-control" style="max-width:240px" placeholder="Search name or email…" id="u-search">
+    <select class="form-control" style="max-width:130px" id="u-role">
+      <option value="">All Roles</option><option value="free">Free</option><option value="vip">VIP</option><option value="admin">Admin</option>
+    </select>
+    <select class="form-control" style="max-width:140px" id="u-banned">
+      <option value="">All Status</option><option value="0">Active</option><option value="1">Banned</option>
+    </select>
+  </div>
+
+  <div class="data-table-wrap admin-card" style="padding:0">
+    <table class="data-table">
+      <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Country</th><th>Joined</th><th>Sub Expires</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="users-body"></tbody>
+    </table>
+  </div>
+  <div class="pager" id="pager"></div>
+</main>
+
+<!-- User detail modal -->
+<div class="modal-overlay" id="user-modal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header"><h3>User Details</h3><button class="modal-close" id="user-modal-close"><span class="material-icons-round">close</span></button></div>
+    <div class="modal-body" id="user-detail-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="user-modal-cancel">Close</button>
+      <button class="btn btn-primary" id="modal-vip-btn"></button>
+      <button class="btn btn-danger" id="modal-ban-btn"></button>
+    </div>
+  </div>
+</div>
+
+<script src="admin.js"></script>
+<script>
+injectAdminShell('users.html');
+let debTimer, currentPage = 1, selectedUser = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadUsers(1);
+
+  document.getElementById('u-search').addEventListener('input', () => { clearTimeout(debTimer); debTimer = setTimeout(() => loadUsers(1), 400); });
+  document.getElementById('u-role').addEventListener('change', () => loadUsers(1));
+  document.getElementById('u-banned').addEventListener('change', () => loadUsers(1));
+  document.getElementById('user-modal-close').addEventListener('click', closeUser);
+  document.getElementById('user-modal-cancel').addEventListener('click', closeUser);
+});
+
+async function loadUsers(page = 1) {
+  currentPage = page;
+  const search = document.getElementById('u-search').value;
+  const role = document.getElementById('u-role').value;
+  const banned = document.getElementById('u-banned').value;
+  const params = new URLSearchParams({ page, limit: 25, ...(search&&{search}), ...(role&&{role}), ...(banned!==''&&{is_banned:banned}) });
+  const d = await api(`/admin/users?${params}`);
+  const users = d.data?.users || [];
+  document.getElementById('users-body').innerHTML = users.length
+    ? users.map(u => `<tr>
+        <td><strong>${escHtml(u.name)}</strong></td>
+        <td>${escHtml(u.email)}</td>
+        <td><span class="badge badge-${u.role==='vip'?'vip':u.role==='admin'?'admin':'free'}">${u.role}</span></td>
+        <td>${escHtml(u.country||'—')}</td>
+        <td>${fmtDate(u.created_at)}</td>
+        <td>${u.sub_expires ? fmtDate(u.sub_expires) : '—'}</td>
+        <td><span class="badge ${u.is_banned?'badge-inactive':'badge-active'}">${u.is_banned?'Banned':'Active'}</span></td>
+        <td>
+          <div class="flex gap-2">
+            <button class="btn btn-sm btn-ghost" data-view-id="${u.id}"><span class="material-icons-round">visibility</span> View</button>
+            <button class="btn btn-sm ${u.is_banned?'btn-primary':'btn-danger'}" data-ban-id="${u.id}" data-ban-cur="${u.is_banned}">${u.is_banned?'Unban':'Ban'}</button>
+          </div>
+        </td>
+      </tr>`).join('')
+    : '<tr><td colspan="8" class="empty-cell">No users found</td></tr>';
+
+  document.querySelectorAll('[data-view-id]').forEach(btn => btn.addEventListener('click', () => viewUser(btn.dataset.viewId)));
+  document.querySelectorAll('[data-ban-id]').forEach(btn => btn.addEventListener('click', () => toggleBan(btn.dataset.banId, parseInt(btn.dataset.banCur))));
+
+  renderPager(document.getElementById('pager'), page, d.data?.total||0, 25, 'loadUsers');
+}
+
+async function viewUser(id) {
+  const d = await api(`/admin/users/${id}`);
+  const u = d.data?.user;
+  if (!u) return;
+  selectedUser = u;
+  document.getElementById('user-detail-body').innerHTML = `
+    <div style="display:grid;gap:10px;font-size:14px">
+      <div class="flex-between"><span class="text-soft">Name</span><strong>${escHtml(u.name)}</strong></div>
+      <div class="flex-between"><span class="text-soft">Email</span><strong>${escHtml(u.email)}</strong></div>
+      <div class="flex-between"><span class="text-soft">Role</span><span class="badge badge-${u.role==='vip'?'vip':u.role==='admin'?'admin':'free'}">${u.role}</span></div>
+      <div class="flex-between"><span class="text-soft">Country</span><strong>${escHtml(u.country||'—')}</strong></div>
+      <div class="flex-between"><span class="text-soft">Joined</span><strong>${fmtDate(u.created_at)}</strong></div>
+      <div class="flex-between"><span class="text-soft">Subscription</span><strong>${u.sub_plan?u.sub_plan+' (expires '+fmtDate(u.sub_expires)+')':'Free'}</strong></div>
+      <div class="flex-between"><span class="text-soft">Bookmarks</span><strong>${u.bookmark_count||0}</strong></div>
+      <div class="flex-between"><span class="text-soft">Comments</span><strong>${u.comment_count||0}</strong></div>
+      <div class="flex-between"><span class="text-soft">Status</span><span class="badge ${u.is_banned?'badge-inactive':'badge-active'}">${u.is_banned?'Banned':'Active'}</span></div>
+    </div>`;
+
+  const vipBtn = document.getElementById('modal-vip-btn');
+  const banBtn = document.getElementById('modal-ban-btn');
+  vipBtn.textContent = u.role === 'vip' ? 'Revoke VIP' : 'Grant VIP';
+  banBtn.textContent = u.is_banned ? 'Unban' : 'Ban';
+
+  const newVipBtn = vipBtn.cloneNode(true);
+  const newBanBtn = banBtn.cloneNode(true);
+  vipBtn.parentNode.replaceChild(newVipBtn, vipBtn);
+  banBtn.parentNode.replaceChild(newBanBtn, banBtn);
+  newVipBtn.addEventListener('click', () => grantVip(u.id, u.role !== 'vip'));
+  newBanBtn.addEventListener('click', () => toggleBan(u.id, u.is_banned, true));
+
+  document.getElementById('user-modal').classList.add('open');
+}
+function closeUser() { document.getElementById('user-modal').classList.remove('open'); }
+
+async function toggleBan(id, isBanned, fromModal = false) {
+  if (!isBanned && !confirm('Ban this user?')) return;
+  const d = await api(`/admin/users/${id}/ban`, {method:'PUT', body:JSON.stringify({is_banned:isBanned?0:1})});
+  if (d.success) { showToast(isBanned?'Unbanned':'Banned','info'); loadUsers(currentPage); if (fromModal) closeUser(); }
+  else showToast(d.message,'error');
+}
+
+async function grantVip(id, grant) {
+  const d = await api(`/admin/users/${id}/role`, {method:'PUT', body:JSON.stringify({role:grant?'vip':'free'})});
+  if (d.success) { showToast(grant?'VIP granted':'VIP revoked','success'); loadUsers(currentPage); closeUser(); }
+  else showToast(d.message,'error');
+}
+</script>
+</body>
+</html>

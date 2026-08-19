@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Settings — OL Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<link rel="icon" href="/images/logo.png">
+<link rel="apple-touch-icon" href="/images/logo.png">
+<link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<div id="admin-sidebar"></div>
+<div id="admin-topbar"></div>
+<main id="admin-main">
+  <h1 class="admin-section-title"><span class="material-icons-round">settings</span> Settings</h1>
+
+  <div class="tab-row mb-3">
+    <button class="tab-btn active" data-tab="general">General</button>
+    <button class="tab-btn" data-tab="stats">Stat Overrides</button>
+    <button class="tab-btn" data-tab="pricing">Pricing</button>
+    <button class="tab-btn" data-tab="telegram">Telegram</button>
+  </div>
+
+  <!-- General -->
+  <div id="tab-general">
+    <div class="admin-card mb-3">
+      <h3 style="font-size:15px;margin-bottom:16px">Site Settings</h3>
+      <div class="grid-2">
+        <div class="form-group"><label class="form-label">Site Name</label><input type="text" class="form-control" id="g-sitename" placeholder="Oddslander"></div>
+        <div class="form-group"><label class="form-label">Site URL</label><input type="url" class="form-control" id="g-siteurl" placeholder="https://oddslander.com"></div>
+        <div class="form-group"><label class="form-label">Support Email</label><input type="email" class="form-control" id="g-email" placeholder="support@oddslander.com"></div>
+        <div class="form-group"><label class="form-label">AdSense Client ID</label><input type="text" class="form-control" id="g-adsense" placeholder="ca-pub-xxxxxxxxxxxxxxxxx"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Site Description (meta)</label><textarea class="form-control" id="g-desc" rows="3" placeholder="Football predictions powered by AI…"></textarea></div>
+      <div class="flex gap-3 mb-3">
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="g-maintenance"> Maintenance Mode</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="g-registration"> Allow Registration</label>
+      </div>
+      <button class="btn btn-primary" id="save-general-btn">Save General Settings</button>
+    </div>
+
+    <div class="admin-card">
+      <h3 style="font-size:15px;margin-bottom:14px"><span class="material-icons-round">router</span> API Usage</h3>
+      <div id="api-usage"><div class="skeleton" style="height:60px"></div></div>
+    </div>
+  </div>
+
+  <!-- Stat overrides -->
+  <div id="tab-stats" style="display:none">
+    <div class="admin-card">
+      <h3 style="font-size:15px;margin-bottom:8px">Public Stat Overrides</h3>
+      <p class="text-soft mb-3" style="font-size:13px">Override the stats shown on the homepage banner. Leave blank to use live calculated values.</p>
+      <div class="grid-2">
+        <div class="form-group"><label class="form-label">Win Rate % (override)</label><input type="number" class="form-control" id="ov-winrate" placeholder="e.g. 82"></div>
+        <div class="form-group"><label class="form-label">Total Predictions (override)</label><input type="number" class="form-control" id="ov-total" placeholder="e.g. 4200"></div>
+        <div class="form-group"><label class="form-label">VIP Win Rate % (override)</label><input type="number" class="form-control" id="ov-vipwinrate" placeholder="e.g. 88"></div>
+        <div class="form-group"><label class="form-label">Leagues Covered (override)</label><input type="number" class="form-control" id="ov-leagues" placeholder="e.g. 35"></div>
+      </div>
+      <button class="btn btn-primary" id="save-overrides-btn">Save Overrides</button>
+    </div>
+  </div>
+
+  <!-- Pricing -->
+  <div id="tab-pricing" style="display:none">
+    <div class="admin-card">
+      <h3 style="font-size:15px;margin-bottom:8px">VIP Pricing (₦)</h3>
+      <p class="text-soft mb-3" style="font-size:13px">These amounts are passed to Paystack. Update after saving your Paystack plans.</p>
+      <div class="grid-2">
+        <div class="form-group"><label class="form-label">Monthly Price (₦)</label><input type="number" class="form-control" id="pr-monthly" placeholder="7500"></div>
+        <div class="form-group"><label class="form-label">Quarterly Price (₦)</label><input type="number" class="form-control" id="pr-quarterly" placeholder="19500"></div>
+        <div class="form-group"><label class="form-label">Annual Price (₦)</label><input type="number" class="form-control" id="pr-annual" placeholder="59900"></div>
+        <div class="form-group"><label class="form-label">Paystack Public Key</label><input type="text" class="form-control" id="pr-pubkey" placeholder="pk_live_xxxxxxxx"></div>
+      </div>
+      <button class="btn btn-primary" id="save-pricing-btn">Save Pricing</button>
+    </div>
+  </div>
+
+  <!-- Telegram -->
+  <div id="tab-telegram" style="display:none">
+    <div class="admin-card">
+      <h3 style="font-size:15px;margin-bottom:8px">Telegram VIP Channel</h3>
+      <p class="text-soft mb-3" style="font-size:13px">VIP subscribers will be sent this link after subscribing. Keep it private — only share with verified VIPs.</p>
+      <div class="form-group"><label class="form-label">Telegram Invite Link</label><input type="url" class="form-control" id="tg-link" placeholder="https://t.me/+xxxxxxxxxxxxxxxx"></div>
+      <div class="form-group"><label class="form-label">Bot Token (for notifications)</label><input type="text" class="form-control" id="tg-bot" placeholder="xxxxxxxxxx:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"></div>
+      <div class="form-group"><label class="form-label">Channel Chat ID</label><input type="text" class="form-control" id="tg-chat" placeholder="-100xxxxxxxxxx"></div>
+      <button class="btn btn-primary" id="save-telegram-btn">Save Telegram Settings</button>
+      <div class="mt-3">
+        <button class="btn btn-ghost btn-sm" id="test-telegram-btn"><span class="material-icons-round">notifications</span> Send Test Notification</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="admin.js"></script>
+<script>
+injectAdminShell('settings.html');
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadSettings();
+  loadApiUsage();
+
+  // Tab switching
+  document.querySelectorAll('.tab-btn[data-tab]').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab, btn));
+  });
+
+  document.getElementById('save-general-btn').addEventListener('click', saveGeneral);
+  document.getElementById('save-overrides-btn').addEventListener('click', saveOverrides);
+  document.getElementById('save-pricing-btn').addEventListener('click', savePricing);
+  document.getElementById('save-telegram-btn').addEventListener('click', saveTelegram);
+  document.getElementById('test-telegram-btn').addEventListener('click', testTelegram);
+});
+
+async function loadSettings() {
+  const d = await api('/admin/settings');
+  const s = d.data?.settings || {};
+  document.getElementById('g-sitename').value = s.site_name || '';
+  document.getElementById('g-siteurl').value = s.site_url || '';
+  document.getElementById('g-email').value = s.support_email || '';
+  document.getElementById('g-adsense').value = s.adsense_client_id || '';
+  document.getElementById('g-desc').value = s.site_description || '';
+  document.getElementById('g-maintenance').checked = !!s.maintenance_mode;
+  document.getElementById('g-registration').checked = s.allow_registration !== false;
+  document.getElementById('ov-winrate').value = s.override_win_rate || '';
+  document.getElementById('ov-total').value = s.override_total_predictions || '';
+  document.getElementById('ov-vipwinrate').value = s.override_vip_win_rate || '';
+  document.getElementById('ov-leagues').value = s.override_leagues_covered || '';
+  document.getElementById('pr-monthly').value = s.price_monthly || 7500;
+  document.getElementById('pr-quarterly').value = s.price_quarterly || 19500;
+  document.getElementById('pr-annual').value = s.price_annual || 59900;
+  document.getElementById('pr-pubkey').value = s.paystack_public_key || '';
+  document.getElementById('tg-link').value = s.telegram_invite_link || '';
+  document.getElementById('tg-chat').value = s.telegram_chat_id || '';
+}
+
+async function loadApiUsage() {
+  const d = await api('/admin/settings');
+  const s = d.data?.settings || {};
+  const used = parseInt(s.odds_api_calls_today) || 0;
+  const limit = 16;
+  document.getElementById('api-usage').innerHTML = `
+    <div class="flex" style="flex-wrap:wrap;gap:20px;font-size:14px">
+      <div>The Odds API today: <strong style="color:${used>=limit?'var(--danger)':'var(--primary)'}">${used}/${limit}</strong> calls</div>
+      <div>API-Football calls: <strong>${s.apifootball_calls_today||0}</strong> today</div>
+      <div style="margin-top:8px;width:100%">
+        <div style="height:6px;background:rgba(173,223,241,0.08);border-radius:3px;overflow:hidden">
+          <div style="height:100%;background:${used>=limit?'var(--danger)':'var(--primary)'};width:${Math.min(used/limit*100,100)}%;border-radius:3px"></div>
+        </div>
+      </div>
+    </div>`;
+}
+
+async function saveGeneral() {
+  const body = {
+    site_name: document.getElementById('g-sitename').value.trim(),
+    site_url: document.getElementById('g-siteurl').value.trim(),
+    support_email: document.getElementById('g-email').value.trim(),
+    adsense_client_id: document.getElementById('g-adsense').value.trim(),
+    site_description: document.getElementById('g-desc').value.trim(),
+    maintenance_mode: document.getElementById('g-maintenance').checked ? 1 : 0,
+    allow_registration: document.getElementById('g-registration').checked ? 1 : 0,
+  };
+  const d = await api('/admin/settings', {method:'PUT', body:JSON.stringify(body)});
+  if (d.success) showToast('Settings saved!','success');
+  else showToast(d.message,'error');
+}
+
+async function saveOverrides() {
+  const body = {
+    override_win_rate: document.getElementById('ov-winrate').value || null,
+    override_total_predictions: document.getElementById('ov-total').value || null,
+    override_vip_win_rate: document.getElementById('ov-vipwinrate').value || null,
+    override_leagues_covered: document.getElementById('ov-leagues').value || null,
+  };
+  const d = await api('/admin/settings', {method:'PUT', body:JSON.stringify(body)});
+  if (d.success) showToast('Overrides saved!','success');
+  else showToast(d.message,'error');
+}
+
+async function savePricing() {
+  const body = {
+    price_monthly: parseInt(document.getElementById('pr-monthly').value)||7500,
+    price_quarterly: parseInt(document.getElementById('pr-quarterly').value)||19500,
+    price_annual: parseInt(document.getElementById('pr-annual').value)||59900,
+    paystack_public_key: document.getElementById('pr-pubkey').value.trim(),
+  };
+  const d = await api('/admin/settings', {method:'PUT', body:JSON.stringify(body)});
+  if (d.success) showToast('Pricing saved!','success');
+  else showToast(d.message,'error');
+}
+
+async function saveTelegram() {
+  const body = {
+    telegram_invite_link: document.getElementById('tg-link').value.trim(),
+    telegram_chat_id: document.getElementById('tg-chat').value.trim(),
+  };
+  const d = await api('/admin/settings', {method:'PUT', body:JSON.stringify(body)});
+  if (d.success) showToast('Telegram settings saved!','success');
+  else showToast(d.message,'error');
+}
+
+async function testTelegram() {
+  const d = await api('/admin/settings/telegram-test', {method:'POST'});
+  if (d.success) showToast('Test message sent!','success');
+  else showToast(d.message||'Failed — check bot token & chat ID','error');
+}
+
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  ['general','stats','pricing','telegram'].forEach(t => document.getElementById('tab-'+t).style.display = t===tab?'block':'none');
+}
+</script>
+</body>
+</html>

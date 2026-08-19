@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Oddslander — Football Intelligence Predictions</title>
+<meta name="description" content="Data-driven football predictions with an AI-powered Intelligence Engine. Free and VIP tips daily.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+<link rel="icon" href="/images/logo.png">
+<link rel="apple-touch-icon" href="/images/logo.png">
+</head>
+<body>
+<div id="header-placeholder"></div>
+
+<main>
+  <!-- Banker of the Day -->
+  <section style="padding-top:24px">
+    <div class="container" id="banker-section"></div>
+  </section>
+
+  <!-- VIP Teaser -->
+  <section style="padding-top:8px">
+    <div class="container" id="vip-section"></div>
+  </section>
+
+  <!-- Predictions -->
+  <section>
+    <div class="container">
+      <div class="flex-between mb-3">
+        <h2 class="section-title mb-0">Today's <span>Tips</span></h2>
+        <a href="/predictions.html" class="btn btn-outline btn-sm">View All →</a>
+      </div>
+
+      <!-- Category Tabs -->
+      <div class="tab-row mb-2" id="category-tabs">
+        <button class="category-tab active" data-cat="free">All Free</button>
+        <button class="category-tab" data-cat="over_1_5">Over 1.5</button>
+        <button class="category-tab" data-cat="over_2_5">Over 2.5</button>
+        <button class="category-tab" data-cat="over_3_5">Over 3.5</button>
+        <button class="category-tab" data-cat="under_2_5">Under 2.5</button>
+        <button class="category-tab" data-cat="gg">BTTS</button>
+        <button class="category-tab" data-cat="home_win">Home Win</button>
+        <button class="category-tab" data-cat="away_win">Away Win</button>
+        <button class="category-tab" data-cat="draw">Draw</button>
+      </div>
+
+      <!-- Date Tabs -->
+      <div class="date-tabs mb-2">
+        <button class="date-tab" data-date="yesterday">Yesterday</button>
+        <button class="date-tab active" data-date="today">Today</button>
+        <button class="date-tab" data-date="tomorrow">Tomorrow</button>
+      </div>
+
+      <!-- Grid -->
+      <div class="grid-2" id="predictions-grid"></div>
+
+      <div class="text-center mt-3">
+        <button class="btn btn-outline" id="load-more" style="display:none">Load More</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Recent Winning Tips -->
+  <section class="recent-wins-section">
+    <div class="container">
+      <div class="flex-between mb-3">
+        <h2 class="section-title mb-0">Our Recent <span>Winning Tips</span></h2>
+        <a href="/predictions.html?result=won" class="btn btn-outline btn-sm">View More</a>
+      </div>
+      <div id="recent-wins-list">
+        <div class="rw-card skeleton" style="height:88px"></div>
+        <div class="rw-card skeleton" style="height:88px;opacity:.75"></div>
+        <div class="rw-card skeleton" style="height:88px;opacity:.5"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="footer-placeholder"></div>
+<script src="/js/app.js"></script>
+<script>
+let currentPage = 1, currentDate = 'today', currentCat = 'free';
+let totalPages = 1;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await renderBankerCards(document.getElementById('banker-section'));
+  await renderVipTeaser(document.getElementById('vip-section'));
+  applyFilters();
+  loadRecentWins();
+  setupCategoryTabs();
+  setupDateTabs();
+  document.getElementById('load-more').addEventListener('click', loadMore);
+});
+
+function setupCategoryTabs() {
+  document.querySelectorAll('.category-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.category-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentCat = btn.dataset.cat;
+      currentPage = 1;
+      applyFilters();
+    });
+  });
+}
+
+function setupDateTabs() {
+  document.querySelectorAll('.date-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.date-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentDate = btn.dataset.date;
+      currentPage = 1;
+      applyFilters();
+    });
+  });
+}
+
+function applyFilters() {
+  currentPage = 1;
+  const grid = document.getElementById('predictions-grid');
+  loadPredictions({ date: currentDate, category: currentCat, page: currentPage }, grid)
+    .then(pg => {
+      totalPages = pg?.totalPages || 1;
+      document.getElementById('load-more').style.display = totalPages > 1 ? 'inline-flex' : 'none';
+    });
+}
+
+async function loadMore() {
+  if (currentPage >= totalPages) return;
+  currentPage++;
+  const grid = document.getElementById('predictions-grid');
+  const pg = await loadPredictions({ date: currentDate, category: currentCat, page: currentPage }, grid, true);
+  totalPages = pg?.totalPages || 1;
+  if (currentPage >= totalPages) document.getElementById('load-more').style.display = 'none';
+}
+
+// Auto-refresh today's cards every 60 s to reflect live scores
+setInterval(() => {
+  const isToday = currentDate === new Date().toISOString().slice(0,10);
+  if (!isToday) return;
+  const grid = document.getElementById('predictions-grid');
+  if (grid) loadPredictions({ date: currentDate, category: currentCat, page: 1 }, grid);
+}, 60000);
+</script>
+</body>
+</html>

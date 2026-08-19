@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Blog — OL Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<link rel="icon" href="/images/logo.png">
+<link rel="apple-touch-icon" href="/images/logo.png">
+<link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="admin.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+<script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+</head>
+<body>
+<div id="admin-sidebar"></div>
+<div id="admin-topbar"></div>
+<main id="admin-main">
+  <div class="flex-between mb-3">
+    <h1 class="admin-section-title mb-0">Blog Posts</h1>
+    <button class="btn btn-primary" id="new-post-btn">+ New Post</button>
+  </div>
+
+  <!-- List view -->
+  <div id="list-view">
+    <div class="search-bar mb-2">
+      <input type="text" class="form-control" style="max-width:220px" placeholder="Search posts…" id="b-search">
+      <select class="form-control" style="max-width:160px" id="b-cat">
+        <option value="">All Categories</option>
+        <option>Predictions</option><option>Analysis</option><option>News</option><option>Tips</option><option>Education</option>
+      </select>
+      <select class="form-control" style="max-width:130px" id="b-pub">
+        <option value="">All</option><option value="1">Published</option><option value="0">Draft</option>
+      </select>
+    </div>
+    <div class="data-table-wrap admin-card" style="padding:0">
+      <table class="data-table">
+        <thead><tr><th>Title</th><th>Category</th><th>Author</th><th>Date</th><th>Published</th><th>Actions</th></tr></thead>
+        <tbody id="posts-body"></tbody>
+      </table>
+    </div>
+    <div class="pager" id="pager"></div>
+  </div>
+
+  <!-- Editor view -->
+  <div id="editor-view" style="display:none">
+    <div class="flex-between mb-3">
+      <h2 style="font-size:18px" id="editor-title">New Post</h2>
+      <button class="btn btn-ghost btn-sm" id="back-btn">← Back to list</button>
+    </div>
+    <div class="admin-card">
+      <input type="hidden" id="edit-id">
+      <div class="grid-2 mb-2">
+        <div class="form-group"><label class="form-label">Title *</label><input type="text" class="form-control" id="p-title" placeholder="Post title"></div>
+        <div class="form-group"><label class="form-label">Category</label>
+          <select class="form-control" id="p-cat">
+            <option>Predictions</option><option>Analysis</option><option>News</option><option>Tips</option><option>Education</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group mb-2"><label class="form-label">Excerpt</label><input type="text" class="form-control" id="p-excerpt" placeholder="Short description shown on blog list"></div>
+      <div class="form-group mb-2"><label class="form-label">Featured Image</label>
+        <div class="flex gap-2" style="align-items:center">
+          <input type="file" id="p-img" accept="image/*" style="font-size:13px">
+          <img id="p-img-preview" style="height:48px;border-radius:6px;display:none">
+          <input type="hidden" id="p-img-data">
+        </div>
+      </div>
+      <div class="form-group mb-2"><label class="form-label">Content (Markdown) *</label><textarea id="p-content"></textarea></div>
+      <div class="grid-2 mb-2">
+        <div class="form-group"><label class="form-label">Meta Title</label><input type="text" class="form-control" id="p-meta-title" placeholder="SEO title"></div>
+        <div class="form-group"><label class="form-label">Meta Description</label><input type="text" class="form-control" id="p-meta-desc" placeholder="SEO description"></div>
+      </div>
+      <div class="form-group mb-3"><label class="form-label">Keywords</label><input type="text" class="form-control" id="p-keywords" placeholder="comma, separated, keywords"></div>
+      <div class="flex gap-3 mb-3">
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="p-publish"> Publish immediately</label>
+      </div>
+      <div class="flex gap-2">
+        <button class="btn btn-primary" id="save-btn">Save Post</button>
+        <button class="btn btn-ghost" id="cancel-btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="admin.js"></script>
+<script>
+injectAdminShell('blog.html');
+let debTimer, mde = null, currentPage = 1;
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadPosts(1);
+
+  // Bind all interactions via addEventListener — no onclick attributes
+  document.getElementById('new-post-btn').addEventListener('click', () => showEditor());
+  document.getElementById('back-btn').addEventListener('click', hideEditor);
+  document.getElementById('cancel-btn').addEventListener('click', hideEditor);
+  document.getElementById('save-btn').addEventListener('click', savePost);
+  document.getElementById('b-search').addEventListener('input', () => { clearTimeout(debTimer); debTimer = setTimeout(() => loadPosts(1), 400); });
+  document.getElementById('b-cat').addEventListener('change', () => loadPosts(1));
+  document.getElementById('b-pub').addEventListener('change', () => loadPosts(1));
+  document.getElementById('p-img').addEventListener('change', previewImg);
+});
+
+async function loadPosts(page = 1) {
+  currentPage = page;
+  const search = document.getElementById('b-search').value;
+  const cat = document.getElementById('b-cat').value;
+  const pub = document.getElementById('b-pub').value;
+  const params = new URLSearchParams({ page, limit: 20, ...(search && { search }), ...(cat && { category: cat }), ...(pub !== '' && { is_published: pub }) });
+  const d = await api(`/blog?${params}`);
+  const posts = d.data?.posts || [];
+  document.getElementById('posts-body').innerHTML = posts.length
+    ? posts.map(p => `<tr>
+        <td><strong>${escHtml(p.title)}</strong><br><a href="/blog/${escHtml(p.slug)}" target="_blank" class="text-muted" style="font-size:11px">/blog/${escHtml(p.slug)}</a></td>
+        <td>${escHtml(p.category || '—')}</td>
+        <td>${escHtml(p.author_name || '—')}</td>
+        <td>${fmtDate(p.published_at || p.created_at)}</td>
+        <td><button class="btn btn-sm ${p.is_published ? 'btn-primary' : 'btn-ghost'}" data-pub-id="${p.id}" data-pub-cur="${p.is_published}">${p.is_published ? 'Published' : 'Draft'}</button></td>
+        <td>
+          <div class="flex gap-2">
+            <button class="btn btn-sm btn-ghost" data-edit-id="${p.id}"><span class="material-icons-round">edit</span> Edit</button>
+            <button class="btn btn-sm btn-danger" data-del-id="${p.id}"><span class="material-icons-round">delete</span></button>
+          </div>
+        </td>
+      </tr>`).join('')
+    : '<tr><td colspan="6" class="empty-cell">No posts yet — click "+ New Post" to create one</td></tr>';
+
+  // Bind row-level buttons after render
+  document.querySelectorAll('[data-edit-id]').forEach(btn => btn.addEventListener('click', () => editPost(btn.dataset.editId)));
+  document.querySelectorAll('[data-del-id]').forEach(btn => btn.addEventListener('click', () => deletePost(btn.dataset.delId)));
+  document.querySelectorAll('[data-pub-id]').forEach(btn => btn.addEventListener('click', () => togglePub(btn.dataset.pubId, parseInt(btn.dataset.pubCur))));
+
+  renderPager(document.getElementById('pager'), page, d.data?.total || 0, 20, 'loadPosts');
+}
+
+function showEditor(post = null) {
+  document.getElementById('list-view').style.display = 'none';
+  document.getElementById('editor-view').style.display = 'block';
+  document.getElementById('editor-title').textContent = post ? 'Edit Post' : 'New Post';
+  document.getElementById('edit-id').value = post?.id || '';
+  document.getElementById('p-title').value = post?.title || '';
+  document.getElementById('p-cat').value = post?.category || 'Predictions';
+  document.getElementById('p-excerpt').value = post?.excerpt || '';
+  document.getElementById('p-meta-title').value = post?.meta_title || '';
+  document.getElementById('p-meta-desc').value = post?.meta_description || '';
+  document.getElementById('p-keywords').value = post?.keywords || '';
+  document.getElementById('p-publish').checked = !!post?.is_published;
+  document.getElementById('p-img-data').value = '';
+  document.getElementById('p-img-preview').style.display = 'none';
+  if (post?.featured_image) {
+    document.getElementById('p-img-preview').src = post.featured_image;
+    document.getElementById('p-img-preview').style.display = 'block';
+    document.getElementById('p-img-data').value = post.featured_image;
+  }
+  if (mde) { mde.toTextArea(); mde = null; }
+  mde = new EasyMDE({ element: document.getElementById('p-content'), initialValue: post?.content || '', spellChecker: false, autofocus: false });
+  applyEditorStyles(mde);
+}
+
+function applyEditorStyles(editor) {
+  const cm = editor.codemirror.getWrapperElement();
+  const container = cm.closest('.EasyMDEContainer');
+
+  cm.style.setProperty('background-color', '#0d1a26', 'important');
+  cm.style.border = '1px solid rgba(173,223,241,0.14)';
+  cm.style.borderRadius = '0 0 8px 8px';
+  const scroll = cm.querySelector('.CodeMirror-scroll');
+  if (scroll) scroll.style.minHeight = '220px';
+
+  function paintLines() {
+    cm.querySelectorAll('.CodeMirror-line, .CodeMirror-line *').forEach(el => {
+      el.style.setProperty('color', 'silver', 'important');
+    });
+  }
+  paintLines();
+
+  let paintTimer;
+  const obs = new MutationObserver(() => { clearTimeout(paintTimer); paintTimer = setTimeout(paintLines, 0); });
+  obs.observe(cm, { childList: true, subtree: true });
+
+  if (container) {
+    const toolbar = container.querySelector('.editor-toolbar');
+    if (toolbar) {
+      toolbar.style.setProperty('background-color', '#111', 'important');
+      toolbar.style.border = '1px solid rgba(255,255,255,0.08)';
+      toolbar.style.borderBottom = 'none';
+      toolbar.style.borderRadius = '8px 8px 0 0';
+      toolbar.querySelectorAll('button, a').forEach(b => b.style.setProperty('color', '#e8f4f8', 'important'));
+    }
+  }
+}
+
+function hideEditor() {
+  document.getElementById('editor-view').style.display = 'none';
+  document.getElementById('list-view').style.display = 'block';
+  if (mde) { mde.toTextArea(); mde = null; }
+}
+
+function previewImg() {
+  const file = document.getElementById('p-img').files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('p-img-preview').src = e.target.result;
+    document.getElementById('p-img-preview').style.display = 'block';
+    document.getElementById('p-img-data').value = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function editPost(id) {
+  const d = await api(`/blog/${id}`);
+  showEditor(d.data?.post);
+}
+
+async function savePost() {
+  const id = document.getElementById('edit-id').value;
+  const body = {
+    title: document.getElementById('p-title').value.trim(),
+    category: document.getElementById('p-cat').value,
+    excerpt: document.getElementById('p-excerpt').value.trim(),
+    content: mde ? mde.value() : '',
+    meta_title: document.getElementById('p-meta-title').value.trim(),
+    meta_description: document.getElementById('p-meta-desc').value.trim(),
+    keywords: document.getElementById('p-keywords').value.trim(),
+    is_published: document.getElementById('p-publish').checked ? 1 : 0,
+    featured_image: document.getElementById('p-img-data').value || null,
+  };
+  if (!body.title || !body.content) { showToast('Title and content required', 'error'); return; }
+  const d = id ? await api(`/blog/${id}`, { method: 'PUT', body: JSON.stringify(body) }) : await api('/blog', { method: 'POST', body: JSON.stringify(body) });
+  if (d.success) { showToast('Saved!', 'success'); hideEditor(); loadPosts(currentPage); }
+  else showToast(d.message, 'error');
+}
+
+async function togglePub(id, cur) {
+  await api(`/blog/${id}/publish`, { method: 'PUT', body: JSON.stringify({ is_published: cur ? 0 : 1 }) });
+  loadPosts(currentPage);
+}
+
+async function deletePost(id) {
+  if (!confirm('Delete this post?')) return;
+  const d = await api(`/blog/${id}`, { method: 'DELETE' });
+  if (d.success) { showToast('Deleted', 'info'); loadPosts(currentPage); }
+  else showToast(d.message, 'error');
+}
+</script>
+</body>
+</html>
