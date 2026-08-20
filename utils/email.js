@@ -1,4 +1,4 @@
-const nodemailer = require('nodemailer');
+﻿const nodemailer = require('nodemailer');
 
 const transport = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -10,8 +10,8 @@ const transport = nodemailer.createTransport({
   },
 });
 
-const FROM = process.env.EMAIL_FROM || 'Oddslander <noreply@oddslander.com>';
-const SITE_URL = process.env.SITE_URL || 'https://www.oddslander.com';
+const FROM = process.env.EMAIL_FROM || 'Predictvilla <noreply@predictvilla.com>';
+const SITE_URL = process.env.SITE_URL || 'https://www.predictvilla.com';
 
 function brandedEmail(title, body) {
   return `<!DOCTYPE html>
@@ -36,12 +36,12 @@ function brandedEmail(title, body) {
 <div style="padding:24px 16px">
 <div class="wrap">
   <div class="header">
-    <h1>⚡ Oddslander</h1>
+    <h1>⚡ Predictvilla</h1>
     <p>Data-Driven Picks. Proven Results.</p>
   </div>
   <div class="body">${body}</div>
   <div class="footer">
-    &copy; 2025 Oddslander &bull; <a href="${SITE_URL}/privacy.html">Privacy</a> &bull; <a href="${SITE_URL}/terms.html">Terms</a><br>
+    &copy; 2025 Predictvilla &bull; <a href="${SITE_URL}/privacy.html">Privacy</a> &bull; <a href="${SITE_URL}/terms.html">Terms</a><br>
     For entertainment only. Please gamble responsibly.
   </div>
 </div>
@@ -52,10 +52,10 @@ function brandedEmail(title, body) {
 async function sendWelcomeEmail({ name, email }) {
   await transport.sendMail({
     from: FROM, to: email,
-    subject: 'Welcome to Oddslander! 🎯',
-    html: brandedEmail('Welcome to Oddslander', `
+    subject: 'Welcome to Predictvilla! 🎯',
+    html: brandedEmail('Welcome to Predictvilla', `
       <h2>Welcome, ${name}! 🎉</h2>
-      <p>You're now part of the Oddslander community — where data meets football intelligence.</p>
+      <p>You're now part of the Predictvilla community — where data meets football intelligence.</p>
       <p>Start exploring today's free predictions and consider upgrading to VIP for our highest-confidence picks.</p>
       <a class="btn" href="${SITE_URL}/predictions.html">View Today's Tips</a>
       <p style="margin-top:24px;color:#addff1;font-size:13px">Need help? Reply to this email anytime.</p>
@@ -66,14 +66,14 @@ async function sendWelcomeEmail({ name, email }) {
 async function sendVerificationEmail({ name, email, otp }) {
   await transport.sendMail({
     from: FROM, to: email,
-    subject: `Your Oddslander verification code: ${otp}`,
+    subject: `Your Predictvilla verification code: ${otp}`,
     html: brandedEmail('Verify Your Email', `
       <h2>Verify your email, ${name}</h2>
       <p>Enter this 6-digit code to complete your registration. It expires in <strong>15 minutes</strong>.</p>
       <div style="text-align:center;margin:28px 0">
         <span style="font-size:40px;font-weight:900;letter-spacing:12px;color:#02f5a1">${otp}</span>
       </div>
-      <p style="color:#addff1;font-size:13px">If you didn't sign up for Oddslander, you can safely ignore this email.</p>
+      <p style="color:#addff1;font-size:13px">If you didn't sign up for Predictvilla, you can safely ignore this email.</p>
     `),
   });
 }
@@ -81,11 +81,11 @@ async function sendVerificationEmail({ name, email, otp }) {
 async function sendPasswordResetEmail({ name, email, resetUrl }) {
   await transport.sendMail({
     from: FROM, to: email,
-    subject: 'Reset your Oddslander password',
+    subject: 'Reset your Predictvilla password',
     html: brandedEmail('Reset Your Password', `
       <h2>Password reset request</h2>
       <p>Hi ${name},</p>
-      <p>We received a request to reset your Oddslander password. Click the button below to set a new password. This link expires in <strong>1 hour</strong>.</p>
+      <p>We received a request to reset your Predictvilla password. Click the button below to set a new password. This link expires in <strong>1 hour</strong>.</p>
       <a class="btn" href="${resetUrl}">Reset Password</a>
       <p style="margin-top:24px;color:#addff1;font-size:13px">If you didn't request a password reset, ignore this email — your account is safe.</p>
     `),
@@ -96,7 +96,7 @@ async function sendExpiryReminderEmail({ name, email, plan, expiresAt }) {
   const expDate = new Date(expiresAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
   await transport.sendMail({
     from: FROM, to: email,
-    subject: 'Your Oddslander VIP is expiring soon',
+    subject: 'Your Predictvilla VIP is expiring soon',
     html: brandedEmail('VIP Expiring Soon', `
       <h2>Your VIP subscription is ending soon</h2>
       <p>Hi ${name},</p>
@@ -110,7 +110,7 @@ async function sendExpiryReminderEmail({ name, email, plan, expiresAt }) {
 async function sendVipWelcomeEmail({ name, email, plan, telegramLink }) {
   await transport.sendMail({
     from: FROM, to: email,
-    subject: '🏆 Welcome to Oddslander VIP!',
+    subject: '🏆 Welcome to Predictvilla VIP!',
     html: brandedEmail('VIP Access Activated', `
       <h2>You're now a VIP member! 🏆</h2>
       <p>Hi ${name},</p>

@@ -4,8 +4,8 @@ node_modules/
 logs/
 *.log
 npm-debug.log*
-oddslander-build-prompt.md
-oddslander-task-checklist.md
+predictvilla-build-prompt.md
+predictvilla-task-checklist.md
 staketruth-build-prompt.md
 staketruth-task-checklist.md
 ecosystem.config.js

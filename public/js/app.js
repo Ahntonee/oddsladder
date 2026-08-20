@@ -1,4 +1,4 @@
-/* Oddslander — Shared Frontend Logic */
+﻿/* Predictvilla — Shared Frontend Logic */
 
 // ── Theme (before DOM to prevent flash) ─────────────────────────────────────
 (function() {
@@ -397,10 +397,10 @@ function injectJsonLd(data) {
   document.head.appendChild(el);
 }
 function setPageMeta({ title, description, image, type = 'website', noindex = false } = {}) {
-  const BASE = 'https://oddslander.com';
+  const BASE = 'https://predictvilla.com';
   const img = image || `${BASE}/images/logo.png`;
   const canonical = BASE + window.location.pathname;
-  if (title) { document.title = `${title} — Oddslander`; setOg('title', title); setMeta('twitter:title', title); }
+  if (title) { document.title = `${title} — Predictvilla`; setOg('title', title); setMeta('twitter:title', title); }
   if (description) { setMeta('description', description); setOg('description', description); setMeta('twitter:description', description); }
   setOg('image', img); setMeta('twitter:image', img);
   setOg('type', type); setOg('url', canonical);
@@ -461,7 +461,7 @@ async function injectHeader() {
     <div class="sidebar-logo-wrap">
       <a href="/" class="sidebar-logo">
         <img src="/images/logo.png" alt="OL" onerror="this.style.display='none'">
-        <span>Oddslander</span>
+        <span>Predictvilla</span>
       </a>
       <button class="sidebar-close-btn" id="sidebar-close"><span class="material-icons-round">close</span></button>
     </div>
@@ -503,7 +503,7 @@ async function injectHeader() {
         <button class="hamburger-btn" id="sidebar-toggle"><span class="material-icons-round">menu</span></button>
         <a href="/" class="topbar-logo">
           <img src="/images/logo.png" alt="" onerror="this.style.display='none'">
-          <span>Oddslander</span>
+          <span>Predictvilla</span>
         </a>
         <div style="flex:1"></div>
         <a href="/pricing.html" class="vip-premium-btn">
@@ -612,8 +612,8 @@ async function injectFooter() {
         <div class="footer-grid-new">
 
           <div class="footer-brand-col">
-            <img src="/images/logo.png" alt="Oddslander" class="footer-logo" onerror="this.style.display='none'">
-            <p class="footer-desc">Oddslander is an online service that provides the most accurate football prediction, soccer betting tips as well as news to its users.</p>
+            <img src="/images/logo.png" alt="Predictvilla" class="footer-logo" onerror="this.style.display='none'">
+            <p class="footer-desc">Predictvilla is an online service that provides the most accurate football prediction, soccer betting tips as well as news to its users.</p>
             <div class="footer-socials">${socialHtml}</div>
           </div>
 
@@ -654,7 +654,7 @@ async function injectFooter() {
 
     <div class="footer-bottom-bar">
       <div class="container">
-        <p>&copy; ${new Date().getFullYear()} Oddslander &bull; For entertainment only. Please gamble responsibly.</p>
+        <p>&copy; ${new Date().getFullYear()} Predictvilla &bull; For entertainment only. Please gamble responsibly.</p>
         <div class="footer-bottom-socials">${socialHtml}</div>
       </div>
     </div>
@@ -881,7 +881,7 @@ if (document.readyState === 'loading') {
     const banner = document.createElement('div');
     banner.id = 'ol-cookie-banner';
     banner.innerHTML = `
-      <p>We use cookies to keep Oddslander running and to improve your experience with personalised football tips. <a href="/privacy.html">Privacy Policy</a></p>
+      <p>We use cookies to keep Predictvilla running and to improve your experience with personalised football tips. <a href="/privacy.html">Privacy Policy</a></p>
       <div class="ol-cb-btns">
         <button class="ol-btn-manage" id="ol-manage-btn">Manage Cookies</button>
         <button class="ol-btn-reject" id="ol-reject-btn">Reject Optional</button>
@@ -899,11 +899,11 @@ if (document.readyState === 'loading') {
     overlay.innerHTML = `
       <div id="ol-cookie-modal">
         <div class="cm-head">
-          <img src="/images/logo.png" alt="Oddslander">
+          <img src="/images/logo.png" alt="Predictvilla">
           <h2>Cookie Preferences</h2>
         </div>
         <div class="cm-body">
-          <p>Oddslander uses cookies to deliver accurate football predictions, keep your account secure, and improve the tips we show you. Choose which cookies you're happy with below.</p>
+          <p>Predictvilla uses cookies to deliver accurate football predictions, keep your account secure, and improve the tips we show you. Choose which cookies you're happy with below.</p>
 
           <div class="cm-cookie-row">
             <h4>Essential Cookies <span class="cm-badge-on">Always On</span></h4>

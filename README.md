@@ -1,4 +1,4 @@
-# Oddslander
+﻿# Predictvilla
 
 Football intelligence prediction platform. Node.js 22 / Express 5 / MySQL 8.
 
@@ -13,7 +13,7 @@ Football intelligence prediction platform. Node.js 22 / Express 5 / MySQL 8.
 
 ```bash
 # 1. Clone and install
-cd /var/www/oddslander
+cd /var/www/predictvilla
 npm install
 
 # 2. Create environment file
@@ -21,7 +21,7 @@ cp .env.example .env
 nano .env        # fill in all values
 
 # 3. Create MySQL database
-mysql -u root -p -e "CREATE DATABASE oddslander CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mysql -u root -p -e "CREATE DATABASE predictvilla CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 
 # 4. Run migrations (creates all 20 tables + seeds admin user)
 node config/migrate.js
@@ -51,13 +51,13 @@ Copy `.env.example` to `.env` and fill in every value.
 | `FROM_EMAIL` / `FROM_NAME` | Sender address shown in emails |
 | `TELEGRAM_BOT_TOKEN` | Telegram bot token for notifications |
 | `TELEGRAM_CHAT_ID` | VIP channel chat ID |
-| `BASE_URL` | Public URL e.g. `https://oddslander.com` |
+| `BASE_URL` | Public URL e.g. `https://predictvilla.com` |
 
 ## Admin Access
 
 After migration the default admin account is:
 
-- **Email:** `admin@oddslander.com`
+- **Email:** `admin@predictvilla.com`
 - **Password:** `Admin@OL!`
 
 **Change this immediately** after first login via Dashboard → Settings.
@@ -67,23 +67,23 @@ Admin panel: `https://yourdomain.com/admin/`
 ## Nginx
 
 ```bash
-sudo cp nginx.conf.example /etc/nginx/sites-available/oddslander
+sudo cp nginx.conf.example /etc/nginx/sites-available/predictvilla
 # Edit domain name inside the file
-sudo ln -s /etc/nginx/sites-available/oddslander /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/predictvilla /etc/nginx/sites-enabled/
 sudo nginx -t && sudo systemctl reload nginx
 
 # SSL via Certbot
-sudo certbot --nginx -d oddslander.com -d www.oddslander.com
+sudo certbot --nginx -d predictvilla.com -d www.predictvilla.com
 ```
 
 ## PM2 Commands
 
 ```bash
 pm2 status                  # check all instances
-pm2 logs oddslander         # tail logs
-pm2 restart oddslander      # rolling restart (no downtime in cluster mode)
-pm2 stop oddslander
-pm2 delete oddslander
+pm2 logs predictvilla         # tail logs
+pm2 restart predictvilla      # rolling restart (no downtime in cluster mode)
+pm2 stop predictvilla
+pm2 delete predictvilla
 ```
 
 ## Cron Jobs (automatic)

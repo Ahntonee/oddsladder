@@ -1,4 +1,4 @@
-const { pool } = require('../config/db');
+﻿const { pool } = require('../config/db');
 const { calculateConfidence, getWeight, poissonPMF } = require('./confidence');
 const { clamp } = require('../utils/helpers');
 const { getLiveOddsForFixture } = require('./oddsApi');
@@ -461,7 +461,7 @@ async function runDailySpecials() {
       `Combined Odds: ${combinedOdds.toFixed(0)}x | Avg Confidence: ${avgConf}/100 | Avg Historical Win Rate: ${avgHist}%`,
       `Covers ${leagueCt} league${leagueCt !== 1 ? 's' : ''}`,
       '', 'SELECTIONS:', ...pickLines, '',
-      'Each pick independently validated by the Oddslander Intelligence Engine:',
+      'Each pick independently validated by the Predictvilla Intelligence Engine:',
       '• Poisson goal model (home/away scoring averages, venue advantage)',
       '• Recent form analysis (last 5 matches, home/away weighted)',
       `• ${totalSamples} logged historical outcomes informing win-rate estimates`,

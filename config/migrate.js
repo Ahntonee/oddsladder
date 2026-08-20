@@ -1,4 +1,4 @@
-require('dotenv').config();
+﻿require('dotenv').config();
 const { pool } = require('./db');
 const bcrypt = require('bcryptjs');
 
@@ -331,7 +331,7 @@ async function migrate() {
   const adminHash = await bcrypt.hash('Admin@OL!', 12);
   await db.query(
     `INSERT IGNORE INTO users (name, email, password_hash, role) VALUES (?, ?, ?, 'admin')`,
-    ['Admin', 'admin@oddslander.com', adminHash]
+    ['Admin', 'admin@predictvilla.com', adminHash]
   );
 
   // Seed leagues
@@ -392,15 +392,15 @@ async function migrate() {
   // Seed SEO settings
   const seoPages = ['home', 'predictions', 'statistics', 'blog', 'pricing', 'about', 'contact', 'terms', 'privacy'];
   const seoDefaults = {
-    home: ['Oddslander — Football Intelligence Predictions', 'Data-driven football predictions with an AI-powered Intelligence Engine. Free and VIP tips daily.', 'football predictions, free tips, VIP picks, banker of the day'],
-    predictions: ['Football Predictions & Tips — Oddslander', 'Browse today\'s free and VIP football predictions. Filter by league, market, or category.', 'football tips today, free predictions, over 2.5 tips'],
-    statistics: ['Football Statistics & Analytics — Oddslander', 'Front-tested football statistics: scoring averages, market reliability, and prediction track records.', 'football statistics, prediction accuracy, market analysis'],
-    blog: ['Football Blog — Oddslander', 'Football analysis, betting guides, and expert insights from the Oddslander team.', 'football blog, betting tips, match analysis'],
-    pricing: ['VIP Subscription — Oddslander', 'Unlock VIP football tips, AI-powered picks, and access to the Telegram VIP channel.', 'VIP football tips, subscription, premium predictions'],
-    about: ['About Oddslander', 'Learn about Oddslander\'s AI-powered football prediction platform.', 'about oddslander, football prediction platform'],
-    contact: ['Contact Oddslander', 'Get in touch with the Oddslander team.', 'contact oddslander'],
-    terms: ['Terms of Service — Oddslander', 'Oddslander terms of service and usage policy.', ''],
-    privacy: ['Privacy Policy — Oddslander', 'Oddslander privacy policy and data handling practices.', ''],
+    home: ['Predictvilla — Football Intelligence Predictions', 'Data-driven football predictions with an AI-powered Intelligence Engine. Free and VIP tips daily.', 'football predictions, free tips, VIP picks, banker of the day'],
+    predictions: ['Football Predictions & Tips — Predictvilla', 'Browse today\'s free and VIP football predictions. Filter by league, market, or category.', 'football tips today, free predictions, over 2.5 tips'],
+    statistics: ['Football Statistics & Analytics — Predictvilla', 'Front-tested football statistics: scoring averages, market reliability, and prediction track records.', 'football statistics, prediction accuracy, market analysis'],
+    blog: ['Football Blog — Predictvilla', 'Football analysis, betting guides, and expert insights from the Predictvilla team.', 'football blog, betting tips, match analysis'],
+    pricing: ['VIP Subscription — Predictvilla', 'Unlock VIP football tips, AI-powered picks, and access to the Telegram VIP channel.', 'VIP football tips, subscription, premium predictions'],
+    about: ['About Predictvilla', 'Learn about Predictvilla\'s AI-powered football prediction platform.', 'about predictvilla, football prediction platform'],
+    contact: ['Contact Predictvilla', 'Get in touch with the Predictvilla team.', 'contact predictvilla'],
+    terms: ['Terms of Service — Predictvilla', 'Predictvilla terms of service and usage policy.', ''],
+    privacy: ['Privacy Policy — Predictvilla', 'Predictvilla privacy policy and data handling practices.', ''],
   };
   for (const page of seoPages) {
     const [title, desc, keywords] = seoDefaults[page] || ['', '', ''];
@@ -412,11 +412,11 @@ async function migrate() {
 
   // Seed static pages
   const staticPages = [
-    ['home', 'Home', '# Welcome to Oddslander\n\nData-Driven Picks. Proven Results.'],
-    ['about', 'About Us', '# About Oddslander\n\nOddslander is a football predictions platform powered by a real-time data pipeline and an AI-driven Intelligence Engine targeting an 80–88% prediction win rate.\n\n## Our Mission\n\nWe combine Poisson statistical models, historical outcome learning, and live bookie odds to deliver the most accurate football tips on the internet.\n\n## The Intelligence Engine\n\nOur AI analyses form, H2H data, league statistics, and market odds to generate predictions with confidence scores. Only picks above our quality threshold are published.\n\n## Responsible Gambling\n\nOddslander tips are for entertainment only. Always gamble responsibly. If you need help, visit [BeGambleAware](https://www.begambleaware.org).'],
-    ['terms', 'Terms of Service', '# Terms of Service\n\n*Last updated: 2025*\n\n## 1. Acceptance\n\nBy using Oddslander, you agree to these terms.\n\n## 2. Nature of Service\n\nOddslander provides football prediction content for entertainment purposes only. We do not guarantee any financial outcomes.\n\n## 3. Subscriptions\n\nVIP subscriptions are billed via Paystack. You may cancel at any time.\n\n## 4. Responsible Gambling\n\nYou must be 18+ to use this service. Please gamble responsibly.'],
+    ['home', 'Home', '# Welcome to Predictvilla\n\nData-Driven Picks. Proven Results.'],
+    ['about', 'About Us', '# About Predictvilla\n\nPredictvilla is a football predictions platform powered by a real-time data pipeline and an AI-driven Intelligence Engine targeting an 80–88% prediction win rate.\n\n## Our Mission\n\nWe combine Poisson statistical models, historical outcome learning, and live bookie odds to deliver the most accurate football tips on the internet.\n\n## The Intelligence Engine\n\nOur AI analyses form, H2H data, league statistics, and market odds to generate predictions with confidence scores. Only picks above our quality threshold are published.\n\n## Responsible Gambling\n\nPredictvilla tips are for entertainment only. Always gamble responsibly. If you need help, visit [BeGambleAware](https://www.begambleaware.org).'],
+    ['terms', 'Terms of Service', '# Terms of Service\n\n*Last updated: 2025*\n\n## 1. Acceptance\n\nBy using Predictvilla, you agree to these terms.\n\n## 2. Nature of Service\n\nPredictvilla provides football prediction content for entertainment purposes only. We do not guarantee any financial outcomes.\n\n## 3. Subscriptions\n\nVIP subscriptions are billed via Paystack. You may cancel at any time.\n\n## 4. Responsible Gambling\n\nYou must be 18+ to use this service. Please gamble responsibly.'],
     ['privacy', 'Privacy Policy', '# Privacy Policy\n\n*Last updated: 2025*\n\n## Data We Collect\n\n- Email and name upon registration\n- Usage analytics (anonymised)\n- Payment references (via Paystack — we do not store card data)\n\n## How We Use Your Data\n\n- To provide and improve the service\n- To send relevant subscription and prediction emails\n\n## Your Rights\n\nYou may delete your account at any time from your dashboard.'],
-    ['contact', 'Contact', '# Contact Us\n\nFor support or enquiries, email us at **support@oddslander.com**.\n\nFor VIP and subscription issues, include your registered email address.'],
+    ['contact', 'Contact', '# Contact Us\n\nFor support or enquiries, email us at **support@predictvilla.com**.\n\nFor VIP and subscription issues, include your registered email address.'],
   ];
   for (const [slug, title, content] of staticPages) {
     await db.query(

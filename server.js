@@ -1,4 +1,4 @@
-require('dotenv').config({ path: require('path').join(__dirname, '.env') });
+﻿require('dotenv').config({ path: require('path').join(__dirname, '.env') });
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
@@ -158,8 +158,8 @@ function buildStaticHeader(currentPath = '/') {
   return `<header class="site-header" id="header-placeholder">
   <div class="container"><div class="header-inner">
     <a href="/" class="site-logo">
-      <img src="/images/logo.png" alt="Oddslander" width="32" height="32">
-      <span>Oddslander</span>
+      <img src="/images/logo.png" alt="Predictvilla" width="32" height="32">
+      <span>Predictvilla</span>
     </a>
     <nav class="main-nav" id="main-nav">
       ${navHtml}
@@ -202,7 +202,7 @@ async function buildStaticFooter() {
   <div class="container">
     <div class="footer-grid">
       <div class="footer-brand">
-        <img src="/images/logo.png" alt="Oddslander" width="48" height="48">
+        <img src="/images/logo.png" alt="Predictvilla" width="48" height="48">
         <p>Data-Driven Picks. Proven Results.</p>
       </div>
       <div>
@@ -233,7 +233,7 @@ async function buildStaticFooter() {
       </div>
     </div>
     <div class="footer-bottom">
-      <p>&copy; 2025 Oddslander &bull; For entertainment only. Please gamble responsibly.</p>
+      <p>&copy; 2025 Predictvilla &bull; For entertainment only. Please gamble responsibly.</p>
     </div>
   </div>
 </footer>`;
@@ -276,7 +276,7 @@ async function injectStaticShell(html, currentPath) {
 
 // ─── robots.txt ───────────────────────────────────────────────────────────────
 app.get('/robots.txt', (req, res) => {
-  const base = process.env.SITE_URL || 'https://www.oddslander.com';
+  const base = process.env.SITE_URL || 'https://www.predictvilla.com';
   res.type('text').send(
     `User-agent: *\nAllow: /\nDisallow: /admin/\nDisallow: /api/\n\nSitemap: ${base}/sitemap.xml`
   );
@@ -289,7 +289,7 @@ app.get('/sitemap.xml', async (req, res) => {
     res.type('xml').send(sitemapCache.xml);
     return;
   }
-  const base = process.env.SITE_URL || 'https://www.oddslander.com';
+  const base = process.env.SITE_URL || 'https://www.predictvilla.com';
   const [preds] = await pool.query('SELECT slug, updated_at FROM predictions WHERE published_at IS NOT NULL ORDER BY updated_at DESC LIMIT 500');
   const [posts] = await pool.query('SELECT slug, updated_at FROM blog_posts WHERE is_published=1 ORDER BY updated_at DESC LIMIT 200');
   const [activeLeagues] = await pool.query('SELECT name FROM leagues WHERE is_active = 1');
@@ -363,11 +363,11 @@ app.use(async (req, res, next) => {
     }
 
     // Inject canonical + OG tags on static pages
-    const base = process.env.SITE_URL || 'https://www.oddslander.com';
+    const base = process.env.SITE_URL || 'https://www.predictvilla.com';
     const canonicalPath = req.path === '/index.html' ? '/' : req.path;
     const canonicalUrl = `${base}${canonicalPath}`;
     const titleMatch = html.match(/<title>([^<]*)<\/title>/);
-    const titleText = titleMatch ? titleMatch[1] : 'Oddslander';
+    const titleText = titleMatch ? titleMatch[1] : 'Predictvilla';
     const descMatch = html.match(/<meta name="description" content="([^"]*)"/i);
     const descText = descMatch ? descMatch[1] : '';
     if (!html.includes('rel="canonical"')) {
@@ -426,7 +426,7 @@ app.use(async (req, res, next) => {
 // ─── Market filter pages (SEO) ────────────────────────────────────────────────
 const MARKET_PAGES = {
   'over-25': {
-    title: 'Over 2.5 Goals Predictions Today | Oddslander',
+    title: 'Over 2.5 Goals Predictions Today | Predictvilla',
     description: "Today's best over 2.5 goals predictions with AI-powered analysis. Free and VIP over/under tips updated daily for major leagues.",
     keywords: 'over 2.5 predictions, over 2.5 goals today, over 2.5 tips, football goals predictions',
     label: 'Over 2.5 Goals',
@@ -434,15 +434,15 @@ const MARKET_PAGES = {
     intro: 'Browse today\'s over 2.5 goals predictions, scored by our AI Intelligence Engine across major football leagues. Each pick includes odds, market confidence and form data to help you decide.',
   },
   'btts': {
-    title: 'BTTS Predictions Today | Both Teams to Score | Oddslander',
+    title: 'BTTS Predictions Today | Both Teams to Score | Predictvilla',
     description: "Both teams to score predictions for today's matches. Free BTTS tips with AI intelligence scoring and league statistics.",
     keywords: 'BTTS predictions, both teams to score today, BTTS tips, football BTTS',
     label: 'BTTS',
     api: 'BTTS',
-    intro: 'Both Teams to Score predictions for today\'s fixtures, powered by Oddslander\'s Intelligence Engine. Filter by league or category to find the strongest BTTS picks across Europe and beyond.',
+    intro: 'Both Teams to Score predictions for today\'s fixtures, powered by Predictvilla\'s Intelligence Engine. Filter by league or category to find the strongest BTTS picks across Europe and beyond.',
   },
   'correct-score': {
-    title: 'Correct Score Predictions Today | Oddslander',
+    title: 'Correct Score Predictions Today | Predictvilla',
     description: "Today's correct score predictions powered by AI analysis. High-value correct score tips for major leagues with form and head-to-head data.",
     keywords: 'correct score predictions, correct score tips today, football score predictions, scoreline tips',
     label: 'Correct Score',
@@ -450,15 +450,15 @@ const MARKET_PAGES = {
     intro: 'Correct score predictions for today\'s matches selected by our Intelligence Engine. These high-value picks are analysed against team form, head-to-head records and scoring patterns.',
   },
   'accumulator': {
-    title: 'Accumulator Tips Today | Daily Acca Predictions | Oddslander',
+    title: 'Accumulator Tips Today | Daily Acca Predictions | Predictvilla',
     description: 'Daily accumulator tips with carefully selected matches. Free and VIP acca predictions updated daily across major football leagues.',
     keywords: 'accumulator tips today, acca predictions, football accumulator, daily acca tips',
     label: 'Accumulator',
     api: 'Accumulator',
-    intro: 'Daily accumulator tips handpicked and validated by the Oddslander Intelligence Engine. Each acca combines value picks across multiple matches — filter by date or category to build your slip.',
+    intro: 'Daily accumulator tips handpicked and validated by the Predictvilla Intelligence Engine. Each acca combines value picks across multiple matches — filter by date or category to build your slip.',
   },
   '1x2': {
-    title: '1X2 Predictions Today | Win Draw Win Tips | Oddslander',
+    title: '1X2 Predictions Today | Win Draw Win Tips | Predictvilla',
     description: "Today's 1X2 match result predictions. Home win, away win and draw tips for major leagues powered by AI analysis.",
     keywords: '1x2 predictions, match result tips, win draw win predictions, 1x2 football tips',
     label: '1X2',
@@ -466,7 +466,7 @@ const MARKET_PAGES = {
     intro: '1X2 match result predictions for today\'s fixtures. Our Intelligence Engine analyses form, league position and head-to-head data to rate each home win, draw or away win pick.',
   },
   'double-chance': {
-    title: 'Double Chance Predictions Today | Oddslander',
+    title: 'Double Chance Predictions Today | Predictvilla',
     description: 'Double chance betting predictions for today. Safe and high-probability double chance tips powered by AI intelligence scoring.',
     keywords: 'double chance predictions, double chance tips, safe football tips, double chance betting',
     label: 'Double Chance',
@@ -474,7 +474,7 @@ const MARKET_PAGES = {
     intro: 'Double chance predictions for today — covering Home/Draw, Away/Draw and Home/Away markets. A safer betting option backed by AI confidence scoring and current form data.',
   },
   'draw-no-bet': {
-    title: 'Draw No Bet Predictions Today | Oddslander',
+    title: 'Draw No Bet Predictions Today | Predictvilla',
     description: 'Draw No Bet predictions for today\'s matches. Risk-reduced football tips with AI-powered analysis and intelligence scoring.',
     keywords: 'draw no bet predictions, DNB tips, draw no bet football, risk free football tips',
     label: 'Draw No Bet',
@@ -492,7 +492,7 @@ function getMarketTemplate() {
 app.get('/predictions/:market', async (req, res) => {
   const meta = MARKET_PAGES[req.params.market];
   if (!meta) return res.status(404).sendFile(path.join(__dirname, 'public', 'index.html'));
-  const canonical = `${process.env.SITE_URL || 'https://www.oddslander.com'}/predictions/${req.params.market}`;
+  const canonical = `${process.env.SITE_URL || 'https://www.predictvilla.com'}/predictions/${req.params.market}`;
   let html = getMarketTemplate()
     .replace(/__META_TITLE__/g,   meta.title)
     .replace(/__META_DESC__/g,    meta.description)
@@ -519,9 +519,9 @@ app.get('/league/:slug', async (req, res) => {
     const league = leagues.find(l => leagueSlug(l.name) === req.params.slug);
     if (!league) return res.status(404).sendFile(path.join(__dirname, 'public', 'index.html'));
 
-    const base = process.env.SITE_URL || 'https://www.oddslander.com';
+    const base = process.env.SITE_URL || 'https://www.predictvilla.com';
     const canonical = `${base}/league/${req.params.slug}`;
-    const title = `${league.name} Predictions Today | Oddslander`;
+    const title = `${league.name} Predictions Today | Predictvilla`;
     const description = `Today's ${league.name} football predictions with AI-powered analysis. Free and VIP ${league.name} tips updated daily.`;
     const keywords = `${league.name} predictions, ${league.name} tips${league.country ? `, ${league.country} football predictions` : ''}`;
 
@@ -553,10 +553,10 @@ app.get('/prediction/:slug', async (req, res) => {
     );
     if (!rows.length) return res.sendFile(path.join(__dirname, 'public', 'prediction-detail.html'));
     const p = rows[0];
-    const base = process.env.SITE_URL || 'https://www.oddslander.com';
-    const title = `${p.home_team} vs ${p.away_team} Prediction — ${p.league_name || 'Football'} | Oddslander`;
+    const base = process.env.SITE_URL || 'https://www.predictvilla.com';
+    const title = `${p.home_team} vs ${p.away_team} Prediction — ${p.league_name || 'Football'} | Predictvilla`;
     const tipStr = p.tip && p.tip !== 'TBD' ? ` Tip: ${p.tip}${p.odds ? ` @ ${p.odds}` : ''}.` : '';
-    const description = `${p.home_team} vs ${p.away_team} prediction for ${new Date(p.match_date).toDateString()}.${tipStr} Free football tips from Oddslander.`;
+    const description = `${p.home_team} vs ${p.away_team} prediction for ${new Date(p.match_date).toDateString()}.${tipStr} Free football tips from Predictvilla.`;
     const canonical = `${base}/prediction/${p.slug}`;
     const ldJson = JSON.stringify({
       '@context': 'https://schema.org', '@type': 'SportsEvent',
@@ -571,7 +571,7 @@ app.get('/prediction/:slug', async (req, res) => {
     });
     let html = readHtmlFile(path.join(__dirname, 'public', 'prediction-detail.html'));
     html = html.replace(
-      '<title>Prediction — Oddslander</title>',
+      '<title>Prediction — Predictvilla</title>',
       `<title>${esc(title)}</title>
 <meta name="description" content="${esc(description)}">
 <link rel="canonical" href="${canonical}">
@@ -630,14 +630,14 @@ app.get('/blog/:slug', async (req, res) => {
     );
     if (!rows.length) return res.sendFile(path.join(__dirname, 'public', 'blog-post.html'));
     const p = rows[0];
-    const base = process.env.SITE_URL || 'https://www.oddslander.com';
+    const base = process.env.SITE_URL || 'https://www.predictvilla.com';
     const canonical = `${base}/blog/${p.slug}`;
-    const title = `${p.meta_title || p.title} | Oddslander`;
-    const description = p.meta_description || p.excerpt || `Read ${p.title} on the Oddslander football predictions blog.`;
+    const title = `${p.meta_title || p.title} | Predictvilla`;
+    const description = p.meta_description || p.excerpt || `Read ${p.title} on the Predictvilla football predictions blog.`;
     const image = p.featured_image && !p.featured_image.startsWith('data:') ? p.featured_image : `${base}/images/logo.png`;
     let html = readHtmlFile(path.join(__dirname, 'public', 'blog-post.html'));
     html = html.replace(
-      '<title>Blog — Oddslander</title>',
+      '<title>Blog — Predictvilla</title>',
       `<title>${esc(title)}</title>
 <meta name="description" content="${esc(description)}">
 <link rel="canonical" href="${canonical}">
@@ -668,13 +668,13 @@ app.get('/tips/:slug', async (req, res) => {
     );
     if (!rows.length) return res.status(404).sendFile(path.join(__dirname, 'public', 'index.html'));
     const p = rows[0];
-    const base = process.env.SITE_URL || 'https://www.oddslander.com';
+    const base = process.env.SITE_URL || 'https://www.predictvilla.com';
     const canonical = `${base}/tips/${p.slug}`;
-    const title = `${p.title} | Oddslander`;
-    const description = p.meta_description || `${p.title} — Football predictions and tips from Oddslander.`;
+    const title = `${p.title} | Predictvilla`;
+    const description = p.meta_description || `${p.title} — Football predictions and tips from Predictvilla.`;
     let html = readHtmlFile(path.join(__dirname, 'public', 'seo-article.html'));
     html = html.replace(
-      '<title>Oddslander — Football Intelligence Predictions</title>',
+      '<title>Predictvilla — Football Intelligence Predictions</title>',
       `<title>${esc(title)}</title>
 <meta name="description" content="${esc(description)}">
 ${p.meta_keywords ? `<meta name="keywords" content="${esc(p.meta_keywords)}">` : ''}
@@ -730,7 +730,7 @@ app.use((err, req, res, next) => {
 async function start() {
   await connectWithRetry();
   app.listen(PORT, () => {
-    console.log(`[Server] Oddslander running on port ${PORT} (${process.env.NODE_ENV})`);
+    console.log(`[Server] Predictvilla running on port ${PORT} (${process.env.NODE_ENV})`);
   });
   if (!process.env.pm_id || process.env.pm_id === '0') {
     startScheduler();

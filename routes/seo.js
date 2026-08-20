@@ -1,18 +1,18 @@
-const router = require('express').Router();
+﻿const router = require('express').Router();
 const { pool } = require('../config/db');
 const { authenticate, requireAdmin } = require('../middleware/auth');
 const { successResponse, errorResponse, asyncHandler } = require('../utils/helpers');
 
 const SEO_DEFAULTS = {
-  home:        ['Oddslander — Football Intelligence Predictions', 'Data-driven football predictions with an AI-powered Intelligence Engine. Free and VIP tips daily.', 'football predictions, free tips, VIP picks, banker of the day'],
-  predictions: ['Football Predictions & Tips — Oddslander', "Browse today's free and VIP football predictions. Filter by league, market, or category.", 'football tips today, free predictions, over 2.5 tips'],
-  statistics:  ['Football Statistics & Analytics — Oddslander', 'Front-tested football statistics: scoring averages, market reliability, and prediction track records.', 'football statistics, prediction accuracy, market analysis'],
-  blog:        ['Football Blog — Oddslander', 'Football analysis, betting guides, and expert insights from the Oddslander team.', 'football blog, betting tips, match analysis'],
-  pricing:     ['VIP Subscription — Oddslander', 'Unlock VIP football tips, AI-powered picks, and access to the Telegram VIP channel.', 'VIP football tips, subscription, premium predictions'],
-  about:       ['About Oddslander', "Learn about Oddslander's AI-powered football prediction platform.", 'about oddslander, football prediction platform'],
-  contact:     ['Contact Oddslander', 'Get in touch with the Oddslander team.', 'contact oddslander'],
-  terms:       ['Terms of Service — Oddslander', 'Oddslander terms of service and usage policy.', ''],
-  privacy:     ['Privacy Policy — Oddslander', 'Oddslander privacy policy and data handling practices.', ''],
+  home:        ['Predictvilla — Football Intelligence Predictions', 'Data-driven football predictions with an AI-powered Intelligence Engine. Free and VIP tips daily.', 'football predictions, free tips, VIP picks, banker of the day'],
+  predictions: ['Football Predictions & Tips — Predictvilla', "Browse today's free and VIP football predictions. Filter by league, market, or category.", 'football tips today, free predictions, over 2.5 tips'],
+  statistics:  ['Football Statistics & Analytics — Predictvilla', 'Front-tested football statistics: scoring averages, market reliability, and prediction track records.', 'football statistics, prediction accuracy, market analysis'],
+  blog:        ['Football Blog — Predictvilla', 'Football analysis, betting guides, and expert insights from the Predictvilla team.', 'football blog, betting tips, match analysis'],
+  pricing:     ['VIP Subscription — Predictvilla', 'Unlock VIP football tips, AI-powered picks, and access to the Telegram VIP channel.', 'VIP football tips, subscription, premium predictions'],
+  about:       ['About Predictvilla', "Learn about Predictvilla's AI-powered football prediction platform.", 'about predictvilla, football prediction platform'],
+  contact:     ['Contact Predictvilla', 'Get in touch with the Predictvilla team.', 'contact predictvilla'],
+  terms:       ['Terms of Service — Predictvilla', 'Predictvilla terms of service and usage policy.', ''],
+  privacy:     ['Privacy Policy — Predictvilla', 'Predictvilla privacy policy and data handling practices.', ''],
 };
 
 // GET all SEO settings

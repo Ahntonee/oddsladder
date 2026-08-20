@@ -1,13 +1,13 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Privacy Policy — Oddslander Football Predictions</title>
-<meta name="description" content="Oddslander's privacy policy — how we collect, use, and protect your data on our football predictions platform.">
-<link rel="canonical" href="https://oddslander.com/privacy.html">
-<meta property="og:title" content="Privacy Policy — Oddslander">
-<meta property="og:description" content="How Oddslander collects, uses, and protects your personal data.">
-<meta property="og:image" content="https://oddslander.com/images/logo.webp">
+<title>Privacy Policy — Predictvilla Football Predictions</title>
+<meta name="description" content="Predictvilla's privacy policy — how we collect, use, and protect your data on our football predictions platform.">
+<link rel="canonical" href="https://predictvilla.com/privacy.html">
+<meta property="og:title" content="Privacy Policy — Predictvilla">
+<meta property="og:description" content="How Predictvilla collects, uses, and protects your personal data.">
+<meta property="og:image" content="https://predictvilla.com/images/logo.webp">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary">
 <meta name="robots" content="noindex,follow">
@@ -30,7 +30,7 @@
 <div id="footer-placeholder"></div>
 <script src="/js/app.js"></script>
 <script>
-const FALLBACK = `# Privacy Policy\n\n*Last updated: January 2025*\n\n## 1. Information We Collect\n- **Account data**: name, email address, country.\n- **Usage data**: pages visited, device type, referrer (anonymised).\n- **Payment data**: processed entirely by Paystack; we store only plan name and expiry date.\n\n## 2. How We Use Your Information\n- To provide and improve the Oddslander service.\n- To send transactional emails (OTP, subscription receipts, expiry reminders).\n- To personalise your dashboard experience.\n\n## 3. Cookies\n- **ol_token** (httpOnly, Secure): authentication JWT — expires with your session or 7 days.\n- **ol_session** (SameSite=Lax): anonymous analytics session identifier.\n\n## 4. Data Sharing\nWe do not sell or share your personal data with third parties, except:\n- **Paystack**: to process payments.\n- **Email provider (SMTP)**: to send transactional emails.\n- **API-Football / The Odds API**: we send fixture IDs only, no personal data.\n\n## 5. Data Retention\nYour data is retained for as long as your account is active. You may delete your account at any time from your Dashboard → Settings.\n\n## 6. Security\nPasswords are hashed with bcrypt (cost 12). JWT tokens are stored in httpOnly cookies and never exposed to JavaScript.\n\n## 7. Your Rights\nYou may request access to, correction of, or deletion of your personal data by contacting us via the Contact page.\n\n## 8. Changes\nWe may update this policy. We will notify you by email if changes are material.\n\n## 9. Contact\nPrivacy inquiries: use the Contact page.`;
+const FALLBACK = `# Privacy Policy\n\n*Last updated: January 2025*\n\n## 1. Information We Collect\n- **Account data**: name, email address, country.\n- **Usage data**: pages visited, device type, referrer (anonymised).\n- **Payment data**: processed entirely by Paystack; we store only plan name and expiry date.\n\n## 2. How We Use Your Information\n- To provide and improve the Predictvilla service.\n- To send transactional emails (OTP, subscription receipts, expiry reminders).\n- To personalise your dashboard experience.\n\n## 3. Cookies\n- **ol_token** (httpOnly, Secure): authentication JWT — expires with your session or 7 days.\n- **ol_session** (SameSite=Lax): anonymous analytics session identifier.\n\n## 4. Data Sharing\nWe do not sell or share your personal data with third parties, except:\n- **Paystack**: to process payments.\n- **Email provider (SMTP)**: to send transactional emails.\n- **API-Football / The Odds API**: we send fixture IDs only, no personal data.\n\n## 5. Data Retention\nYour data is retained for as long as your account is active. You may delete your account at any time from your Dashboard → Settings.\n\n## 6. Security\nPasswords are hashed with bcrypt (cost 12). JWT tokens are stored in httpOnly cookies and never exposed to JavaScript.\n\n## 7. Your Rights\nYou may request access to, correction of, or deletion of your personal data by contacting us via the Contact page.\n\n## 8. Changes\nWe may update this policy. We will notify you by email if changes are material.\n\n## 9. Contact\nPrivacy inquiries: use the Contact page.`;
 
 document.addEventListener('DOMContentLoaded', async () => {
   try {
@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const data = await r.json();
     const page = data.data?.page;
     if (!page) throw new Error();
-    document.title = `${page.title} — Oddslander`;
+    document.title = `${page.title} — Predictvilla`;
     document.getElementById('page-content').innerHTML = `<div class="article-content">${DOMPurify.sanitize(marked.parse(page.content||FALLBACK))}</div>`;
   } catch {
     document.getElementById('page-content').innerHTML = `<div class="article-content">${DOMPurify.sanitize(marked.parse(FALLBACK))}</div>`;

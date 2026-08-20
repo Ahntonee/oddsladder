@@ -1,6 +1,6 @@
-# Oddslander — Nginx configuration example
-# Copy to /etc/nginx/sites-available/oddslander and symlink to sites-enabled
-# Replace oddslander.com with your actual domain
+﻿# Predictvilla — Nginx configuration example
+# Copy to /etc/nginx/sites-available/predictvilla and symlink to sites-enabled
+# Replace predictvilla.com with your actual domain
 
 # Rate limiting zones
 limit_req_zone $binary_remote_addr zone=api:10m rate=30r/m;
@@ -10,27 +10,27 @@ limit_req_zone $binary_remote_addr zone=auth:10m rate=10r/m;
 server {
     listen 80;
     listen [::]:80;
-    server_name oddslander.com www.oddslander.com;
-    return 301 https://oddslander.com$request_uri;
+    server_name predictvilla.com www.predictvilla.com;
+    return 301 https://predictvilla.com$request_uri;
 }
 
 # Redirect www → non-www
 server {
     listen 443 ssl http2;
-    server_name www.oddslander.com;
-    ssl_certificate     /etc/letsencrypt/live/oddslander.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/oddslander.com/privkey.pem;
-    return 301 https://oddslander.com$request_uri;
+    server_name www.predictvilla.com;
+    ssl_certificate     /etc/letsencrypt/live/predictvilla.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/predictvilla.com/privkey.pem;
+    return 301 https://predictvilla.com$request_uri;
 }
 
 server {
     listen 443 ssl http2;
     listen [::]:443 ssl http2;
-    server_name oddslander.com;
+    server_name predictvilla.com;
 
     # SSL — managed by Certbot / Let's Encrypt
-    ssl_certificate     /etc/letsencrypt/live/oddslander.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/oddslander.com/privkey.pem;
+    ssl_certificate     /etc/letsencrypt/live/predictvilla.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/predictvilla.com/privkey.pem;
     ssl_protocols       TLSv1.2 TLSv1.3;
     ssl_prefer_server_ciphers on;
     ssl_session_cache   shared:SSL:10m;
@@ -50,7 +50,7 @@ server {
     gzip_comp_level 5;
     gzip_types text/plain text/css application/json application/javascript text/xml application/xml text/javascript image/svg+xml;
 
-    root /var/www/oddslander/public;
+    root /var/www/predictvilla/public;
     index index.html;
 
     # Block sensitive files
@@ -155,6 +155,6 @@ server {
     }
 
     # Logs
-    access_log /var/log/nginx/oddslander.access.log;
-    error_log  /var/log/nginx/oddslander.error.log warn;
+    access_log /var/log/nginx/predictvilla.access.log;
+    error_log  /var/log/nginx/predictvilla.error.log warn;
 }

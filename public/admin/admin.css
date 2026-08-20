@@ -1,4 +1,4 @@
-/* Admin shell styles — Oddslander Brand Palette */
+﻿/* Admin shell styles — Predictvilla Brand Palette */
 :root{--sidebar-w:220px}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Inter',sans-serif;background:var(--deep-onyx,#171717);color:var(--text-primary,#ffffff);display:flex;min-height:100vh}

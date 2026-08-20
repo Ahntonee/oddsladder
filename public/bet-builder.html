@@ -1,9 +1,19 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Bet Builder — Oddslander</title>
+<title>Bet Builder — Predictvilla</title>
 <meta name="description" content="Build your accumulator from today's highest-confidence AI predictions. Auto-generated picks, combined odds, and stake calculator.">
+<link rel="canonical" href="https://predictvilla.com/bet-builder.html">
+<meta property="og:title" content="Bet Builder — Predictvilla">
+<meta property="og:description" content="Build your accumulator from today's highest-confidence AI football predictions. Auto-generated picks with combined odds and stake calculator.">
+<meta property="og:image" content="https://predictvilla.com/images/logo.webp">
+<meta property="og:url" content="https://predictvilla.com/bet-builder.html">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Bet Builder — Predictvilla">
+<meta name="twitter:description" content="Build football accumulators from AI-powered predictions with auto odds calculation.">
+<meta name="twitter:image" content="https://predictvilla.com/images/logo.webp">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
@@ -442,7 +452,7 @@ function buildSlipText() {
   const payout = stake * combined;
 
   const lines = [
-    `🎯 Oddslander Accumulator — ${new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short'})}`,
+    `🎯 Predictvilla Accumulator — ${new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short'})}`,
     '',
     ...selected.map((g,i) => {
       const ko = g.match_date ? new Date(g.match_date).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '';
@@ -452,7 +462,7 @@ function buildSlipText() {
     `Combined Odds: ${combined.toFixed(2)}`,
     `Stake: $${stake.toFixed(2)} → Potential: $${payout.toFixed(2)}`,
     '',
-    '🔗 oddslander.com/bet-builder',
+    '🔗 predictvilla.com/bet-builder',
   ];
 
   return lines.join('\n');
@@ -472,7 +482,7 @@ function shareSlip() {
   const text = buildSlipText();
   if (!text) { showToast('Add picks to your slip first', 'error'); return; }
   if (navigator.share) {
-    navigator.share({ title:'My Oddslander Acca', text, url: window.location.href }).catch(()=>{});
+    navigator.share({ title:'My Predictvilla Acca', text, url: window.location.href }).catch(()=>{});
   } else {
     copySlip();
   }

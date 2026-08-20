@@ -1,4 +1,4 @@
-const { pool } = require('../config/db');
+﻿const { pool } = require('../config/db');
 const { successResponse, errorResponse, asyncHandler, parsePagination, paginate, generateBlogSlug, sanitiseText } = require('../utils/helpers');
 
 exports.list = asyncHandler(async (req, res) => {
@@ -45,7 +45,7 @@ exports.create = asyncHandler(async (req, res) => {
       meta_title, meta_description, keywords, featured_image, is_published, published_at)
      VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
     [slug, sanitiseText(title), content, excerpt ? sanitiseText(excerpt) : null,
-     category || null, author_name || 'Oddslander', meta_title || null, meta_description || null,
+     category || null, author_name || 'Predictvilla', meta_title || null, meta_description || null,
      keywords || null, featured_image || null, is_published ? 1 : 0, pub]
   );
   return successResponse(res, { id: result.insertId, slug }, 'Post created', 201);
@@ -66,7 +66,7 @@ exports.update = asyncHandler(async (req, res) => {
       ${slugUpdate ? ', slug=?' : ''}
       ${pub !== undefined ? ', published_at=?' : ''} WHERE id=?`,
     [sanitiseText(title || ''), content, excerpt || null, category || null,
-     author_name || 'Oddslander', meta_title || null, meta_description || null,
+     author_name || 'Predictvilla', meta_title || null, meta_description || null,
      keywords || null, featured_image || null, is_published ? 1 : 0,
      ...(slugUpdate ? [slugUpdate] : []),
      ...(pub !== undefined ? [pub] : []), req.params.id]

@@ -1,19 +1,19 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>About Oddslander — Football Predictions Platform</title>
-<meta name="description" content="Learn about Oddslander, an AI-powered football predictions platform covering 160+ leagues with free and VIP tips daily.">
-<link rel="canonical" href="https://oddslander.com/about.html">
-<meta property="og:title" content="About Oddslander — Football Predictions Platform">
+<title>About Predictvilla — Football Predictions Platform</title>
+<meta name="description" content="Learn about Predictvilla, an AI-powered football predictions platform covering 160+ leagues with free and VIP tips daily.">
+<link rel="canonical" href="https://predictvilla.com/about.html">
+<meta property="og:title" content="About Predictvilla — Football Predictions Platform">
 <meta property="og:description" content="AI-powered football predictions covering 160+ leagues. Free and VIP tips with an 80-88% win rate target.">
-<meta property="og:image" content="https://oddslander.com/images/logo.webp">
-<meta property="og:url" content="https://oddslander.com/about.html">
+<meta property="og:image" content="https://predictvilla.com/images/logo.webp">
+<meta property="og:url" content="https://predictvilla.com/about.html">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="About Oddslander">
+<meta name="twitter:title" content="About Predictvilla">
 <meta name="twitter:description" content="AI-powered football predictions platform covering 160+ leagues with free and VIP tips.">
-<meta name="twitter:image" content="https://oddslander.com/images/logo.webp">
+<meta name="twitter:image" content="https://predictvilla.com/images/logo.webp">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Jura:wght@400;500;600;700&family=Exo+2:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800;900&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
@@ -39,12 +39,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const data = await r.json();
     const page = data.data?.page;
     if (!page) throw new Error();
-    setPageMeta({ title: page.title, description: page.meta_description || 'Learn about Oddslander — an AI-powered football predictions platform covering 160+ leagues with free and VIP tips.' });
+    setPageMeta({ title: page.title, description: page.meta_description || 'Learn about Predictvilla — an AI-powered football predictions platform covering 160+ leagues with free and VIP tips.' });
     document.getElementById('about-content').innerHTML = `
       <h1 style="font-size:clamp(28px,4vw,42px);font-weight:900;margin-bottom:28px">${escapeHtml(page.title)}</h1>
       <div class="article-content">${DOMPurify.sanitize(marked.parse(page.content||''))}</div>`;
   } catch {
-    document.getElementById('about-content').innerHTML = `<h1>About Oddslander</h1><div class="article-content"><h2>Our Mission</h2><p>Oddslander is a football predictions platform powered by a real-time data pipeline and an AI-driven Intelligence Engine targeting an 80–88% prediction win rate.</p><h2>The Intelligence Engine</h2><p>We combine Poisson statistical models, historical outcome learning, and live bookie odds to deliver the most accurate football tips.</p><h2>Responsible Gambling</h2><p>Oddslander tips are for entertainment only. Always gamble responsibly.</p></div>`;
+    document.getElementById('about-content').innerHTML = `<h1>About Predictvilla</h1><div class="article-content"><h2>Our Mission</h2><p>Predictvilla is a football predictions platform powered by a real-time data pipeline and an AI-driven Intelligence Engine targeting an 80–88% prediction win rate.</p><h2>The Intelligence Engine</h2><p>We combine Poisson statistical models, historical outcome learning, and live bookie odds to deliver the most accurate football tips.</p><h2>Responsible Gambling</h2><p>Predictvilla tips are for entertainment only. Always gamble responsibly.</p></div>`;
   }
 });
 </script>

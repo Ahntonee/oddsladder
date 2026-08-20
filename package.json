@@ -1,7 +1,7 @@
-{
-  "name": "oddslander",
+﻿{
+  "name": "predictvilla",
   "version": "1.0.0",
-  "description": "Oddslander — Football Intelligence Prediction Platform",
+  "description": "Predictvilla — Football Intelligence Prediction Platform",
   "main": "server.js",
   "scripts": {
     "start": "node config/migrate.js && node config/migrate_auth.js && node server.js",
@@ -26,6 +26,7 @@
     "slugify": "^1.6.6"
   },
   "devDependencies": {
-    "nodemon": "^3.1.0"
+    "nodemon": "^3.1.0",
+    "sharp": "^0.35.3"
   }
 }

@@ -1,4 +1,4 @@
-// Shared admin utilities
+﻿// Shared admin utilities
 (function () {
   // Guard: redirect to login if not admin
   function getAdmin() {
@@ -44,7 +44,7 @@
     const topbar = document.getElementById('admin-topbar');
     if (sidebar) {
       sidebar.innerHTML = `
-        <div class="admin-brand"><img src="/images/logo.png" alt="Oddslander" style="height:32px;object-fit:contain"></div>
+        <div class="admin-brand"><img src="/images/logo.png" alt="Predictvilla" style="height:32px;object-fit:contain"></div>
         <nav class="admin-nav">
           ${nav.map(n => `<a href="${n.href}" class="admin-nav-link${activePage === n.href ? ' active' : ''}"><span class="material-icons-round">${n.icon}</span> ${n.label}</a>`).join('')}
         </nav>

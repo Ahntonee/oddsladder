@@ -1,16 +1,16 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Football Prediction — Oddslander</title>
-<meta name="description" content="Expert football prediction with AI-powered analysis, confidence score, and VIP tips on Oddslander.">
-<meta property="og:title" content="Football Prediction — Oddslander">
+<title>Football Prediction — Predictvilla</title>
+<meta name="description" content="Expert football prediction with AI-powered analysis, confidence score, and VIP tips on Predictvilla.">
+<meta property="og:title" content="Football Prediction — Predictvilla">
 <meta property="og:description" content="Expert football prediction with AI analysis and confidence score.">
-<meta property="og:image" content="https://oddslander.com/images/logo.webp">
+<meta property="og:image" content="https://predictvilla.com/images/logo.webp">
 <meta property="og:type" content="article">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://oddslander.com/images/logo.webp">
+<meta name="twitter:image" content="https://predictvilla.com/images/logo.webp">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Jura:wght@400;500;600;700&family=Exo+2:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800;900&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const { prediction: p } = (await predR.json()).data;
 
     const matchTitle = `${p.home_team} vs ${p.away_team} Prediction`;
-    const matchDesc = `${p.tip} at odds ${p.odds ? parseFloat(p.odds).toFixed(2) : 'N/A'}. ${p.confidence_score ? 'Confidence: '+p.confidence_score+'%. ' : ''}Expert football prediction for ${p.league_name || 'football'} on Oddslander.`;
+    const matchDesc = `${p.tip} at odds ${p.odds ? parseFloat(p.odds).toFixed(2) : 'N/A'}. ${p.confidence_score ? 'Confidence: '+p.confidence_score+'%. ' : ''}Expert football prediction for ${p.league_name || 'football'} on Predictvilla.`;
     setPageMeta({ title: matchTitle, description: matchDesc, type: 'article' });
     injectJsonLd({ "@context":"https://schema.org","@type":"SportsEvent","name":`${p.home_team} vs ${p.away_team}`,"startDate":p.match_date,"sport":"Football","homeTeam":{"@type":"SportsTeam","name":p.home_team},"awayTeam":{"@type":"SportsTeam","name":p.away_team},"location":{"@type":"Place","name":p.league_name||'Football'},"url":window.location.href });
     document.getElementById('bc-title').textContent = `${p.home_team} vs ${p.away_team}`;
