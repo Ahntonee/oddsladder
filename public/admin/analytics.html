@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -27,7 +27,7 @@
 .win-bar { width:60px; height:6px; border-radius:3px; background:var(--border); display:inline-block; vertical-align:middle; overflow:hidden; }
 .win-bar-fill { height:100%; border-radius:3px; background:var(--primary); }
 .conf-pill { padding:2px 7px; border-radius:12px; font-size:11px; font-weight:700; }
-.conf-high { background:rgba(172,255,52,.15); color:var(--primary); }
+.conf-high { background:rgba(0,245,161,.15); color:var(--primary); }
 .conf-med  { background:rgba(250,249,42,.12); color:var(--warning); }
 .conf-low  { background:rgba(255,71,87,.12);  color:var(--danger);  }
 .empty-hint { text-align:center; padding:40px; color:var(--text-soft); font-size:13px; }
@@ -408,7 +408,7 @@ function renderVisitorsChart(daily) {
     data: {
       labels: daily.map(r => r.date),
       datasets: [
-        { label:'Views',    data:daily.map(r=>r.views||0),    borderColor:'#acff34', backgroundColor:'rgba(172,255,52,0.08)', tension:0.4, fill:true },
+        { label:'Views',    data:daily.map(r=>r.views||0),    borderColor:'#00f5a1', backgroundColor:'rgba(0,245,161,0.08)', tension:0.4, fill:true },
         { label:'Sessions', data:daily.map(r=>r.sessions||0), borderColor:'rgba(241,254,195,0.5)', backgroundColor:'transparent', tension:0.3 }
       ]
     },
@@ -428,7 +428,7 @@ function renderDevicesChart(devs) {
     type: 'doughnut',
     data: {
       labels: devs.map(d=>d.device_type||'Unknown'),
-      datasets: [{ data:devs.map(d=>d.views), backgroundColor:['#acff34','#acff34','#f1fec3','#f1fec3','#ff6b6b'], borderWidth:0 }]
+      datasets: [{ data:devs.map(d=>d.views), backgroundColor:['#00f5a1','#00f5a1','#f1fec3','#f1fec3','#ff6b6b'], borderWidth:0 }]
     },
     options: { responsive:false, plugins:{ legend:{ position:'bottom', labels:{ color:'rgba(241,254,195,0.75)', font:{size:12} } } } }
   });
@@ -494,7 +494,7 @@ function renderRevenueChart(data) {
   }
   const months = [...new Set(data.map(r=>r.month))].sort();
   const plans  = [...new Set(data.map(r=>r.plan))];
-  const colors = ['#acff34','#f1fec3','#f1fec3','#ff6b6b','#acff34'];
+  const colors = ['#00f5a1','#f1fec3','#f1fec3','#ff6b6b','#00f5a1'];
   const ctx = document.getElementById('revenue-chart').getContext('2d');
   revenueChart = new Chart(ctx, {
     type: 'bar',
@@ -637,7 +637,7 @@ function renderMarketChart(markets) {
     data: {
       labels: top.map(m=>m.market),
       datasets: [
-        { label:'Win Rate %', data:top.map(m=>parseFloat(m.win_rate)||0), backgroundColor:'rgba(172,255,52,0.7)', borderColor:'#acff34', borderWidth:1, yAxisID:'y' },
+        { label:'Win Rate %', data:top.map(m=>parseFloat(m.win_rate)||0), backgroundColor:'rgba(0,245,161,0.7)', borderColor:'#00f5a1', borderWidth:1, yAxisID:'y' },
         { label:'Avg Confidence', data:top.map(m=>parseFloat(m.avg_confidence)||0), type:'line', borderColor:'#f1fec3', backgroundColor:'transparent', tension:0.4, yAxisID:'y' },
       ]
     },

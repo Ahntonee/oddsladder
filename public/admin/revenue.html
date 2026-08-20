@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -95,7 +95,7 @@ async function loadByMonth() {
   const ctx = document.getElementById('rev-chart').getContext('2d');
   revChart = new Chart(ctx, {
     type: 'bar',
-    data: { labels:rows.map(r=>r.month), datasets:[{ label:'Revenue ₦', data:rows.map(r=>r.revenue||0), backgroundColor:'rgba(172,255,52,0.7)', borderRadius:4 }] },
+    data: { labels:rows.map(r=>r.month), datasets:[{ label:'Revenue ₦', data:rows.map(r=>r.revenue||0), backgroundColor:'rgba(0,245,161,0.7)', borderRadius:4 }] },
     options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ y:{ticks:{color:'rgba(241,254,195,0.6)',callback:v=>'₦'+v.toLocaleString()}}, x:{ticks:{color:'rgba(241,254,195,0.6)',font:{size:11}}} } }
   });
 }
@@ -107,7 +107,7 @@ async function loadGrowth() {
   const ctx = document.getElementById('growth-chart').getContext('2d');
   growthChart = new Chart(ctx, {
     type: 'line',
-    data: { labels:rows.map(r=>r.month), datasets:[{ label:'New Subs', data:rows.map(r=>r.new_subs||0), borderColor:'#acff34', backgroundColor:'rgba(172,255,52,0.08)', tension:0.4, fill:true }] },
+    data: { labels:rows.map(r=>r.month), datasets:[{ label:'New Subs', data:rows.map(r=>r.new_subs||0), borderColor:'#00f5a1', backgroundColor:'rgba(0,245,161,0.08)', tension:0.4, fill:true }] },
     options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ y:{ticks:{color:'rgba(241,254,195,0.6)'}}, x:{ticks:{color:'rgba(241,254,195,0.6)',font:{size:11}}} } }
   });
 }
@@ -120,7 +120,7 @@ async function loadPlans() {
   const ctx = document.getElementById('plan-chart').getContext('2d');
   planChart = new Chart(ctx, {
     type: 'doughnut',
-    data: { labels:rows.map(r=>r.plan), datasets:[{ data:rows.map(r=>r.count), backgroundColor:['#acff34','#acff34','#f1fec3'], borderWidth:0 }] },
+    data: { labels:rows.map(r=>r.plan), datasets:[{ data:rows.map(r=>r.count), backgroundColor:['#00f5a1','#00f5a1','#f1fec3'], borderWidth:0 }] },
     options: { responsive:false, plugins:{ legend:{ position:'bottom', labels:{ color:'rgba(241,254,195,0.75)', font:{size:12} } } } }
   });
 }
