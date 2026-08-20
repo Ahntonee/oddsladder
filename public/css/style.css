@@ -247,8 +247,8 @@ section { padding: 48px 0; }
   color: var(--text-soft);
   padding: 8px 14px;
   border-radius: var(--radius);
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 15.5px;
+  font-weight: 700;
   transition: all 0.2s;
 }
 .nav-link:hover, .nav-link.active { color: var(--primary); background: var(--border); }
