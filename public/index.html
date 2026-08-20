@@ -119,9 +119,17 @@
       </div>
     </div>
   </section>
+
+  <!-- Homepage SEO Article -->
+  <section class="seo-article-section">
+    <div class="container">
+      <div class="seo-article-body" id="homepage-seo-article"></div>
+    </div>
+  </section>
 </main>
 
 <div id="footer-placeholder"></div>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="/js/app.js"></script>
 <script>
 let currentPage = 1, currentDate = 'today', currentCat = 'free';
@@ -135,6 +143,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   applyFilters();
   loadRecentWins();
   setupCategoryTabs();
+  loadHomepageArticle();
   document.getElementById('load-more').addEventListener('click', loadMore);
 
   // Load ads
@@ -264,6 +273,21 @@ setInterval(() => {
   const grid = document.getElementById('predictions-grid');
   if (grid) loadPredictions({ date: currentDate, category: currentCat, page: 1 }, grid);
 }, 60000);
+
+async function loadHomepageArticle() {
+  const el = document.getElementById('homepage-seo-article');
+  if (!el) return;
+  try {
+    const r = await fetch('/api/pages/homepage_article');
+    const d = await r.json();
+    const content = d.data?.page?.content;
+    if (content && typeof marked !== 'undefined') {
+      el.innerHTML = marked.parse(content);
+    } else if (content) {
+      el.textContent = content;
+    }
+  } catch {}
+}
 </script>
 </body>
 </html>
