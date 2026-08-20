@@ -36,8 +36,8 @@ exports.getBySlug = asyncHandler(async (req, res) => {
 
 exports.create = asyncHandler(async (req, res) => {
   const { title, content, excerpt, category, author_name, meta_title, meta_description,
-          keywords, featured_image, is_published } = req.body;
-  const slug = generateBlogSlug(title);
+          keywords, featured_image, is_published, slug: rawSlug } = req.body;
+  const slug = rawSlug ? rawSlug.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') : generateBlogSlug(title);
   const pub = is_published ? new Date() : null;
 
   const [result] = await pool.query(
@@ -53,19 +53,22 @@ exports.create = asyncHandler(async (req, res) => {
 
 exports.update = asyncHandler(async (req, res) => {
   const { title, content, excerpt, category, author_name, meta_title, meta_description,
-          keywords, featured_image, is_published } = req.body;
+          keywords, featured_image, is_published, slug: rawSlug } = req.body;
   const [existing] = await pool.query('SELECT id, is_published FROM blog_posts WHERE id=?', [req.params.id]);
   if (!existing.length) return errorResponse(res, 'Post not found', 404);
 
   const pub = is_published && !existing[0].is_published ? new Date() : (is_published ? undefined : null);
+  const slugUpdate = rawSlug ? rawSlug.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') : null;
 
   await pool.query(
     `UPDATE blog_posts SET title=?, content=?, excerpt=?, category=?, author_name=?,
       meta_title=?, meta_description=?, keywords=?, featured_image=?, is_published=?
+      ${slugUpdate ? ', slug=?' : ''}
       ${pub !== undefined ? ', published_at=?' : ''} WHERE id=?`,
     [sanitiseText(title || ''), content, excerpt || null, category || null,
      author_name || 'Oddslander', meta_title || null, meta_description || null,
      keywords || null, featured_image || null, is_published ? 1 : 0,
+     ...(slugUpdate ? [slugUpdate] : []),
      ...(pub !== undefined ? [pub] : []), req.params.id]
   );
   return successResponse(res, null, 'Post updated');

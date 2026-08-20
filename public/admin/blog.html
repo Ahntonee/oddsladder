@@ -59,6 +59,11 @@
           </select>
         </div>
       </div>
+      <div class="form-group mb-2">
+        <label class="form-label">Slug <span class="text-muted">(auto-filled from title — edit to customise)</span></label>
+        <input type="text" class="form-control" id="p-slug" placeholder="my-post-url-slug" style="font-family:monospace">
+        <div class="text-muted mt-1" id="p-slug-preview" style="font-size:11px"></div>
+      </div>
       <div class="form-group mb-2"><label class="form-label">Excerpt</label><input type="text" class="form-control" id="p-excerpt" placeholder="Short description shown on blog list"></div>
       <div class="form-group mb-2"><label class="form-label">Featured Image</label>
         <div class="flex gap-2" style="align-items:center">
@@ -87,12 +92,20 @@
 <script src="admin.js"></script>
 <script>
 injectAdminShell('blog.html');
-let debTimer, mde = null, currentPage = 1;
+let debTimer, mde = null, currentPage = 1, slugManual = false;
+
+function toSlug(str) {
+  return str.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+}
+
+function updateSlugPreview() {
+  const val = document.getElementById('p-slug').value;
+  document.getElementById('p-slug-preview').textContent = val ? '/blog/' + val : '';
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   loadPosts(1);
 
-  // Bind all interactions via addEventListener — no onclick attributes
   document.getElementById('new-post-btn').addEventListener('click', () => showEditor());
   document.getElementById('back-btn').addEventListener('click', hideEditor);
   document.getElementById('cancel-btn').addEventListener('click', hideEditor);
@@ -101,6 +114,17 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('b-cat').addEventListener('change', () => loadPosts(1));
   document.getElementById('b-pub').addEventListener('change', () => loadPosts(1));
   document.getElementById('p-img').addEventListener('change', previewImg);
+
+  document.getElementById('p-title').addEventListener('input', () => {
+    if (!slugManual) {
+      document.getElementById('p-slug').value = toSlug(document.getElementById('p-title').value);
+      updateSlugPreview();
+    }
+  });
+  document.getElementById('p-slug').addEventListener('input', () => {
+    slugManual = true;
+    updateSlugPreview();
+  });
 });
 
 async function loadPosts(page = 1) {
@@ -139,8 +163,11 @@ function showEditor(post = null) {
   document.getElementById('list-view').style.display = 'none';
   document.getElementById('editor-view').style.display = 'block';
   document.getElementById('editor-title').textContent = post ? 'Edit Post' : 'New Post';
+  slugManual = !!post;
   document.getElementById('edit-id').value = post?.id || '';
   document.getElementById('p-title').value = post?.title || '';
+  document.getElementById('p-slug').value = post?.slug || '';
+  updateSlugPreview();
   document.getElementById('p-cat').value = post?.category || 'Predictions';
   document.getElementById('p-excerpt').value = post?.excerpt || '';
   document.getElementById('p-meta-title').value = post?.meta_title || '';
@@ -217,8 +244,10 @@ async function editPost(id) {
 
 async function savePost() {
   const id = document.getElementById('edit-id').value;
+  const slugVal = document.getElementById('p-slug').value.trim();
   const body = {
     title: document.getElementById('p-title').value.trim(),
+    slug: slugVal || undefined,
     category: document.getElementById('p-cat').value,
     excerpt: document.getElementById('p-excerpt').value.trim(),
     content: mde ? mde.value() : '',
