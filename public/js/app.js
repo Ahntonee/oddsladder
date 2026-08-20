@@ -452,8 +452,12 @@ async function injectHeader() {
   document.body.insertBefore(sidebar, document.body.firstChild);
   document.body.classList.add('has-sidebar');
 
-  // Slim mobile topbar
+  // Top bar (desktop + mobile)
   if (target) {
+    const desktopAuthHtml = user
+      ? `<a href="${isAdmin ? '/admin/dashboard.html' : '/dashboard.html'}">${escapeHtml(user.name?.split(' ')[0] || 'Account')}</a>`
+      : `<a href="/pricing.html#login">Login</a><span class="tb-divider">|</span><a href="/pricing.html#register">Register</a>`;
+
     target.className = 'topbar';
     target.innerHTML = `
       <div class="topbar-inner">
@@ -463,7 +467,11 @@ async function injectHeader() {
           <span>Oddslander</span>
         </a>
         <div style="flex:1"></div>
-        <a href="/pricing.html" class="vip-premium-btn">★ Go Premium</a>
+        <a href="/pricing.html" class="vip-premium-btn">
+          <span class="prem-top">★ Go Premium</span>
+          <span class="prem-sub">GET STARTED FOR FREE</span>
+        </a>
+        <div class="topbar-auth-links">${desktopAuthHtml}</div>
         <a href="${user ? (isAdmin ? '/admin/dashboard.html' : '/dashboard.html') : '/pricing.html#login'}" class="topbar-auth-icon">
           <span class="material-icons-round">${user ? 'account_circle' : 'login'}</span>
         </a>
