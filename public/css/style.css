@@ -134,8 +134,16 @@
 [data-theme="light"] .data-table td { border-color: rgba(23,23,23,0.07); }
 [data-theme="light"] .data-table tr:hover td { background: rgba(0,245,161,0.06); }
 
-[data-theme="light"] .footer-main { background: #111; }
-[data-theme="light"] .footer-bottom { background: #0a0a0a; }
+[data-theme="light"] .footer-main { background: #f9fce8; }
+[data-theme="light"] .footer-bottom { background: #edf5b8; }
+[data-theme="light"] .footer-col-title { color: #171717; }
+[data-theme="light"] .footer-links-col a,
+[data-theme="light"] .footer-contact-item,
+[data-theme="light"] .footer-contact-item a,
+[data-theme="light"] .footer-desc { color: rgba(23,23,23,0.65); }
+[data-theme="light"] .footer-links-col a:hover { color: #171717; }
+[data-theme="light"] .footer-bottom-bar { background: #edf5b8; }
+[data-theme="light"] .footer-bottom-bar p { color: rgba(23,23,23,0.5); }
 
 [data-theme="light"] .skeleton {
   background: linear-gradient(90deg, rgba(23,23,23,0.05) 25%, rgba(23,23,23,0.10) 50%, rgba(23,23,23,0.05) 75%);
