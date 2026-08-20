@@ -1653,7 +1653,7 @@ body.has-sidebar { padding-left: var(--sidebar-w); padding-top: var(--topbar-h);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 1px;
-  color: rgba(255,255,255,0.28);
+  color: rgba(241,254,195,0.45);
   text-transform: uppercase;
 }
 .snav-link {
@@ -1669,11 +1669,11 @@ body.has-sidebar { padding-left: var(--sidebar-w); padding-top: var(--topbar-h);
   transition: all 0.15s;
   white-space: nowrap;
 }
-.snav-link:hover { color: #fff; background: rgba(255,255,255,0.05); }
-.snav-link.active { color: #fff; background: rgba(0,245,161,0.08); border-left-color: var(--primary); }
+.snav-link:hover { color: #fff; background: rgba(255,255,255,0.06); }
+.snav-link.active { color: #fff; background: rgba(172,255,52,0.08); border-left-color: #acff34; }
 .snav-link .material-icons-round { font-size: 17px; color: rgba(255,255,255,0.35); flex-shrink: 0; }
-.snav-link:hover .material-icons-round,
-.snav-link.active .material-icons-round { color: var(--primary); }
+.snav-link:hover .material-icons-round { color: #fff; }
+.snav-link.active .material-icons-round { color: #acff34; }
 .snav-link.vip-snav { color: #f59e0b; }
 .snav-link.vip-snav .material-icons-round { color: #f59e0b; }
 
@@ -1705,7 +1705,8 @@ body.has-sidebar { padding-left: var(--sidebar-w); padding-top: var(--topbar-h);
   font-family: var(--font-head);
   font-size: 15px;
   font-weight: 900;
-  color: #fff;
+  color: #ffffff;
+  letter-spacing: -0.2px;
 }
 .hamburger-btn {
   background: none;
@@ -1745,7 +1746,7 @@ body.has-sidebar { padding-left: var(--sidebar-w); padding-top: var(--topbar-h);
   flex-shrink: 0;
 }
 .topbar-auth-links a {
-  color: rgba(255,255,255,0.75);
+  color: #ffffff;
   text-decoration: none;
   font-size: 13px;
   font-weight: 500;
@@ -1753,7 +1754,7 @@ body.has-sidebar { padding-left: var(--sidebar-w); padding-top: var(--topbar-h);
   white-space: nowrap;
 }
 .topbar-auth-links a:hover { color: #fff; }
-.topbar-auth-links .tb-divider { color: rgba(255,255,255,0.25); font-size: 13px; }
+.topbar-auth-links .tb-divider { color: rgba(255,255,255,0.3); font-size: 13px; }
 
 /* Mobile-only auth icon */
 .topbar-auth-icon { color: rgba(255,255,255,0.6); flex-shrink: 0; }
