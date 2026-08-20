@@ -223,20 +223,20 @@ function buildPredictionCard(p, isVip = false) {
     ${p.is_vip && !isBanker ? '<div style="text-align:right;margin-bottom:6px"><span class="badge badge-vip">VIP</span></div>' : ''}
     <div class="prediction-header">
       <div class="league-tag">
-        ${p.league_logo ? `<img src="${escapeHtml(p.league_logo)}" alt="">` : '<span class="material-icons-round" style="font-size:18px">emoji_events</span>'}
+        ${p.league_logo ? `<img src="${escapeHtml(p.league_logo)}" alt="" loading="lazy">` : '<span class="material-icons-round" style="font-size:18px">emoji_events</span>'}
         <span>${escapeHtml(p.league_name || 'Football')}</span>
       </div>
       <div class="match-date">${formatMatchDate(p.match_date)}</div>
     </div>
     <div class="teams-row">
       <div class="team">
-        ${p.home_team_logo ? `<img src="${escapeHtml(p.home_team_logo)}" alt="${escapeHtml(p.home_team)}">` : '<span class="material-icons-round" style="font-size:28px">sports_soccer</span>'}
+        ${p.home_team_logo ? `<img src="${escapeHtml(p.home_team_logo)}" alt="${escapeHtml(p.home_team)}" loading="lazy">` : '<span class="material-icons-round" style="font-size:28px">sports_soccer</span>'}
         <div class="team-name">${escapeHtml(p.home_team)}</div>
         ${p.home_form ? `<div style="display:flex;gap:2px;justify-content:center;margin-top:4px">${buildFormDots(p.home_form)}</div>` : ''}
       </div>
       ${buildScoreDivider(p)}
       <div class="team">
-        ${p.away_team_logo ? `<img src="${escapeHtml(p.away_team_logo)}" alt="${escapeHtml(p.away_team)}">` : '<span class="material-icons-round" style="font-size:28px">sports_soccer</span>'}
+        ${p.away_team_logo ? `<img src="${escapeHtml(p.away_team_logo)}" alt="${escapeHtml(p.away_team)}" loading="lazy">` : '<span class="material-icons-round" style="font-size:28px">sports_soccer</span>'}
         <div class="team-name">${escapeHtml(p.away_team)}</div>
         ${p.away_form ? `<div style="display:flex;gap:2px;justify-content:center;margin-top:4px">${buildFormDots(p.away_form)}</div>` : ''}
       </div>
@@ -311,10 +311,10 @@ async function loadRecentWins(containerId = 'recent-wins-list') {
       const timeLabel = matchDate.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
       const wonLabel  = isJustWon ? '⚡ Just Won' : 'WON 🏆';
       const homeLogo  = w.home_team_logo
-        ? `<img src="${escapeHtml(w.home_team_logo)}" alt="${escapeHtml(w.home_team)}" class="rw-logo" onerror="this.style.display='none'">`
+        ? `<img src="${escapeHtml(w.home_team_logo)}" alt="${escapeHtml(w.home_team)}" class="rw-logo" loading="lazy" onerror="this.style.display='none'">`
         : `<div class="rw-logo-fallback">${escapeHtml(w.home_team[0]||'?')}</div>`;
       const awayLogo  = w.away_team_logo
-        ? `<img src="${escapeHtml(w.away_team_logo)}" alt="${escapeHtml(w.away_team)}" class="rw-logo" onerror="this.style.display='none'">`
+        ? `<img src="${escapeHtml(w.away_team_logo)}" alt="${escapeHtml(w.away_team)}" class="rw-logo" loading="lazy" onerror="this.style.display='none'">`
         : `<div class="rw-logo-fallback">${escapeHtml(w.away_team[0]||'?')}</div>`;
       const homeForm  = w.home_form ? buildFormDots(w.home_form, 5) : '';
       const awayForm  = w.away_form ? buildFormDots(w.away_form, 5) : '';
@@ -368,6 +368,45 @@ async function initTicker() {
     const html = items.join('') + items.join(''); // double for seamless loop
     wrap.innerHTML = `<span class="ticker-content">${html}</span>`;
   } catch {}
+}
+
+// ── SEO Meta Helpers ─────────────────────────────────────────────────────────
+function setMeta(name, content) {
+  if (!content) return;
+  let el = document.querySelector(`meta[name="${name}"]`);
+  if (!el) { el = document.createElement('meta'); el.name = name; document.head.appendChild(el); }
+  el.content = content;
+}
+function setOg(prop, content) {
+  if (!content) return;
+  let el = document.querySelector(`meta[property="og:${prop}"]`);
+  if (!el) { el = document.createElement('meta'); el.setAttribute('property', `og:${prop}`); document.head.appendChild(el); }
+  el.content = content;
+}
+function setCanonical(url) {
+  let el = document.querySelector('link[rel="canonical"]');
+  if (!el) { el = document.createElement('link'); el.rel = 'canonical'; document.head.appendChild(el); }
+  el.href = url;
+}
+function injectJsonLd(data) {
+  const existing = document.querySelector('script[type="application/ld+json"]');
+  if (existing) existing.remove();
+  const el = document.createElement('script');
+  el.type = 'application/ld+json';
+  el.textContent = JSON.stringify(data);
+  document.head.appendChild(el);
+}
+function setPageMeta({ title, description, image, type = 'website', noindex = false } = {}) {
+  const BASE = 'https://oddslander.com';
+  const img = image || `${BASE}/images/logo.png`;
+  const canonical = BASE + window.location.pathname;
+  if (title) { document.title = `${title} — Oddslander`; setOg('title', title); setMeta('twitter:title', title); }
+  if (description) { setMeta('description', description); setOg('description', description); setMeta('twitter:description', description); }
+  setOg('image', img); setMeta('twitter:image', img);
+  setOg('type', type); setOg('url', canonical);
+  setMeta('twitter:card', 'summary_large_image');
+  setCanonical(canonical);
+  if (noindex) setMeta('robots', 'noindex,nofollow');
 }
 
 // ── Header / Left Sidebar ─────────────────────────────────────────────────────
@@ -727,11 +766,11 @@ function buildPredictionRow(p, isVip = false) {
     <div class="pred-teams">
       <div class="pred-team-wrap">
         <div class="pred-team-name-row">
-          ${p.home_team_logo ? `<img src="${escapeHtml(p.home_team_logo)}" alt="" onerror="this.style.display='none'">` : ''}
+          ${p.home_team_logo ? `<img src="${escapeHtml(p.home_team_logo)}" alt="" loading="lazy" onerror="this.style.display='none'">` : ''}
           <span>${escapeHtml(p.home_team)}</span>
         </div>
         <div class="pred-team-name-row">
-          ${p.away_team_logo ? `<img src="${escapeHtml(p.away_team_logo)}" alt="" onerror="this.style.display='none'">` : ''}
+          ${p.away_team_logo ? `<img src="${escapeHtml(p.away_team_logo)}" alt="" loading="lazy" onerror="this.style.display='none'">` : ''}
           <span>${escapeHtml(p.away_team)}</span>
         </div>
       </div>

@@ -2,7 +2,18 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>About Oddslander</title>
+<title>About Oddslander — Football Predictions Platform</title>
+<meta name="description" content="Learn about Oddslander, an AI-powered football predictions platform covering 160+ leagues with free and VIP tips daily.">
+<link rel="canonical" href="https://oddslander.com/about.html">
+<meta property="og:title" content="About Oddslander — Football Predictions Platform">
+<meta property="og:description" content="AI-powered football predictions covering 160+ leagues. Free and VIP tips with an 80-88% win rate target.">
+<meta property="og:image" content="https://oddslander.com/images/logo.webp">
+<meta property="og:url" content="https://oddslander.com/about.html">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="About Oddslander">
+<meta name="twitter:description" content="AI-powered football predictions platform covering 160+ leagues with free and VIP tips.">
+<meta name="twitter:image" content="https://oddslander.com/images/logo.webp">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Jura:wght@400;500;600;700&family=Exo+2:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800;900&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
@@ -28,7 +39,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const data = await r.json();
     const page = data.data?.page;
     if (!page) throw new Error();
-    document.title = `${page.title} — Oddslander`;
+    setPageMeta({ title: page.title, description: page.meta_description || 'Learn about Oddslander — an AI-powered football predictions platform covering 160+ leagues with free and VIP tips.' });
     document.getElementById('about-content').innerHTML = `
       <h1 style="font-size:clamp(28px,4vw,42px);font-weight:900;margin-bottom:28px">${escapeHtml(page.title)}</h1>
       <div class="article-content">${DOMPurify.sanitize(marked.parse(page.content||''))}</div>`;
