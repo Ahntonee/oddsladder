@@ -1859,7 +1859,7 @@ body.has-sidebar { padding-left: var(--sidebar-w); padding-top: var(--topbar-h);
   background: #141414;
 }
 .pred-list-header span:nth-child(3) { text-align: center; }
-.pred-list-header span:nth-child(4) { text-align: left; padding-left: 2px; }
+.pred-list-header span:nth-child(4) { text-align: center; }
 .pred-list-header span:nth-child(5) { text-align: right; padding-right: 4px; }
 .pred-row {
   display: grid;
@@ -1935,7 +1935,7 @@ body.has-sidebar { padding-left: var(--sidebar-w); padding-top: var(--topbar-h);
 .prob-badge.prob-high { color: #00b300; }
 .prob-badge.prob-med { color: #d4a800; }
 .prob-badge.prob-low { color: #c55; }
-.pred-tip-col { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 3px; padding-left: 2px; }
+.pred-tip-col { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-align: center; }
 .tip-badge {
   display: inline-block;
   padding: 3px 8px;
