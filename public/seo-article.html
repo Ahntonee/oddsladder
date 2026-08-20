@@ -14,23 +14,59 @@
 <div id="header-placeholder"></div>
 
 <main>
-  <section style="padding:32px 0 16px">
-    <div class="container" style="max-width:900px">
-      <div id="article-loading" style="text-align:center;padding:60px;color:var(--text-soft)">
-        <div class="skeleton" style="height:36px;border-radius:8px;max-width:500px;margin:0 auto 16px"></div>
-        <div class="skeleton" style="height:16px;border-radius:6px;max-width:300px;margin:0 auto"></div>
-      </div>
-      <article id="article-body" style="display:none">
-        <h1 id="art-title" style="font-size:28px;font-weight:900;margin-bottom:12px;line-height:1.3"></h1>
-        <div id="art-meta" style="font-size:13px;color:var(--text-soft);margin-bottom:28px;display:flex;gap:16px;flex-wrap:wrap"></div>
-        <div id="art-content" class="article-content" style="font-size:16px;line-height:1.8;color:var(--text)"></div>
-      </article>
+  <!-- Top Banner Ad -->
+  <section class="ad-section">
+    <div class="container">
+      <div class="ad-wrap ad-wrap-top" id="ad-detail-top"></div>
     </div>
   </section>
 
-  <!-- Live predictions section (injected if show_live_predictions=true) -->
+  <section style="padding:24px 0 16px">
+    <div class="container">
+      <div class="page-with-sidebar">
+
+        <!-- Article main -->
+        <div class="page-main">
+          <div id="article-loading" style="text-align:center;padding:60px;color:var(--text-soft)">
+            <div class="skeleton" style="height:36px;border-radius:8px;max-width:500px;margin:0 auto 16px"></div>
+            <div class="skeleton" style="height:16px;border-radius:6px;max-width:300px;margin:0 auto"></div>
+          </div>
+
+          <article id="article-body" style="display:none">
+            <h1 id="art-title" style="font-size:28px;font-weight:900;margin-bottom:12px;line-height:1.3"></h1>
+            <div id="art-meta" style="font-size:13px;color:var(--text-soft);margin-bottom:28px;display:flex;gap:16px;flex-wrap:wrap"></div>
+            <div id="art-content" class="article-content" style="font-size:16px;line-height:1.8;color:var(--text)"></div>
+          </article>
+
+          <!-- Bottom Article Ad -->
+          <div class="ad-wrap ad-wrap-inline mt-3" id="ad-detail-bottom" style="display:none"></div>
+        </div>
+
+        <!-- Sidebar -->
+        <aside class="page-sidebar">
+          <!-- Sidebar Banner Ad -->
+          <div class="ad-wrap ad-wrap-sidebar" id="ad-sidebar"></div>
+
+          <!-- Sponsored Posts -->
+          <div class="sidebar-widget" id="sponsored-posts-widget" style="display:none">
+            <div class="sidebar-widget-title">Sponsored</div>
+            <div id="ad-native-sidebar"></div>
+          </div>
+
+          <!-- Related tips widget -->
+          <div class="sidebar-widget">
+            <div class="sidebar-widget-title">Today's Top Picks</div>
+            <div id="sidebar-top-picks"></div>
+            <a href="/predictions.html" class="btn btn-outline btn-sm" style="width:100%;text-align:center;margin-top:10px">View All Tips →</a>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- Live predictions section (if show_live_predictions=true) -->
   <section id="live-preds-section" style="display:none;padding-bottom:40px">
-    <div class="container" style="max-width:900px">
+    <div class="container">
       <h2 class="section-title" style="margin-bottom:16px">Today's <span>Live Predictions</span></h2>
       <p style="color:var(--text-soft);font-size:14px;margin-bottom:20px">These are today's AI-generated picks from the Oddslander Intelligence Engine.</p>
       <div id="live-preds-grid" class="grid-2"></div>
@@ -45,17 +81,57 @@
 <script src="/js/app.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
-  await injectHeader();
-  await injectFooter();
-  await loadArticle();
+  await initPage();
+
+  // Load ads
+  renderAds('detail_top', document.getElementById('ad-detail-top'));
+  renderAds('sidebar', document.getElementById('ad-sidebar'));
+  loadNativeSidebar();
+  loadSidebarTopPicks();
+  loadArticle();
 });
+
+async function loadNativeSidebar() {
+  const container = document.getElementById('ad-native-sidebar');
+  const widget = document.getElementById('sponsored-posts-widget');
+  if (!container) return;
+  try {
+    const r = await fetch('/api/ads/position/native_sidebar');
+    const data = r.ok ? await r.json() : null;
+    const ads = data?.data?.ads || [];
+    if (!ads.length) return;
+    widget.style.display = 'block';
+    container.innerHTML = ads.map(ad => `
+      <a class="sponsored-post" href="${ad.link_url||'#'}" target="_blank" rel="nofollow noopener" onclick="trackAdClick(${ad.id})">
+        ${ad.image_url ? `<img src="${ad.image_url}" alt="${ad.alt_text||ad.name}" class="sponsored-post-img">` : ''}
+        <div class="sponsored-post-body">
+          <p class="sponsored-post-name">${ad.name}</p>
+          <span class="ad-label">Sponsored</span>
+        </div>
+      </a>`).join('');
+  } catch {}
+}
+
+async function loadSidebarTopPicks() {
+  const el = document.getElementById('sidebar-top-picks');
+  if (!el) return;
+  try {
+    const r = await fetch('/api/predictions?date=today&limit=4&sort=confidence');
+    if (!r.ok) return;
+    const data = await r.json();
+    const picks = data?.data?.predictions || [];
+    if (!picks.length) { el.innerHTML = '<p style="color:var(--text-soft);font-size:13px">No tips yet today.</p>'; return; }
+    el.innerHTML = picks.map(p => `
+      <a href="/prediction-detail.html?id=${p.id}" class="sidebar-pick">
+        <span class="sidebar-pick-teams">${p.home_team} vs ${p.away_team}</span>
+        <span class="sidebar-pick-tip">${p.predicted_outcome||''}</span>
+      </a>`).join('');
+  } catch {}
+}
 
 async function loadArticle() {
   const slug = window.location.pathname.replace('/tips/', '').replace(/\//g,'');
   try {
-    const r = await fetch(`/api/backlinks/public`); // just a health check reuse; load page data via inline script
-    // Page data is server-injected via <title> meta — read the slug from URL
-    // Load article data
     const ar = await fetch(`/api/seo-article-public/${encodeURIComponent(slug)}`);
     const data = ar.ok ? await ar.json() : null;
 
@@ -73,6 +149,12 @@ async function loadArticle() {
       <span><span class="material-icons-round" style="font-size:14px;vertical-align:middle">psychology</span> AI-Generated Predictions</span>
     `;
     document.getElementById('art-content').innerHTML = page.content || '';
+
+    // Load bottom ad after article renders
+    const bottomAd = document.getElementById('ad-detail-bottom');
+    renderAds('detail_bottom', bottomAd).then(() => {
+      if (bottomAd.innerHTML) bottomAd.style.display = 'block';
+    });
 
     if (page.show_live_predictions) {
       document.getElementById('live-preds-section').style.display = 'block';

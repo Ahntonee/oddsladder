@@ -293,6 +293,7 @@ app.get('/sitemap.xml', async (req, res) => {
   const [preds] = await pool.query('SELECT slug, updated_at FROM predictions WHERE published_at IS NOT NULL ORDER BY updated_at DESC LIMIT 500');
   const [posts] = await pool.query('SELECT slug, updated_at FROM blog_posts WHERE is_published=1 ORDER BY updated_at DESC LIMIT 200');
   const [activeLeagues] = await pool.query('SELECT name FROM leagues WHERE is_active = 1');
+  const [seoArticles] = await pool.query('SELECT slug, updated_at FROM seo_article_pages WHERE is_published=1 ORDER BY updated_at DESC LIMIT 200').catch(() => [[]]);
 
   const staticUrls = ['', '/predictions.html', '/pricing.html', '/blog.html', '/about.html', '/statistics.html'];
   const marketUrls = Object.keys(MARKET_PAGES).map(slug =>
@@ -305,8 +306,9 @@ app.get('/sitemap.xml', async (req, res) => {
     ...staticUrls.map(p => `<url><loc>${base}${p}</loc><changefreq>daily</changefreq><priority>1.0</priority></url>`),
     ...marketUrls,
     ...leagueUrls,
-    ...preds.map(p => `<url><loc>${base}/prediction/${p.slug}</loc><lastmod>${new Date(p.updated_at).toISOString()}</lastmod><priority>0.6</priority></url>`),
-    ...posts.map(p => `<url><loc>${base}/blog/${p.slug}</loc><lastmod>${new Date(p.updated_at).toISOString()}</lastmod><priority>0.7</priority></url>`),
+    ...preds.map(p => `<url><loc>${base}/prediction/${p.slug}</loc><lastmod>${new Date(p.updated_at).toISOString()}</lastmod><changefreq>weekly</changefreq><priority>0.6</priority></url>`),
+    ...posts.map(p => `<url><loc>${base}/blog/${p.slug}</loc><lastmod>${new Date(p.updated_at).toISOString()}</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>`),
+    ...seoArticles.map(p => `<url><loc>${base}/tips/${p.slug}</loc><lastmod>${new Date(p.updated_at).toISOString()}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>`),
   ];
   const xml = `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.join('')}</urlset>`;
   sitemapCache = { xml, at: Date.now() };
@@ -333,7 +335,8 @@ async function getSeoMeta(pageKey) {
 }
 const _htmlCache = {};
 function readHtmlFile(filePath) {
-  if (!_htmlCache[filePath]) _htmlCache[filePath] = fs.readFileSync(filePath, 'utf8');
+  if (isProd && _htmlCache[filePath]) return _htmlCache[filePath];
+  _htmlCache[filePath] = fs.readFileSync(filePath, 'utf8');
   return _htmlCache[filePath];
 }
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -348,8 +351,39 @@ app.use(async (req, res, next) => {
     const meta = await getSeoMeta(pageKey).catch(() => null);
     if (meta?.title) html = html.replace(/<title>[^<]*<\/title>/, `<title>${esc(meta.title)}</title>`);
     if (meta?.description) html = html.replace(/(<meta name="description" content=")[^"]*(")/i, `$1${esc(meta.description)}$2`);
+    // Also update the visible H1 hero title from the DB title
+    if (meta?.title) {
+      const words = meta.title.trim().split(/\s+/);
+      const spanWords = words.length > 3 ? words.slice(-2).join(' ') : words.slice(-1).join(' ');
+      const restWords = words.slice(0, words.length - (words.length > 3 ? 2 : 1)).join(' ');
+      html = html.replace(
+        /<h1 class="page-hero-title">[^<]*<span>[^<]*<\/span><\/h1>/,
+        `<h1 class="page-hero-title">${esc(restWords)} <span>${esc(spanWords)}</span></h1>`
+      );
+    }
 
-    // Fix 5: inject static header/footer for Googlebot crawlability
+    // Inject canonical + OG tags on static pages
+    const base = process.env.SITE_URL || 'https://www.oddslander.com';
+    const canonicalPath = req.path === '/index.html' ? '/' : req.path;
+    const canonicalUrl = `${base}${canonicalPath}`;
+    const titleMatch = html.match(/<title>([^<]*)<\/title>/);
+    const titleText = titleMatch ? titleMatch[1] : 'Oddslander';
+    const descMatch = html.match(/<meta name="description" content="([^"]*)"/i);
+    const descText = descMatch ? descMatch[1] : '';
+    if (!html.includes('rel="canonical"')) {
+      html = html.replace('</head>', `<link rel="canonical" href="${canonicalUrl}">
+<meta property="og:title" content="${titleText}">
+<meta property="og:description" content="${descText}">
+<meta property="og:url" content="${canonicalUrl}">
+<meta property="og:type" content="website">
+<meta property="og:image" content="${base}/images/logo.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${titleText}">
+<meta name="twitter:description" content="${descText}">
+</head>`);
+    }
+
+    // Inject static header/footer for Googlebot crawlability
     html = await injectStaticShell(html, req.path);
 
     // Fix 4: SSR today's predictions into the homepage grid
@@ -366,8 +400,8 @@ app.use(async (req, res, next) => {
         if (preds.length) {
           const cardsHtml = preds.map(buildPredictionCard).join('');
           html = html.replace(
-            '<div class="grid-3" id="predictions-grid"></div>',
-            `<div class="grid-3" id="predictions-grid">${cardsHtml}</div>`,
+            '<div class="grid-1" id="predictions-grid"></div>',
+            `<div class="grid-1" id="predictions-grid">${cardsHtml}</div>`,
           );
           // Also SSR banker section
           const banker = preds.find(p => p.is_banker);
@@ -544,7 +578,7 @@ app.get('/prediction/:slug', async (req, res) => {
 <meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(description)}">
 <meta property="og:url" content="${canonical}">
-<meta property="og:type" content="website">
+<meta property="og:type" content="article">
 <meta property="og:image" content="${base}/images/logo.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${esc(title)}">

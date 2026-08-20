@@ -306,6 +306,10 @@ async function loadRecentWins(containerId = 'recent-wins-list') {
       const hasScore  = w.home_score !== null && w.away_score !== null;
       const odds      = w.odds ? parseFloat(w.odds).toFixed(2) : null;
       const tip       = w.tip || w.market || '—';
+      const matchDate = new Date(w.match_date);
+      const dateLabel = matchDate.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+      const timeLabel = matchDate.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+      const wonLabel  = isJustWon ? '⚡ Just Won' : 'WON 🏆';
       const homeLogo  = w.home_team_logo
         ? `<img src="${escapeHtml(w.home_team_logo)}" alt="${escapeHtml(w.home_team)}" class="rw-logo" onerror="this.style.display='none'">`
         : `<div class="rw-logo-fallback">${escapeHtml(w.home_team[0]||'?')}</div>`;
@@ -314,7 +318,6 @@ async function loadRecentWins(containerId = 'recent-wins-list') {
         : `<div class="rw-logo-fallback">${escapeHtml(w.away_team[0]||'?')}</div>`;
       const homeForm  = w.home_form ? buildFormDots(w.home_form, 5) : '';
       const awayForm  = w.away_form ? buildFormDots(w.away_form, 5) : '';
-      const wonLabel  = isJustWon ? '⚡ Just Won' : 'WON';
 
       return `<a href="/prediction/${escapeHtml(w.slug)}" class="rw-card">
         <div class="rw-teams-row">
@@ -334,7 +337,8 @@ async function loadRecentWins(containerId = 'recent-wins-list') {
             <span class="rw-team-name">${escapeHtml(w.away_team)}</span>
           </div>
           <div class="rw-won-badge ${isJustWon ? 'rw-just-won' : ''}">
-            ${wonLabel} <span class="rw-trophy">🏆</span>
+            <span>${wonLabel}</span>
+            <span class="rw-won-date">${dateLabel} · ${timeLabel}</span>
           </div>
         </div>
         <div class="rw-picks-row">
@@ -619,6 +623,47 @@ async function injectFooter() {
       </div>
     </div>
   </footer>`;
+}
+
+// ── Ads Renderer ─────────────────────────────────────────────────────────────
+async function renderAds(position, container) {
+  if (!container) return;
+  try {
+    const r = await fetch(`/api/ads/position/${encodeURIComponent(position)}`);
+    if (!r.ok) return;
+    const data = await r.json();
+    const ads = data?.data?.ads || [];
+    if (!ads.length) { container.style.display = 'none'; return; }
+
+    container.innerHTML = ads.map(ad => {
+      if (ad.type === 'code') {
+        return `<div class="ad-slot ad-code" data-id="${ad.id}">${ad.code}</div>`;
+      }
+      if (ad.type === 'native') {
+        return `<a class="ad-slot ad-native" href="${ad.link_url||'#'}" target="_blank" rel="nofollow noopener" data-id="${ad.id}" onclick="trackAdClick(${ad.id})">
+          ${ad.image_url ? `<img src="${ad.image_url}" alt="${ad.alt_text||'Sponsored'}" class="ad-native-img">` : ''}
+          <div class="ad-native-body">
+            <span class="ad-label">Sponsored</span>
+            <p class="ad-native-name">${ad.name}</p>
+          </div>
+        </a>`;
+      }
+      if (ad.type === 'link') {
+        return `<a class="ad-slot ad-link" href="${ad.link_url||'#'}" target="_blank" rel="nofollow noopener" data-id="${ad.id}" onclick="trackAdClick(${ad.id})">
+          <span class="ad-label">Ad</span> ${ad.name}
+        </a>`;
+      }
+      // banner (default)
+      const style = [ad.width ? `width:${ad.width}px` : '', ad.height ? `height:${ad.height}px` : ''].filter(Boolean).join(';');
+      return `<a class="ad-slot ad-banner" href="${ad.link_url||'#'}" target="_blank" rel="nofollow noopener" data-id="${ad.id}" onclick="trackAdClick(${ad.id})">
+        <img src="${ad.image_url}" alt="${ad.alt_text||ad.name}" style="${style}" loading="lazy">
+      </a>`;
+    }).join('');
+  } catch {}
+}
+
+function trackAdClick(id) {
+  fetch(`/api/ads/${id}/click`, { method: 'POST' }).catch(() => {});
 }
 
 // ── AdSense Inject ────────────────────────────────────────────────────────────

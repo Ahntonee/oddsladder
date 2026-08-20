@@ -15,7 +15,7 @@
 }
 .stat-pill {
   display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700;
-  background:rgba(2,245,161,0.1);color:var(--primary);border:1px solid rgba(2,245,161,0.2);
+  background:rgba(172,255,52,0.1);color:var(--primary);border:1px solid rgba(172,255,52,0.2);
 }
 .conf-bar {
   width:60px;height:5px;border-radius:3px;background:var(--border);display:inline-block;vertical-align:middle;overflow:hidden;
@@ -207,8 +207,8 @@ function renderTable() {
 function formDots(form) {
   if (!form) return '';
   return form.split('').map(r => {
-    const bg = r==='W'?'#02f5a1':r==='L'?'#ff4757':'#faf92a';
-    const fg = r==='L'?'#fff':'#07191e';
+    const bg = r==='W'?'#acff34':r==='L'?'#ff4757':'#f1fec3';
+    const fg = r==='L'?'#fff':'#171717';
     return `<span style="background:${bg};color:${fg}">${r}</span>`;
   }).join('');
 }

@@ -31,7 +31,7 @@
   <div class="admin-card mb-3">
     <div class="flex-between mb-3">
       <h3 style="font-size:15px"><span class="material-icons-round">content_paste</span> Prediction Queue
-        <span id="queue-count" class="badge" style="background:rgba(2,245,161,0.12);color:var(--primary);margin-left:6px">0</span>
+        <span id="queue-count" class="badge" style="background:rgba(172,255,52,0.12);color:var(--primary);margin-left:6px">0</span>
       </h3>
       <button class="btn btn-ghost btn-sm" id="refresh-queue-btn">↻ Refresh</button>
     </div>
@@ -221,7 +221,7 @@ async function loadAccuracyChart() {
   const rows = d.data?.rows || [];
   if (!rows.length) { document.querySelector('.chart-wrap').innerHTML = '<p class="text-soft" style="font-size:12px;padding:16px 0">No accuracy data yet.</p>'; return; }
   const ctx = document.getElementById('accuracy-chart').getContext('2d');
-  new Chart(ctx, { type:'line', data:{ labels:rows.map(r=>r.week||r.month||r.date), datasets:[{ label:'Win Rate %', data:rows.map(r=>r.win_rate||0), borderColor:'#02f5a1', backgroundColor:'rgba(2,245,161,0.08)', tension:0.4, fill:true }] }, options:{ responsive:true, maintainAspectRatio:false, scales:{ y:{ min:0, max:100, ticks:{color:'rgba(173,223,241,0.6)'} }, x:{ ticks:{color:'rgba(173,223,241,0.6)'} } }, plugins:{ legend:{display:false} } } });
+  new Chart(ctx, { type:'line', data:{ labels:rows.map(r=>r.week||r.month||r.date), datasets:[{ label:'Win Rate %', data:rows.map(r=>r.win_rate||0), borderColor:'#acff34', backgroundColor:'rgba(172,255,52,0.08)', tension:0.4, fill:true }] }, options:{ responsive:true, maintainAspectRatio:false, scales:{ y:{ min:0, max:100, ticks:{color:'rgba(241,254,195,0.6)'} }, x:{ ticks:{color:'rgba(241,254,195,0.6)'} } }, plugins:{ legend:{display:false} } } });
 }
 </script>
 </body>

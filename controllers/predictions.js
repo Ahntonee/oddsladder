@@ -68,7 +68,7 @@ exports.recentWins = asyncHandler(async (req, res) => {
             l.name as league_name
      FROM predictions p
      LEFT JOIN leagues l ON l.id = p.league_id
-     WHERE p.result = 'win' AND p.published_at IS NOT NULL
+     WHERE p.result = 'won' AND p.published_at IS NOT NULL
      ORDER BY p.match_date DESC
      LIMIT 50`
   );

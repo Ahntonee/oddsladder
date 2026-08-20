@@ -26,40 +26,89 @@
     <div class="container" id="vip-section"></div>
   </section>
 
-  <!-- Predictions -->
+  <!-- Page Hero -->
+  <section class="page-hero">
+    <div class="container">
+      <h1 class="page-hero-title">AI-Powered <span>Football Predictions</span></h1>
+      <p class="page-hero-sub">Free daily tips powered by our Intelligence Engine — over 160 leagues covered.</p>
+    </div>
+  </section>
+
+  <!-- Top Banner Ad -->
+  <section class="ad-section">
+    <div class="container">
+      <div class="ad-wrap ad-wrap-top" id="ad-predictions-top"></div>
+    </div>
+  </section>
+
+  <!-- Predictions + Sidebar -->
   <section>
     <div class="container">
-      <div class="flex-between mb-3">
-        <h2 class="section-title mb-0">Today's <span>Tips</span></h2>
-        <a href="/predictions.html" class="btn btn-outline btn-sm">View All →</a>
-      </div>
+      <div class="page-with-sidebar">
 
-      <!-- Category Tabs -->
-      <div class="tab-row mb-2" id="category-tabs">
-        <button class="category-tab active" data-cat="free">All Free</button>
-        <button class="category-tab" data-cat="over_1_5">Over 1.5</button>
-        <button class="category-tab" data-cat="over_2_5">Over 2.5</button>
-        <button class="category-tab" data-cat="over_3_5">Over 3.5</button>
-        <button class="category-tab" data-cat="under_2_5">Under 2.5</button>
-        <button class="category-tab" data-cat="gg">BTTS</button>
-        <button class="category-tab" data-cat="home_win">Home Win</button>
-        <button class="category-tab" data-cat="away_win">Away Win</button>
-        <button class="category-tab" data-cat="draw">Draw</button>
-      </div>
+        <!-- Main content -->
+        <div class="page-main">
+          <div class="flex-between mb-3">
+            <h2 class="section-title mb-0">Today's <span>Tips</span></h2>
+            <a href="/predictions.html" class="btn btn-outline btn-sm">View All →</a>
+          </div>
 
-      <!-- Date Tabs -->
-      <div class="date-tabs mb-2">
-        <button class="date-tab" data-date="yesterday">Yesterday</button>
-        <button class="date-tab active" data-date="today">Today</button>
-        <button class="date-tab" data-date="tomorrow">Tomorrow</button>
-      </div>
+          <!-- Category Tabs -->
+          <div class="tab-row mb-2" id="category-tabs">
+            <button class="category-tab active" data-cat="free">All Free</button>
+            <button class="category-tab" data-cat="over_1_5">Over 1.5</button>
+            <button class="category-tab" data-cat="over_2_5">Over 2.5</button>
+            <button class="category-tab" data-cat="over_3_5">Over 3.5</button>
+            <button class="category-tab" data-cat="under_2_5">Under 2.5</button>
+            <button class="category-tab" data-cat="gg">BTTS</button>
+            <button class="category-tab" data-cat="home_win">Home Win</button>
+            <button class="category-tab" data-cat="away_win">Away Win</button>
+            <button class="category-tab" data-cat="draw">Draw</button>
+          </div>
 
-      <!-- Grid -->
-      <div class="grid-2" id="predictions-grid"></div>
+          <!-- Date Tabs -->
+          <div class="date-tabs mb-2">
+            <button class="date-tab" data-date="yesterday">Yesterday</button>
+            <button class="date-tab active" data-date="today">Today</button>
+            <button class="date-tab" data-date="tomorrow">Tomorrow</button>
+          </div>
 
-      <div class="text-center mt-3">
-        <button class="btn btn-outline" id="load-more" style="display:none">Load More</button>
+          <!-- Mid-feed Ad (injected after 4 cards by JS) -->
+          <div id="ad-homepage-mid" class="ad-wrap ad-wrap-inline"></div>
+
+          <!-- Grid -->
+          <div class="grid-1" id="predictions-grid"></div>
+
+          <div class="text-center mt-3">
+            <button class="btn btn-outline" id="load-more" style="display:none">Load More</button>
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <aside class="page-sidebar">
+          <!-- Sidebar Ad -->
+          <div class="ad-wrap ad-wrap-sidebar" id="ad-sidebar"></div>
+
+          <!-- Sponsored Posts (native ads) -->
+          <div class="sidebar-widget" id="sponsored-posts-widget" style="display:none">
+            <div class="sidebar-widget-title">Sponsored</div>
+            <div id="ad-native-sidebar"></div>
+          </div>
+
+          <!-- Sponsor ad widget -->
+          <div class="sidebar-widget" id="sponsor-widget-2" style="display:none">
+            <div class="sidebar-widget-title">Sponsored</div>
+            <div id="ad-sidebar-2"></div>
+          </div>
+        </aside>
       </div>
+    </div>
+  </section>
+
+  <!-- Mid-page Banner Ad -->
+  <section class="ad-section">
+    <div class="container">
+      <div class="ad-wrap ad-wrap-mid" id="ad-predictions-bottom"></div>
     </div>
   </section>
 
@@ -86,6 +135,7 @@ let currentPage = 1, currentDate = 'today', currentCat = 'free';
 let totalPages = 1;
 
 document.addEventListener('DOMContentLoaded', async () => {
+  await initPage();
   await renderBankerCards(document.getElementById('banker-section'));
   await renderVipTeaser(document.getElementById('vip-section'));
   applyFilters();
@@ -93,7 +143,57 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupCategoryTabs();
   setupDateTabs();
   document.getElementById('load-more').addEventListener('click', loadMore);
+
+  // Load ads
+  renderAds('predictions_top', document.getElementById('ad-predictions-top'));
+  renderAds('predictions_bottom', document.getElementById('ad-predictions-bottom'));
+  renderAds('sidebar', document.getElementById('ad-sidebar'));
+  renderAds('homepage_mid', document.getElementById('ad-homepage-mid'));
+  loadNativeSidebar();
+  loadSponsorWidget2();
 });
+
+async function loadNativeSidebar() {
+  const container = document.getElementById('ad-native-sidebar');
+  const widget = document.getElementById('sponsored-posts-widget');
+  if (!container) return;
+  try {
+    const r = await fetch('/api/ads/position/native_sidebar');
+    const data = r.ok ? await r.json() : null;
+    const ads = data?.data?.ads || [];
+    if (!ads.length) return;
+    widget.style.display = 'block';
+    container.innerHTML = ads.map(ad => `
+      <a class="sponsored-post" href="${ad.link_url||'#'}" target="_blank" rel="nofollow noopener" onclick="trackAdClick(${ad.id})">
+        ${ad.image_url ? `<img src="${ad.image_url}" alt="${ad.alt_text||ad.name}" class="sponsored-post-img">` : ''}
+        <div class="sponsored-post-body">
+          <p class="sponsored-post-name">${ad.name}</p>
+          <span class="ad-label">Sponsored</span>
+        </div>
+      </a>`).join('');
+  } catch {}
+}
+
+async function loadSponsorWidget2() {
+  const container = document.getElementById('ad-sidebar-2');
+  const widget = document.getElementById('sponsor-widget-2');
+  if (!container) return;
+  try {
+    const r = await fetch('/api/ads/position/sidebar_2');
+    const data = r.ok ? await r.json() : null;
+    const ads = data?.data?.ads || [];
+    if (!ads.length) return;
+    widget.style.display = 'block';
+    container.innerHTML = ads.map(ad => `
+      <a class="sponsored-post" href="${ad.link_url||'#'}" target="_blank" rel="nofollow noopener" onclick="trackAdClick(${ad.id})">
+        ${ad.image_url ? `<img src="${ad.image_url}" alt="${ad.alt_text||ad.name}" class="sponsored-post-img">` : ''}
+        <div class="sponsored-post-body">
+          <p class="sponsored-post-name">${ad.name}</p>
+          <span class="ad-label">Sponsored</span>
+        </div>
+      </a>`).join('');
+  } catch {}
+}
 
 function setupCategoryTabs() {
   document.querySelectorAll('.category-tab').forEach(btn => {
@@ -138,7 +238,6 @@ async function loadMore() {
   if (currentPage >= totalPages) document.getElementById('load-more').style.display = 'none';
 }
 
-// Auto-refresh today's cards every 60 s to reflect live scores
 setInterval(() => {
   const isToday = currentDate === new Date().toISOString().slice(0,10);
   if (!isToday) return;

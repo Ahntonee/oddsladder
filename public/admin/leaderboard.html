@@ -11,12 +11,12 @@
 <link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="admin.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-.lb-card { background:#0d1520; border:1px solid rgba(173,223,241,0.08); border-radius:14px; overflow:hidden; margin-bottom:20px; }
-.lb-card-head { padding:14px 18px; border-bottom:1px solid rgba(173,223,241,0.08); display:flex; align-items:center; justify-content:space-between; }
+.lb-card { background:#0d1520; border:1px solid rgba(241,254,195,0.08); border-radius:14px; overflow:hidden; margin-bottom:20px; }
+.lb-card-head { padding:14px 18px; border-bottom:1px solid rgba(241,254,195,0.08); display:flex; align-items:center; justify-content:space-between; }
 .lb-card-head h3 { font-size:14px; font-weight:700; margin:0; }
 .lb-card-body { padding:18px; }
 .lb-chart-box { height:280px; display:flex; align-items:center; justify-content:center; position:relative; }
-.lb-empty-chart { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; color:rgba(173,223,241,0.3); font-size:13px; gap:8px; }
+.lb-empty-chart { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; color:rgba(241,254,195,0.3); font-size:13px; gap:8px; }
 .lb-empty-chart span { font-size:32px; }
 </style>
 </head>
@@ -205,14 +205,14 @@ async function load() {
         type: 'bar',
         data: {
           labels: rows.slice(0, 8).map(r => r.market || r.category),
-          datasets: [{ label: 'Win Rate %', data: rows.slice(0, 8).map(r => r.win_rate || 0), backgroundColor: 'rgba(2,245,161,0.7)', borderRadius: 6 }]
+          datasets: [{ label: 'Win Rate %', data: rows.slice(0, 8).map(r => r.win_rate || 0), backgroundColor: 'rgba(172,255,52,0.7)', borderRadius: 6 }]
         },
         options: {
           responsive: true, maintainAspectRatio: false,
           plugins: { legend: { display: false } },
           scales: {
-            y: { min: 0, max: 100, ticks: { color: 'rgba(173,223,241,0.6)', callback: v => v + '%' }, grid: { color: 'rgba(173,223,241,0.05)' } },
-            x: { ticks: { color: 'rgba(173,223,241,0.6)', font: { size: 11 } }, grid: { display: false } }
+            y: { min: 0, max: 100, ticks: { color: 'rgba(241,254,195,0.6)', callback: v => v + '%' }, grid: { color: 'rgba(241,254,195,0.05)' } },
+            x: { ticks: { color: 'rgba(241,254,195,0.6)', font: { size: 11 } }, grid: { display: false } }
           }
         }
       });
@@ -262,18 +262,18 @@ async function loadTrend() {
       data: {
         labels: rows.map(r => r.date || r.week),
         datasets: [
-          { label: 'Win Rate %', data: rows.map(r => r.win_rate || 0), borderColor: '#02f5a1', backgroundColor: 'rgba(2,245,161,0.08)', tension: 0.4, fill: true, pointRadius: 3 },
-          { label: 'Predictions', data: rows.map(r => r.count || 0), borderColor: 'rgba(173,223,241,0.4)', backgroundColor: 'transparent', tension: 0.3, yAxisID: 'y2', pointRadius: 2 }
+          { label: 'Win Rate %', data: rows.map(r => r.win_rate || 0), borderColor: '#acff34', backgroundColor: 'rgba(172,255,52,0.08)', tension: 0.4, fill: true, pointRadius: 3 },
+          { label: 'Predictions', data: rows.map(r => r.count || 0), borderColor: 'rgba(241,254,195,0.4)', backgroundColor: 'transparent', tension: 0.3, yAxisID: 'y2', pointRadius: 2 }
         ]
       },
       options: {
         responsive: true, maintainAspectRatio: false,
         scales: {
-          y: { min: 0, max: 100, ticks: { color: 'rgba(173,223,241,0.6)', callback: v => v + '%' }, grid: { color: 'rgba(173,223,241,0.05)' } },
-          y2: { position: 'right', ticks: { color: 'rgba(173,223,241,0.4)' }, grid: { display: false } },
-          x: { ticks: { color: 'rgba(173,223,241,0.6)' }, grid: { display: false } }
+          y: { min: 0, max: 100, ticks: { color: 'rgba(241,254,195,0.6)', callback: v => v + '%' }, grid: { color: 'rgba(241,254,195,0.05)' } },
+          y2: { position: 'right', ticks: { color: 'rgba(241,254,195,0.4)' }, grid: { display: false } },
+          x: { ticks: { color: 'rgba(241,254,195,0.6)' }, grid: { display: false } }
         },
-        plugins: { legend: { labels: { color: 'rgba(173,223,241,0.75)', font: { size: 12 } } } }
+        plugins: { legend: { labels: { color: 'rgba(241,254,195,0.75)', font: { size: 12 } } } }
       }
     });
   } catch {}

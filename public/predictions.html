@@ -16,67 +16,99 @@
 <div id="header-placeholder"></div>
 
 <main>
+  <!-- Page Hero -->
+  <section class="page-hero">
+    <div class="container">
+      <h1 class="page-hero-title">Football <span>Predictions & Picks</span></h1>
+      <p class="page-hero-sub">Browse free and VIP tips across 160+ leagues — filtered by market, league, and result.</p>
+    </div>
+  </section>
+
+  <!-- Top Banner Ad -->
+  <section class="ad-section">
+    <div class="container">
+      <div class="ad-wrap ad-wrap-top" id="ad-predictions-top"></div>
+    </div>
+  </section>
+
   <section>
     <div class="container">
-      <div class="flex-between mb-3">
-        <h1 class="section-title mb-0">Predictions <span>&amp; Picks</span></h1>
+      <div class="page-with-sidebar">
+
+        <!-- Main content -->
+        <div class="page-main">
+          <!-- Banker Section -->
+          <div id="banker-section" class="mb-3"></div>
+
+          <!-- Category Tabs -->
+          <div class="tab-row mb-2" id="category-tabs">
+            <button class="category-tab active" data-cat="">All</button>
+            <button class="category-tab" data-cat="free">Free</button>
+            <button class="category-tab" data-cat="over_1_5">Over 1.5</button>
+            <button class="category-tab" data-cat="over_2_5">Over 2.5</button>
+            <button class="category-tab" data-cat="over_3_5">Over 3.5</button>
+            <button class="category-tab" data-cat="under_2_5">Under 2.5</button>
+            <button class="category-tab" data-cat="gg">BTTS</button>
+            <button class="category-tab" data-cat="home_win">Home Win</button>
+            <button class="category-tab" data-cat="away_win">Away Win</button>
+            <button class="category-tab" data-cat="draw">Draw</button>
+            <button class="category-tab" data-cat="vip">VIP</button>
+          </div>
+
+          <!-- Date Tabs -->
+          <div class="date-tabs mb-2">
+            <button class="date-tab" onclick="setDate(this,'yesterday')">Yesterday</button>
+            <button class="date-tab active" onclick="setDate(this,'today')">Today</button>
+            <button class="date-tab" onclick="setDate(this,'tomorrow')">Tomorrow</button>
+          </div>
+
+          <!-- Filters -->
+          <div class="flex gap-2 mb-3" style="flex-wrap:wrap;align-items:center">
+            <select class="form-control" style="max-width:200px" id="league-filter" onchange="applyFilters()">
+              <option value="">All Leagues</option>
+            </select>
+            <select class="form-control" style="max-width:180px" id="market-filter" onchange="applyFilters()">
+              <option value="">All Markets</option>
+              <option value="1X2">1X2</option>
+              <option value="Over/Under">Over/Under</option>
+              <option value="BTTS">BTTS</option>
+              <option value="Draw No Bet">Draw No Bet</option>
+              <option value="Accumulator">Accumulator</option>
+            </select>
+            <select class="form-control" style="max-width:160px" id="result-filter" onchange="applyFilters()">
+              <option value="">All Results</option>
+              <option value="pending">Pending</option>
+              <option value="won">Won</option>
+              <option value="lost">Lost</option>
+            </select>
+            <input type="text" class="form-control" style="max-width:220px" id="search-input" placeholder="Search teams…" oninput="debounceSearch()">
+          </div>
+
+          <!-- VIP Section -->
+          <div id="vip-section" class="mb-3"></div>
+
+          <!-- Grid -->
+          <div class="grid-1" id="predictions-grid"></div>
+
+          <!-- Pagination -->
+          <div class="pagination" id="pagination"></div>
+        </div>
+
+        <!-- Sidebar -->
+        <aside class="page-sidebar">
+          <div class="ad-wrap ad-wrap-sidebar" id="ad-sidebar"></div>
+
+          <div class="sidebar-widget" id="sponsored-posts-widget" style="display:none">
+            <div class="sidebar-widget-title">Sponsored</div>
+            <div id="ad-native-sidebar"></div>
+          </div>
+
+          <div class="sidebar-widget" id="sponsor-widget-2" style="display:none">
+            <div class="sidebar-widget-title">Sponsored</div>
+            <div id="ad-sidebar-2"></div>
+          </div>
+        </aside>
       </div>
-
-      <!-- Banker Section -->
-      <div id="banker-section" class="mb-3"></div>
-
-      <!-- Category Tabs -->
-      <div class="tab-row mb-2" id="category-tabs">
-        <button class="category-tab active" data-cat="">All</button>
-        <button class="category-tab" data-cat="free">Free</button>
-        <button class="category-tab" data-cat="over_1_5">Over 1.5</button>
-        <button class="category-tab" data-cat="over_2_5">Over 2.5</button>
-        <button class="category-tab" data-cat="over_3_5">Over 3.5</button>
-        <button class="category-tab" data-cat="under_2_5">Under 2.5</button>
-        <button class="category-tab" data-cat="gg">BTTS</button>
-        <button class="category-tab" data-cat="home_win">Home Win</button>
-        <button class="category-tab" data-cat="away_win">Away Win</button>
-        <button class="category-tab" data-cat="draw">Draw</button>
-        <button class="category-tab" data-cat="vip">VIP</button>
-      </div>
-
-      <!-- Date Tabs -->
-      <div class="date-tabs mb-2">
-        <button class="date-tab" onclick="setDate(this,'yesterday')">Yesterday</button>
-        <button class="date-tab active" onclick="setDate(this,'today')">Today</button>
-        <button class="date-tab" onclick="setDate(this,'tomorrow')">Tomorrow</button>
-      </div>
-
-      <!-- Filters -->
-      <div class="flex gap-2 mb-3" style="flex-wrap:wrap;align-items:center">
-        <select class="form-control" style="max-width:200px" id="league-filter" onchange="applyFilters()">
-          <option value="">All Leagues</option>
-        </select>
-        <select class="form-control" style="max-width:180px" id="market-filter" onchange="applyFilters()">
-          <option value="">All Markets</option>
-          <option value="1X2">1X2</option>
-          <option value="Over/Under">Over/Under</option>
-          <option value="BTTS">BTTS</option>
-          <option value="Draw No Bet">Draw No Bet</option>
-          <option value="Accumulator">Accumulator</option>
-        </select>
-        <select class="form-control" style="max-width:160px" id="result-filter" onchange="applyFilters()">
-          <option value="">All Results</option>
-          <option value="pending">Pending</option>
-          <option value="won">Won</option>
-          <option value="lost">Lost</option>
-        </select>
-        <input type="text" class="form-control" style="max-width:220px" id="search-input" placeholder="Search teams…" oninput="debounceSearch()">
-      </div>
-
-      <!-- VIP Section -->
-      <div id="vip-section" class="mb-3"></div>
-
-      <!-- Grid -->
-      <div class="grid-3" id="predictions-grid"></div>
-
-      <!-- Pagination -->
-      <div class="pagination" id="pagination"></div>
     </div>
   </section>
 </main>
@@ -88,12 +120,59 @@ let currentPage = 1, currentDate = 'today', currentCat = '', currentLeague = '',
 let searchTimer;
 
 document.addEventListener('DOMContentLoaded', async () => {
+  await initPage();
   await renderBankerCards(document.getElementById('banker-section'));
   await renderVipTeaser(document.getElementById('vip-section'));
   await populateLeagues();
   applyFilters();
   setupCategoryTabs();
+  renderAds('predictions_top', document.getElementById('ad-predictions-top'));
+  renderAds('sidebar', document.getElementById('ad-sidebar'));
+  loadNativeSidebar();
+  loadSponsorWidget2();
 });
+
+async function loadNativeSidebar() {
+  const container = document.getElementById('ad-native-sidebar');
+  const widget = document.getElementById('sponsored-posts-widget');
+  if (!container) return;
+  try {
+    const r = await fetch('/api/ads/position/native_sidebar');
+    const data = r.ok ? await r.json() : null;
+    const ads = data?.data?.ads || [];
+    if (!ads.length) return;
+    widget.style.display = 'block';
+    container.innerHTML = ads.map(ad => `
+      <a class="sponsored-post" href="${ad.link_url||'#'}" target="_blank" rel="nofollow noopener" onclick="trackAdClick(${ad.id})">
+        ${ad.image_url ? `<img src="${ad.image_url}" alt="${ad.alt_text||ad.name}" class="sponsored-post-img">` : ''}
+        <div class="sponsored-post-body">
+          <p class="sponsored-post-name">${ad.name}</p>
+          <span class="ad-label">Sponsored</span>
+        </div>
+      </a>`).join('');
+  } catch {}
+}
+
+async function loadSponsorWidget2() {
+  const container = document.getElementById('ad-sidebar-2');
+  const widget = document.getElementById('sponsor-widget-2');
+  if (!container) return;
+  try {
+    const r = await fetch('/api/ads/position/sidebar_2');
+    const data = r.ok ? await r.json() : null;
+    const ads = data?.data?.ads || [];
+    if (!ads.length) return;
+    widget.style.display = 'block';
+    container.innerHTML = ads.map(ad => `
+      <a class="sponsored-post" href="${ad.link_url||'#'}" target="_blank" rel="nofollow noopener" onclick="trackAdClick(${ad.id})">
+        ${ad.image_url ? `<img src="${ad.image_url}" alt="${ad.alt_text||ad.name}" class="sponsored-post-img">` : ''}
+        <div class="sponsored-post-body">
+          <p class="sponsored-post-name">${ad.name}</p>
+          <span class="ad-label">Sponsored</span>
+        </div>
+      </a>`).join('');
+  } catch {}
+}
 
 async function populateLeagues() {
   const leagues = await fetchLeagues();

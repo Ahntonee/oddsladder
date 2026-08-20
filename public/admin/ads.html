@@ -10,13 +10,13 @@
 <link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="admin.css">
 <style>
 .ad-type-pill { padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700; }
-.ad-type-banner { background:rgba(2,245,161,.15);color:var(--primary); }
-.ad-type-link   { background:rgba(173,223,241,.15);color:#addff1; }
+.ad-type-banner { background:rgba(172,255,52,.15);color:var(--primary); }
+.ad-type-link   { background:rgba(241,254,195,.15);color:#f1fec3; }
 .ad-type-code   { background:rgba(250,249,42,.12);color:var(--warning); }
-.ad-type-native { background:rgba(153,204,51,.12);color:#99cc33; }
+.ad-type-native { background:rgba(172,255,52,.12);color:#acff34; }
 .pos-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:24px; }
 .pos-card { background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;cursor:pointer; }
-.pos-card.active { border-color:var(--primary);background:rgba(2,245,161,.06); }
+.pos-card.active { border-color:var(--primary);background:rgba(172,255,52,.06); }
 .pos-card-name { font-size:12px;font-weight:700;color:var(--text); }
 .pos-card-count { font-size:20px;font-weight:900;color:var(--primary);margin-top:4px; }
 </style>
@@ -56,6 +56,7 @@
       <option>footer</option>
       <option>popup</option>
       <option>homepage_mid</option>
+      <option>native_sidebar</option>
     </select>
     <select class="form-control" id="f-type" style="max-width:140px">
       <option value="">All Types</option>
@@ -131,6 +132,8 @@
         <option value="detail_bottom">Prediction Detail Bottom</option>
         <option value="footer">Footer</option>
         <option value="popup">Popup</option>
+        <option value="native_sidebar">Native / Sponsored Sidebar</option>
+        <option value="sidebar_2">Sidebar Slot 2</option>
       </select>
     </div>
 
@@ -195,7 +198,7 @@
 <script>
 injectAdminShell('ads.html');
 
-const POSITIONS = ['header','predictions_top','predictions_bottom','sidebar','homepage_mid','detail_top','detail_bottom','footer','popup'];
+const POSITIONS = ['header','predictions_top','predictions_bottom','sidebar','sidebar_2','homepage_mid','detail_top','detail_bottom','footer','popup','native_sidebar'];
 let allAds = [];
 
 document.addEventListener('DOMContentLoaded', loadAds);
