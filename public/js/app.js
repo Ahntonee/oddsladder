@@ -370,146 +370,135 @@ async function initTicker() {
   } catch {}
 }
 
-// ── Header ────────────────────────────────────────────────────────────────────
+// ── Header / Left Sidebar ─────────────────────────────────────────────────────
 async function injectHeader() {
   const target = document.getElementById('header-placeholder');
-  if (!target) return;
-  target.className = 'site-header';
   const user = getUser();
   const isAdmin = user?.role === 'admin';
   const isVip = user?.role === 'vip';
   const currentPath = window.location.pathname;
 
-  const navLinks = [
-    ['/', 'Home'],
-    ['/predictions.html', 'Predictions'],
-    ['/bet-builder.html', 'Bet Builder'],
-    ['/pricing.html', 'Subscription'],
-    ['/blog.html', 'Blog'],
-    ['/about.html', 'About Us'],
+  const isActive = href => {
+    const base = href.split('?')[0];
+    return (base === '/' ? currentPath === '/' : currentPath.startsWith(base.replace('.html', ''))) ? 'active' : '';
+  };
+
+  const mainLinks = [
+    ['/', 'home', 'Home'],
+    ['/predictions.html', 'sports_soccer', 'All Predictions'],
+    ['/blog.html', 'article', 'Blog'],
+    ['/pricing.html', 'workspace_premium', 'Subscription'],
+    ['/bet-builder.html', 'construction', 'Bet Builder'],
+    ['/about.html', 'info', 'About Us'],
+  ];
+  const catLinks = [
+    ['/predictions.html', 'tips_and_updates', 'All Tips'],
+    ['/predictions.html?cat=over_2_5', 'trending_up', 'Over 2.5'],
+    ['/predictions.html?cat=gg', 'sync_alt', 'BTTS'],
+    ['/predictions.html?cat=home_win', 'home', 'Home Win'],
+    ['/predictions.html?cat=draw', 'remove', 'Draw'],
+    ['/predictions.html?cat=away_win', 'flight_takeoff', 'Away Win'],
+    ['/predictions.html?cat=under_2_5', 'trending_down', 'Under 2.5'],
+    ['/predictions.html?cat=over_1_5', 'add_circle_outline', 'Over 1.5'],
   ];
 
-  const tipsActive = currentPath.startsWith('/predictions/') ? 'active' : '';
-  const tipsDropdown = `
-    <div class="nav-dropdown">
-      <button class="nav-link nav-dropdown-btn ${tipsActive}">
-        Tips <span class="material-icons-round" style="font-size:14px">expand_more</span>
+  const sidebarAuthHtml = user
+    ? `<a href="${isAdmin ? '/admin/dashboard.html' : '/dashboard.html'}" class="snav-link">
+        <span class="material-icons-round">account_circle</span>${escapeHtml(user.name?.split(' ')[0] || 'Account')}
+        ${isVip ? '<span class="badge badge-vip" style="font-size:9px;margin-left:4px">VIP</span>' : ''}
+        ${isAdmin ? '<span class="badge" style="font-size:9px;margin-left:4px;background:rgba(0,245,161,.15);color:var(--primary)">Admin</span>' : ''}
+      </a>
+      <button class="snav-link w-full" id="sidebar-logout" style="background:none;border:none;text-align:left;cursor:pointer;color:rgba(255,71,87,0.8)">
+        <span class="material-icons-round">logout</span>Logout
+      </button>`
+    : `<a href="/pricing.html#login" class="snav-link"><span class="material-icons-round">login</span>Login</a>
+       <a href="/pricing.html#register" class="snav-link" style="color:var(--primary)"><span class="material-icons-round">person_add</span>Register</a>`;
+
+  // Build sidebar
+  const sidebar = document.createElement('div');
+  sidebar.id = 'left-sidebar';
+  sidebar.className = 'left-sidebar';
+  sidebar.innerHTML = `
+    <div class="sidebar-logo-wrap">
+      <a href="/" class="sidebar-logo">
+        <img src="/images/logo.png" alt="OL" onerror="this.style.display='none'">
+        <span>Oddslander</span>
+      </a>
+      <button class="sidebar-close-btn" id="sidebar-close"><span class="material-icons-round">close</span></button>
+    </div>
+    <div class="snav-section">
+      ${mainLinks.map(([href, icon, label]) => `<a href="${href}" class="snav-link ${isActive(href)}"><span class="material-icons-round">${icon}</span>${label}</a>`).join('')}
+      ${isVip || isAdmin ? `<a href="/pricing.html" class="snav-link vip-snav"><span class="material-icons-round">star</span>VIP Picks</a>` : ''}
+    </div>
+    <div class="snav-section">
+      <div class="snav-label">Categories</div>
+      ${catLinks.map(([href, icon, label]) => `<a href="${href}" class="snav-link"><span class="material-icons-round">${icon}</span>${label}</a>`).join('')}
+    </div>
+    <div class="snav-section snav-bottom">
+      <div class="snav-label">Account</div>
+      ${sidebarAuthHtml}
+      <button class="snav-link w-full" id="sidebar-theme-toggle" style="background:none;border:none;text-align:left;cursor:pointer">
+        <span class="material-icons-round" id="sidebar-theme-icon">${(localStorage.getItem('ol_theme')||'dark')==='dark'?'light_mode':'dark_mode'}</span>
+        <span id="sidebar-theme-label">${(localStorage.getItem('ol_theme')||'dark')==='dark'?'Light Mode':'Dark Mode'}</span>
       </button>
-      <div class="nav-dropdown-menu">
-        <a href="/predictions/over-25">Over 2.5 Goals</a>
-        <a href="/predictions/btts">BTTS</a>
-        <a href="/predictions/accumulator">Accumulator</a>
-        <a href="/predictions/1x2">1X2 / Win-Draw-Win</a>
-        <a href="/predictions/correct-score">Correct Score</a>
-        <a href="/predictions/double-chance">Double Chance</a>
-        <a href="/predictions/draw-no-bet">Draw No Bet</a>
-      </div>
     </div>`;
 
-  const navHtml = navLinks.map(([href, label]) => {
-    const active = (href === '/' ? currentPath === '/' : currentPath.startsWith(href.replace('.html',''))) ? 'active' : '';
-    return `<a href="${href}" class="nav-link ${active}">${label}</a>`;
-  }).join('') + tipsDropdown;
+  // Overlay for mobile
+  const overlay = document.createElement('div');
+  overlay.id = 'sidebar-overlay';
+  overlay.className = 'sidebar-overlay';
 
-  const authHtml = user
-    ? `<div class="user-avatar">
-        <span class="odlt-chip" id="nav-odlt-chip" title="ODLT Tokens" onclick="location.href='/dashboard.html#tokens'" style="cursor:pointer">
-          <span class="material-icons-round" style="font-size:13px;color:var(--primary)">toll</span>
-          <span id="nav-odlt-bal">…</span>
-        </span>
-        <button class="avatar-btn">
-          <div class="avatar-circle">${escapeHtml(user.name?.[0]?.toUpperCase() || 'U')}</div>
-          <span>${escapeHtml(user.name?.split(' ')[0] || 'Account')}</span>
-          ${isVip ? '<span class="badge badge-vip" style="font-size:9px">VIP</span>' : ''}
-          <span>▾</span>
-        </button>
-        <div class="avatar-dropdown" id="avatar-dropdown">
-          <a href="/dashboard.html"><span class="material-icons-round" style="font-size:16px">analytics</span> Dashboard</a>
-          <a href="/dashboard.html#tokens"><span class="material-icons-round" style="font-size:16px">toll</span> ODLT Tokens</a>
-          ${isAdmin ? '<a href="/admin/dashboard.html"><span class="material-icons-round" style="font-size:16px">admin_panel_settings</span> Admin Panel</a>' : ''}
-          <hr>
-          <button id="logout-btn"><span class="material-icons-round" style="font-size:16px">logout</span> Logout</button>
-        </div>
-      </div>`
-    : `<a href="/pricing.html#login" class="btn btn-ghost btn-sm">Login</a>
-       <a href="/pricing.html#register" class="btn btn-primary btn-sm">Register</a>`;
+  document.body.insertBefore(overlay, document.body.firstChild);
+  document.body.insertBefore(sidebar, document.body.firstChild);
+  document.body.classList.add('has-sidebar');
 
-  // Load ODLT balance into nav chip after render
-  if (user) setTimeout(async () => {
-    try {
-      const r = await fetch('/api/tokens/balance');
-      const d = await r.json();
-      const el = document.getElementById('nav-odlt-bal');
-      if (el && d.success) el.textContent = (d.data?.balance ?? 0).toLocaleString() + ' ODLT';
-    } catch {}
-  }, 400);
-
-  // Mobile bottom nav items
-  const mobNavItems = [
-    { href: '/', icon: 'home', label: 'Home' },
-    { href: '/predictions.html', icon: 'sports_soccer', label: 'Tips' },
-    { href: '/bet-builder.html', icon: 'construction', label: 'Builder' },
-    { href: '/pricing.html', icon: 'workspace_premium', label: 'VIP', cls: 'vip-tab' },
-    { href: user ? '/dashboard.html' : '/pricing.html#login', icon: user ? 'account_circle' : 'login', label: user ? 'Account' : 'Login' },
-  ];
-  const mobNavHtml = mobNavItems.map(n => {
-    const active = (n.href === '/' ? currentPath === '/' : currentPath.startsWith(n.href.replace('.html',''))) ? 'active' : '';
-    return `<a href="${n.href}" class="mob-nav-item ${n.cls||''} ${active}">
-      <span class="material-icons-round">${n.icon}</span>
-      <span>${n.label}</span>
-    </a>`;
-  }).join('');
-
-  target.innerHTML = `
-    <div class="ticker-wrap">
-      <div class="container"><div class="ticker-inner">
-        <span class="ticker-label">LIVE</span>
-        <div class="ticker-track"></div>
-      </div></div>
-    </div>
-    <div class="container">
-      <div class="header-inner">
-        <a href="/" class="site-logo">
-          <img src="/images/logo.png" alt="Oddslander" onerror="this.style.display='none'">
+  // Slim mobile topbar
+  if (target) {
+    target.className = 'topbar';
+    target.innerHTML = `
+      <div class="topbar-inner">
+        <button class="hamburger-btn" id="sidebar-toggle"><span class="material-icons-round">menu</span></button>
+        <a href="/" class="topbar-logo">
+          <img src="/images/logo.png" alt="" onerror="this.style.display='none'">
           <span>Oddslander</span>
         </a>
-        <nav class="main-nav" id="main-nav">${navHtml}</nav>
-        <div class="header-actions">
-          <button class="theme-toggle" id="theme-toggle-btn" title="Toggle theme">
-            <span class="material-icons-round" id="theme-icon">${localStorage.getItem('ol_theme') === 'light' ? 'dark_mode' : 'light_mode'}</span>
-          </button>
-          ${authHtml}
-        </div>
-      </div>
-    </div>
-    <nav class="mobile-bottom-nav" id="mobile-bottom-nav" aria-label="Mobile navigation">
-      <div class="mobile-bottom-nav-inner">${mobNavHtml}</div>
-    </nav>`;
+        <div style="flex:1"></div>
+        <a href="/pricing.html" class="vip-premium-btn">★ Go Premium</a>
+        <a href="${user ? (isAdmin ? '/admin/dashboard.html' : '/dashboard.html') : '/pricing.html#login'}" class="topbar-auth-icon">
+          <span class="material-icons-round">${user ? 'account_circle' : 'login'}</span>
+        </a>
+      </div>`;
+  }
 
-  // Attach events
-  document.getElementById('theme-toggle-btn').addEventListener('click', toggleTheme);
-  const avatarBtn = document.querySelector('.avatar-btn');
-  if (avatarBtn) avatarBtn.addEventListener('click', toggleAvatarMenu);
-  const logoutBtn = document.getElementById('logout-btn');
-  if (logoutBtn) logoutBtn.addEventListener('click', logout);
+  // ── Events ───────────────────────────────────────────────────────────────
+  const toggleSidebar = () => {
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('open');
+    document.body.classList.toggle('sidebar-open');
+  };
+  document.getElementById('sidebar-toggle')?.addEventListener('click', toggleSidebar);
+  document.getElementById('sidebar-close')?.addEventListener('click', toggleSidebar);
+  overlay.addEventListener('click', toggleSidebar);
+  document.getElementById('sidebar-logout')?.addEventListener('click', logout);
+  document.getElementById('sidebar-theme-toggle')?.addEventListener('click', () => {
+    toggleTheme();
+    const isDark = (localStorage.getItem('ol_theme')||'dark') === 'dark';
+    const icon = document.getElementById('sidebar-theme-icon');
+    const label = document.getElementById('sidebar-theme-label');
+    if (icon) icon.textContent = isDark ? 'light_mode' : 'dark_mode';
+    if (label) label.textContent = isDark ? 'Light Mode' : 'Dark Mode';
+  });
 
+  // Inject ticker into existing sidebar section
+  const tickerWrap = document.createElement('div');
+  tickerWrap.className = 'ticker-wrap';
+  tickerWrap.innerHTML = `<div class="container"><div class="ticker-inner"><span class="ticker-label">LIVE</span><div class="ticker-track"></div></div></div>`;
+  if (target) target.appendChild(tickerWrap);
   initTicker();
+}
 
-  // Tips dropdown toggle (click for mobile, hover handled by CSS)
-  document.querySelector('.nav-dropdown-btn')?.addEventListener('click', e => {
-    e.stopPropagation();
-    document.querySelector('.nav-dropdown')?.classList.toggle('open');
-  });
-
-  // Close dropdowns on outside click
-  document.addEventListener('click', e => {
-    if (!e.target.closest('.user-avatar')) {
-      document.getElementById('avatar-dropdown')?.classList.remove('open');
-    }
-    if (!e.target.closest('.nav-dropdown')) {
-      document.querySelector('.nav-dropdown')?.classList.remove('open');
-    }
-  });
+function toggleAvatarMenu() {
+  document.getElementById('avatar-dropdown')?.classList.toggle('open');
 }
 
 function toggleAvatarMenu() {
@@ -700,6 +689,55 @@ async function initPage() {
   } catch {}
 }
 
+// ── Prediction Row (list format) ──────────────────────────────────────────────
+function buildPredictionRow(p, isVip = false) {
+  const isLocked = p.is_vip && !isVip;
+  const isFT = ['FT', 'AET', 'PEN', 'FT_PEN'].includes(p.fixture_status);
+  const isLive = LIVE_STATUS_SET.has(p.fixture_status) && p.home_score !== null;
+  const resultClass = p.result === 'won' ? 'result-won' : p.result === 'lost' ? 'result-lost' : isLive ? 'result-live' : '';
+
+  const matchDate = new Date(p.match_date);
+  const timeStr = matchDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  const timeHtml = isLive
+    ? `<div class="pred-time"><span class="live-dot"></span>${p.elapsed_minutes ? p.elapsed_minutes + "'" : 'LIVE'}</div>`
+    : `<div class="pred-time">${timeStr}</div>`;
+
+  const scoreHtml = (isFT || isLive) && p.home_score !== null
+    ? `<div class="pred-score-col"><span>${p.home_score}</span><span class="score-dash">-</span><span>${p.away_score}</span><span class="ft-label">${isLive ? (p.elapsed_minutes ? p.elapsed_minutes + "'" : 'LIVE') : 'FT'}</span></div>`
+    : `<div class="pred-score-col vs-text">vs</div>`;
+
+  const prob = p.confidence_score || p.intelligence_score || null;
+  const probClass = prob >= 70 ? 'prob-high' : prob >= 55 ? 'prob-med' : 'prob-low';
+  const probHtml = `<div class="pred-prob"><span class="prob-badge ${prob ? probClass : ''}">${prob ? prob + '%' : '—'}</span></div>`;
+
+  const tipText = isLocked ? '🔒 VIP Pick' : (p.tip || p.market || '—');
+  const tipCls = isLocked ? 'tip-vip' : '';
+  const oddVal = p.odds ? parseFloat(p.odds).toFixed(2) : null;
+
+  return `<a href="/prediction/${escapeHtml(p.slug || p.id)}" class="pred-row ${resultClass}">
+    ${timeHtml}
+    <div class="pred-teams">
+      <div class="pred-team-wrap">
+        <div class="pred-team-name-row">
+          ${p.home_team_logo ? `<img src="${escapeHtml(p.home_team_logo)}" alt="" onerror="this.style.display='none'">` : ''}
+          <span>${escapeHtml(p.home_team)}</span>
+        </div>
+        <div class="pred-team-name-row">
+          ${p.away_team_logo ? `<img src="${escapeHtml(p.away_team_logo)}" alt="" onerror="this.style.display='none'">` : ''}
+          <span>${escapeHtml(p.away_team)}</span>
+        </div>
+      </div>
+      ${scoreHtml}
+    </div>
+    ${probHtml}
+    <div class="pred-tip-col">
+      <span class="tip-badge ${tipCls}">${escapeHtml(tipText)}</span>
+      ${p.market && !isLocked ? `<span class="tip-market">${escapeHtml(p.market)}</span>` : ''}
+    </div>
+    <div class="pred-odd-col">${oddVal || '—'}</div>
+  </a>`;
+}
+
 // ── Prediction Grid ───────────────────────────────────────────────────────────
 async function loadPredictions(params = {}, container, append = false) {
   if (!container) return;
@@ -708,7 +746,7 @@ async function loadPredictions(params = {}, container, append = false) {
   const qs = new URLSearchParams({ date: 'today', limit: 20, ...params }).toString();
 
   if (!append) {
-    container.innerHTML = `<div class="skeleton" style="height:200px;border-radius:14px"></div>`.repeat(4);
+    container.innerHTML = `<div class="pred-list">${`<div class="pred-row-skeleton skeleton"></div>`.repeat(6)}</div>`;
   }
 
   try {
@@ -718,16 +756,23 @@ async function loadPredictions(params = {}, container, append = false) {
     const pagination = data.data?.pagination || {};
 
     if (!preds.length && !append) {
-      container.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon"><span class="material-icons-round" style="font-size:48px">sports_soccer</span></div><h3>No predictions yet</h3><p>Check back soon for today's tips</p></div>`;
+      container.innerHTML = `<div class="empty-state"><div class="empty-icon"><span class="material-icons-round" style="font-size:48px">sports_soccer</span></div><h3>No predictions yet</h3><p>Check back soon for today's tips</p></div>`;
       return pagination;
     }
 
-    const html = preds.map(p => buildPredictionCard(p, isVip)).join('');
-    if (append) container.insertAdjacentHTML('beforeend', html);
-    else container.innerHTML = html;
+    const rows = preds.map(p => buildPredictionRow(p, isVip)).join('');
+    const header = `<div class="pred-list-header"><span></span><span>Match</span><span>Prob</span><span>Tips</span><span>Odd</span></div>`;
+
+    if (append) {
+      let list = container.querySelector('.pred-list');
+      if (!list) { list = document.createElement('div'); list.className = 'pred-list'; container.appendChild(list); }
+      list.insertAdjacentHTML('beforeend', rows);
+    } else {
+      container.innerHTML = `<div class="pred-list">${header}${rows}</div>`;
+    }
     return pagination;
   } catch (err) {
-    if (!append) container.innerHTML = `<p class="text-soft text-center" style="grid-column:1/-1">Failed to load predictions</p>`;
+    if (!append) container.innerHTML = `<p class="text-soft text-center">Failed to load predictions</p>`;
     return {};
   }
 }

@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Oddslander — Football Intelligence Predictions</title>
 <meta name="description" content="Data-driven football predictions with an AI-powered Intelligence Engine. Free and VIP tips daily.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Jura:wght@400;500;600;700&family=Exo+2:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800;900&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
 <link rel="stylesheet" href="/css/style.css">
 <link rel="icon" href="/images/logo.png">
@@ -34,71 +34,64 @@
     </div>
   </section>
 
-  <!-- Top Banner Ad -->
-  <section class="ad-section">
-    <div class="container">
-      <div class="ad-wrap ad-wrap-top" id="ad-predictions-top"></div>
-    </div>
-  </section>
-
-  <!-- Predictions + Sidebar -->
-  <section>
+  <!-- Predictions + Right Sidebar -->
+  <section style="padding: 24px 0 48px">
     <div class="container">
       <div class="page-with-sidebar">
 
         <!-- Main content -->
         <div class="page-main">
-          <div class="flex-between mb-3">
-            <h2 class="section-title mb-0">Today's <span>Tips</span></h2>
-            <a href="/predictions.html" class="btn btn-outline btn-sm">View All →</a>
-          </div>
+
+          <!-- Date Picker -->
+          <div class="date-picker-row" id="date-picker-row"></div>
 
           <!-- Category Tabs -->
-          <div class="tab-row mb-2" id="category-tabs">
-            <button class="category-tab active" data-cat="free">All Free</button>
-            <button class="category-tab" data-cat="over_1_5">Over 1.5</button>
+          <div class="tab-row mb-2" id="category-tabs" style="overflow-x:auto;scrollbar-width:none;flex-wrap:nowrap">
+            <button class="category-tab active" data-cat="free">Tips</button>
             <button class="category-tab" data-cat="over_2_5">Over 2.5</button>
-            <button class="category-tab" data-cat="over_3_5">Over 3.5</button>
-            <button class="category-tab" data-cat="under_2_5">Under 2.5</button>
             <button class="category-tab" data-cat="gg">BTTS</button>
             <button class="category-tab" data-cat="home_win">Home Win</button>
-            <button class="category-tab" data-cat="away_win">Away Win</button>
             <button class="category-tab" data-cat="draw">Draw</button>
+            <button class="category-tab" data-cat="away_win">Away Win</button>
+            <button class="category-tab" data-cat="over_1_5">Over 1.5</button>
+            <button class="category-tab" data-cat="under_2_5">Under 2.5</button>
           </div>
 
-          <!-- Date Tabs -->
-          <div class="date-tabs mb-2">
-            <button class="date-tab" data-date="yesterday">Yesterday</button>
-            <button class="date-tab active" data-date="today">Today</button>
-            <button class="date-tab" data-date="tomorrow">Tomorrow</button>
-          </div>
-
-          <!-- Mid-feed Ad (injected after 4 cards by JS) -->
+          <!-- Mid-feed Ad -->
           <div id="ad-homepage-mid" class="ad-wrap ad-wrap-inline"></div>
 
-          <!-- Grid -->
-          <div class="grid-1" id="predictions-grid"></div>
+          <!-- Prediction List -->
+          <div id="predictions-grid"></div>
 
           <div class="text-center mt-3">
             <button class="btn btn-outline" id="load-more" style="display:none">Load More</button>
           </div>
         </div>
 
-        <!-- Sidebar -->
+        <!-- Right Sidebar -->
         <aside class="page-sidebar">
+          <!-- Top Leagues Widget -->
+          <div class="sidebar-widget">
+            <div class="sidebar-widget-title">Top Leagues</div>
+            <div class="top-leagues-list">
+              <a href="/predictions.html?league=Premier League" class="league-item"><span class="material-icons-round" style="font-size:16px;color:rgba(255,255,255,.35)">emoji_events</span> Premier League</a>
+              <a href="/predictions.html?league=La Liga" class="league-item"><span class="material-icons-round" style="font-size:16px;color:rgba(255,255,255,.35)">emoji_events</span> La Liga</a>
+              <a href="/predictions.html?league=Serie A" class="league-item"><span class="material-icons-round" style="font-size:16px;color:rgba(255,255,255,.35)">emoji_events</span> Serie A</a>
+              <a href="/predictions.html?league=Bundesliga" class="league-item"><span class="material-icons-round" style="font-size:16px;color:rgba(255,255,255,.35)">emoji_events</span> Bundesliga</a>
+              <a href="/predictions.html?league=Ligue 1" class="league-item"><span class="material-icons-round" style="font-size:16px;color:rgba(255,255,255,.35)">emoji_events</span> Ligue 1</a>
+              <a href="/predictions.html?league=Champions League" class="league-item"><span class="material-icons-round" style="font-size:16px;color:rgba(255,255,255,.35)">emoji_events</span> Champions League</a>
+              <a href="/predictions.html?league=Europa League" class="league-item"><span class="material-icons-round" style="font-size:16px;color:rgba(255,255,255,.35)">emoji_events</span> Europa League</a>
+              <a href="/predictions.html?league=MLS" class="league-item"><span class="material-icons-round" style="font-size:16px;color:rgba(255,255,255,.35)">emoji_events</span> MLS</a>
+            </div>
+          </div>
+
           <!-- Sidebar Ad -->
           <div class="ad-wrap ad-wrap-sidebar" id="ad-sidebar"></div>
 
-          <!-- Sponsored Posts (native ads) -->
+          <!-- Sponsored Posts -->
           <div class="sidebar-widget" id="sponsored-posts-widget" style="display:none">
             <div class="sidebar-widget-title">Sponsored</div>
             <div id="ad-native-sidebar"></div>
-          </div>
-
-          <!-- Sponsor ad widget -->
-          <div class="sidebar-widget" id="sponsor-widget-2" style="display:none">
-            <div class="sidebar-widget-title">Sponsored</div>
-            <div id="ad-sidebar-2"></div>
           </div>
         </aside>
       </div>
@@ -138,10 +131,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   await initPage();
   await renderBankerCards(document.getElementById('banker-section'));
   await renderVipTeaser(document.getElementById('vip-section'));
+  buildDatePicker();
   applyFilters();
   loadRecentWins();
   setupCategoryTabs();
-  setupDateTabs();
   document.getElementById('load-more').addEventListener('click', loadMore);
 
   // Load ads
@@ -207,15 +200,42 @@ function setupCategoryTabs() {
   });
 }
 
-function setupDateTabs() {
-  document.querySelectorAll('.date-tab').forEach(btn => {
+function buildDatePicker() {
+  const row = document.getElementById('date-picker-row');
+  if (!row) return;
+  const today = new Date();
+  const days = [];
+  for (let i = -3; i <= 4; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+    days.push(d);
+  }
+  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const todayStr = today.toISOString().slice(0,10);
+  row.innerHTML = `<button class="live-date-btn" id="live-date-btn"><span class="live-pulse"></span>Live</button>` +
+    days.map(d => {
+      const iso = d.toISOString().slice(0,10);
+      const isToday = iso === todayStr;
+      const label = isToday ? 'TODAY' : dayNames[d.getDay()];
+      const active = isToday ? 'active' : '';
+      return `<button class="date-btn ${active}" data-iso="${iso}" data-date="${isToday ? 'today' : iso}">
+        <span class="date-num">${d.getDate()}</span>
+        <span class="date-label">${label}</span>
+      </button>`;
+    }).join('');
+  row.querySelectorAll('.date-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.date-tab').forEach(b => b.classList.remove('active'));
+      row.querySelectorAll('.date-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      currentDate = btn.dataset.date;
+      currentDate = btn.dataset.iso;
       currentPage = 1;
       applyFilters();
     });
+  });
+  document.getElementById('live-date-btn')?.addEventListener('click', () => {
+    currentDate = 'today';
+    currentPage = 1;
+    applyFilters();
   });
 }
 
