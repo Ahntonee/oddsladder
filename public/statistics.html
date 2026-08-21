@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -616,7 +616,7 @@ async function loadTeams(dir='highest'){
     : empty(4);
   if(teamsChart) teamsChart.destroy();
   const ctx = document.getElementById('teams-chart').getContext('2d');
-  teamsChart = new Chart(ctx,{type:'bar',data:{labels:teams.map(t=>t.team_name.slice(0,12)),datasets:[{label:'Goals/Game',data:teams.map(t=>t.goals_scored_avg||0),backgroundColor:'rgba(178,208,0,0.7)',borderRadius:4}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'rgba(178,208,0,0.5)',font:{size:10}}},y:{ticks:{color:'rgba(178,208,0,0.5)'}}}}});
+  teamsChart = new Chart(ctx,{type:'bar',data:{labels:teams.map(t=>t.team_name.slice(0,12)),datasets:[{label:'Goals/Game',data:teams.map(t=>t.goals_scored_avg||0),backgroundColor:'rgba(160,208,0,0.7)',borderRadius:4}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'rgba(160,208,0,0.5)',font:{size:10}}},y:{ticks:{color:'rgba(160,208,0,0.5)'}}}}});
 }
 
 async function loadLeagues(dir='highest'){
@@ -629,7 +629,7 @@ async function loadLeagues(dir='highest'){
     : empty(4);
   if(leaguesChart) leaguesChart.destroy();
   const ctx = document.getElementById('leagues-chart').getContext('2d');
-  leaguesChart = new Chart(ctx,{type:'bar',data:{labels:leagues.map(l=>l.league_name?.slice(0,14)),datasets:[{label:'Goals/Game',data:leagues.map(l=>l.goals_per_game||0),backgroundColor:'rgba(178,208,0,0.6)',borderRadius:4}]},options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'rgba(178,208,0,0.5)'}},y:{ticks:{color:'rgba(178,208,0,0.5)',font:{size:10}}}}}});
+  leaguesChart = new Chart(ctx,{type:'bar',data:{labels:leagues.map(l=>l.league_name?.slice(0,14)),datasets:[{label:'Goals/Game',data:leagues.map(l=>l.goals_per_game||0),backgroundColor:'rgba(160,208,0,0.6)',borderRadius:4}]},options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'rgba(160,208,0,0.5)'}},y:{ticks:{color:'rgba(160,208,0,0.5)',font:{size:10}}}}}});
 }
 
 async function loadTeamsByMarket(){
@@ -676,7 +676,7 @@ async function loadMarkets(){
   const top = markets.slice(0,6);
   if(top.length){
     const ctx = document.getElementById('markets-chart').getContext('2d');
-    marketsChart = new Chart(ctx,{type:'doughnut',data:{labels:top.map(m=>m.market),datasets:[{data:top.map(m=>m.win_rate||0),backgroundColor:['#b2d000','#ffc107','#4ade80','#60a5fa','#f87171','#a78bfa'],borderWidth:0}]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{color:'rgba(178,208,0,0.75)',font:{size:11}}}}}});
+    marketsChart = new Chart(ctx,{type:'doughnut',data:{labels:top.map(m=>m.market),datasets:[{data:top.map(m=>m.win_rate||0),backgroundColor:['#a0d000','#ffd000','#4ade80','#60a5fa','#f87171','#a78bfa'],borderWidth:0}]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{color:'rgba(160,208,0,0.75)',font:{size:11}}}}}});
   }
 }
 
@@ -713,3 +713,4 @@ document.addEventListener('DOMContentLoaded', ()=>{
 </script>
 </body>
 </html>
+
