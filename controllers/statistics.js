@@ -55,3 +55,43 @@ exports.summary = asyncHandler(async (req, res) => {
   const data = await svc.getSummary();
   return successResponse(res, data);
 });
+
+exports.accuracySummary = asyncHandler(async (req, res) => {
+  const data = await svc.getAccuracySummary(req.query.league_id ? parseInt(req.query.league_id) : null);
+  return successResponse(res, data);
+});
+
+exports.accuracyByMarket = asyncHandler(async (req, res) => {
+  const data = await svc.getAccuracyByMarket(req.query.league_id ? parseInt(req.query.league_id) : null);
+  return successResponse(res, { markets: data });
+});
+
+exports.accuracyByConfidence = asyncHandler(async (req, res) => {
+  const data = await svc.getAccuracyByConfidenceBand();
+  return successResponse(res, { bands: data });
+});
+
+exports.accuracyByTip = asyncHandler(async (req, res) => {
+  const data = await svc.getAccuracyByTip();
+  return successResponse(res, { tips: data });
+});
+
+exports.accuracyByLeagueMarket = asyncHandler(async (req, res) => {
+  const data = await svc.getAccuracyByLeagueMarket(req.query.league_id ? parseInt(req.query.league_id) : null);
+  return successResponse(res, { rows: data });
+});
+
+exports.accuracyCalibration = asyncHandler(async (req, res) => {
+  const data = await svc.getAccuracyCalibration();
+  return successResponse(res, { rows: data });
+});
+
+exports.predictionFrequency = asyncHandler(async (req, res) => {
+  const data = await svc.getPredictionFrequency(req.query.league_id ? parseInt(req.query.league_id) : null);
+  return successResponse(res, { rows: data });
+});
+
+exports.accuracyLeagues = asyncHandler(async (req, res) => {
+  const data = await svc.getAccuracyLeagues();
+  return successResponse(res, { leagues: data });
+});

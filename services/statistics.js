@@ -284,6 +284,136 @@ async function refreshLeagueReliability() {
   console.log(`[Statistics] Refreshed league reliability for ${rows.length} leagues`);
 }
 
+// ── Accuracy Tracker ──────────────────────────────────────────────────────────
+
+async function getAccuracySummary(leagueId = null) {
+  const args = [];
+  let where = "WHERE result IN ('won','lost')";
+  if (leagueId) { where += ' AND league_id = ?'; args.push(leagueId); }
+  const [[row]] = await pool.query(
+    `SELECT COUNT(*) as total, SUM(result='won') as won, SUM(result='lost') as lost,
+            ROUND(SUM(result='won')/COUNT(*)*100,2) as accuracy
+     FROM predictions ${where}`, args
+  );
+  return { total: row.total || 0, won: parseInt(row.won)||0, lost: parseInt(row.lost)||0, accuracy: parseFloat(row.accuracy)||0 };
+}
+
+async function getAccuracyByMarket(leagueId = null) {
+  const args = [];
+  let where = "WHERE result IN ('won','lost')";
+  if (leagueId) { where += ' AND league_id = ?'; args.push(leagueId); }
+  const [rows] = await pool.query(
+    `SELECT market, COUNT(*) as total, SUM(result='won') as won,
+            ROUND(SUM(result='won')/COUNT(*)*100,2) as accuracy
+     FROM predictions ${where}
+     GROUP BY market ORDER BY total DESC`, args
+  );
+  return rows.map(r => ({ market: r.market, total: r.total, won: parseInt(r.won)||0, accuracy: parseFloat(r.accuracy)||0 }));
+}
+
+async function getAccuracyByConfidenceBand() {
+  const [rows] = await pool.query(
+    `SELECT b*5 as band_low, COUNT(*) as total, SUM(result='won') as won
+     FROM (SELECT FLOOR(confidence_score/5) as b, result
+           FROM predictions WHERE result IN ('won','lost') AND confidence_score IS NOT NULL) t
+     GROUP BY b ORDER BY b DESC`
+  );
+  return rows.map(r => ({
+    band: `${r.band_low}–${parseInt(r.band_low)+4}%`,
+    total: r.total, won: parseInt(r.won)||0,
+    accuracy: r.total > 0 ? parseFloat(((parseInt(r.won)||0)/r.total*100).toFixed(2)) : 0
+  }));
+}
+
+async function getAccuracyByTip() {
+  const [rows] = await pool.query(
+    `SELECT market, tip, COUNT(*) as total, SUM(result='won') as won,
+            ROUND(SUM(result='won')/COUNT(*)*100,2) as accuracy
+     FROM predictions WHERE result IN ('won','lost') AND tip IS NOT NULL AND tip != ''
+     GROUP BY market, tip ORDER BY market, total DESC`
+  );
+  return rows.map(r => ({ market: r.market, tip: r.tip, total: r.total, won: parseInt(r.won)||0, accuracy: parseFloat(r.accuracy)||0 }));
+}
+
+async function getAccuracyByLeagueMarket(leagueId = null) {
+  const args = [];
+  let where = "WHERE p.result IN ('won','lost')";
+  if (leagueId) { where += ' AND p.league_id = ?'; args.push(leagueId); }
+  const [rows] = await pool.query(
+    `SELECT l.name as league_name, l.country, p.market, p.tip,
+            COUNT(*) as total, SUM(p.result='won') as won,
+            ROUND(SUM(p.result='won')/COUNT(*)*100,2) as accuracy
+     FROM predictions p JOIN leagues l ON l.id = p.league_id
+     ${where}
+     GROUP BY l.id, p.market, p.tip
+     HAVING total >= 2
+     ORDER BY p.market, accuracy DESC
+     LIMIT 200`, args
+  );
+  return rows.map(r => ({ ...r, won: parseInt(r.won)||0, accuracy: parseFloat(r.accuracy)||0 }));
+}
+
+async function getAccuracyCalibration() {
+  const [rows] = await pool.query(
+    `SELECT market, tip,
+            CONCAT(b*5,'–',b*5+4,'%') as band,
+            COUNT(*) as total, SUM(result='won') as won,
+            ROUND(SUM(result='won')/COUNT(*)*100,2) as accuracy,
+            MAX(updated_at) as last_updated
+     FROM (SELECT market, tip, FLOOR(confidence_score/5) as b, result, updated_at
+           FROM predictions WHERE result IN ('won','lost') AND confidence_score IS NOT NULL AND tip IS NOT NULL) t
+     GROUP BY market, tip, b
+     ORDER BY last_updated DESC
+     LIMIT 200`
+  );
+  return rows.map(r => ({ ...r, won: parseInt(r.won)||0, accuracy: parseFloat(r.accuracy)||0 }));
+}
+
+async function getPredictionFrequency(leagueId = null) {
+  const args = [];
+  let where = 'WHERE p.published_at IS NOT NULL AND p.tip IS NOT NULL AND p.tip != \'\'';
+  if (leagueId) { where += ' AND p.league_id = ?'; args.push(leagueId); }
+  const [rows] = await pool.query(
+    `SELECT l.name as league_name, l.country, p.league_id,
+            p.market, p.tip,
+            COUNT(*) as cnt,
+            SUM(p.result IN ('won','lost')) as resolved_count,
+            SUM(p.result='won') as resolved_won,
+            SUM(COUNT(*)) OVER (PARTITION BY p.league_id) as league_total
+     FROM predictions p JOIN leagues l ON l.id = p.league_id
+     ${where}
+     GROUP BY p.league_id, p.market, p.tip
+     ORDER BY l.name, cnt DESC
+     LIMIT 300`, args
+  ).catch(async () => {
+    // Fallback without window function for older MySQL
+    const [fb] = await pool.query(
+      `SELECT l.name as league_name, l.country, p.league_id, p.market, p.tip,
+              COUNT(*) as cnt,
+              SUM(p.result IN ('won','lost')) as resolved_count,
+              SUM(p.result='won') as resolved_won, 0 as league_total
+       FROM predictions p JOIN leagues l ON l.id = p.league_id
+       ${where} GROUP BY p.league_id, p.market, p.tip
+       ORDER BY l.name, cnt DESC LIMIT 300`, args
+    );
+    return [fb];
+  });
+  return rows.map(r => ({
+    ...r, cnt: r.cnt, resolved_count: parseInt(r.resolved_count)||0, resolved_won: parseInt(r.resolved_won)||0,
+    share: r.league_total > 0 ? parseFloat((r.cnt/r.league_total*100).toFixed(1)) : 0
+  }));
+}
+
+async function getAccuracyLeagues() {
+  const [rows] = await pool.query(
+    `SELECT DISTINCT l.id, l.name, l.country
+     FROM predictions p JOIN leagues l ON l.id = p.league_id
+     WHERE p.result IN ('won','lost')
+     ORDER BY l.name`
+  );
+  return rows;
+}
+
 module.exports = {
   getHighestScoringTeams, getLowestScoringTeams,
   getMostReliableTeamsByMarket, getMostEffectivePredictionsByTeam,
@@ -291,5 +421,8 @@ module.exports = {
   getMostReliableLeaguesByMarket, getMostEffectivePredictionsByLeague,
   getMostReliableMarkets, getCrossMarketLeagueStats,
   getSummary,
+  getAccuracySummary, getAccuracyByMarket, getAccuracyByConfidenceBand,
+  getAccuracyByTip, getAccuracyByLeagueMarket, getAccuracyCalibration,
+  getPredictionFrequency, getAccuracyLeagues,
   refreshTeamStatistics, refreshLeagueStatistics, refreshMarketStats, refreshLeagueReliability,
 };

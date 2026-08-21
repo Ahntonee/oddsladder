@@ -13,4 +13,13 @@ router.get('/markets/reliable', ctrl.marketsReliable);
 router.get('/markets/cross', ctrl.marketsCross);
 router.get('/summary', ctrl.summary);
 
+router.get('/accuracy/summary', ctrl.accuracySummary);
+router.get('/accuracy/by-market', ctrl.accuracyByMarket);
+router.get('/accuracy/by-confidence', ctrl.accuracyByConfidence);
+router.get('/accuracy/by-tip', ctrl.accuracyByTip);
+router.get('/accuracy/by-league-market', ctrl.accuracyByLeagueMarket);
+router.get('/accuracy/calibration', ctrl.accuracyCalibration);
+router.get('/accuracy/frequency', ctrl.predictionFrequency);
+router.get('/accuracy/leagues', ctrl.accuracyLeagues);
+
 module.exports = router;
