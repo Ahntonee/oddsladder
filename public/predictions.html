@@ -130,25 +130,37 @@ function buildDateStrip() {
   if (!strip) return;
   const now = new Date();
   const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
   let html = `<button class="date-strip-btn live-btn" data-date="live" onclick="setDateStrip(this,'live')">
-    <span class="material-icons-round" style="font-size:16px">radio_button_checked</span> Live
-    <span class="live-count" id="live-count">—</span>
-  </button>`;
+    <span class="material-icons-round" style="font-size:14px;vertical-align:middle">radio_button_checked</span> Live
+    <span class="live-count" id="live-count">0</span>
+  </button>
+  <div class="date-strip-sep"></div>`;
+
   for (let i = -1; i <= 5; i++) {
     const d = new Date(now); d.setDate(d.getDate() + i);
-    let label, dateKey;
-    if (i === -1) { label = 'Yesterday'; dateKey = 'yesterday'; }
-    else if (i === 0) { label = 'Today'; dateKey = 'today'; }
-    else if (i === 1) { label = 'Tomorrow'; dateKey = 'tomorrow'; }
+    let sub, dateKey;
+    const dayNum = d.getDate();
+    if (i === -1) { sub = 'YST'; dateKey = 'yesterday'; }
+    else if (i === 0) { sub = 'TODAY'; dateKey = 'today'; }
+    else if (i === 1) { sub = 'TMR'; dateKey = 'tomorrow'; }
     else {
-      const day = days[d.getDay()];
+      sub = days[d.getDay()];
       dateKey = d.toISOString().split('T')[0];
-      label = `${day} ${d.getDate()} ${months[d.getMonth()]}`;
     }
     const active = (dateKey === 'today') ? ' active' : '';
-    html += `<button class="date-strip-btn${active}" data-date="${dateKey}" onclick="setDateStrip(this,'${dateKey}')">${label}</button>`;
+    html += `<button class="date-strip-btn${active}" data-date="${dateKey}" onclick="setDateStrip(this,'${dateKey}')">
+      <span class="ds-num">${dayNum}</span>
+      <span class="ds-sub">${sub}</span>
+    </button>`;
   }
+
+  html += `<div class="date-strip-sep"></div>
+  <button class="date-strip-cal" title="Pick date" onclick="openDatePicker()">
+    <span class="material-icons-round" style="font-size:18px">calendar_month</span>
+  </button>
+  <input type="date" id="date-picker-input" style="position:absolute;opacity:0;pointer-events:none;width:0;height:0">`;
+
   strip.innerHTML = html;
   updateLiveCount();
 }
@@ -172,6 +184,22 @@ function setDateStrip(btn, date) {
   currentResult = date === 'live' ? 'live' : (document.getElementById('result-filter')?.value || '');
   currentPage = 1;
   applyFilters();
+}
+
+function openDatePicker() {
+  const inp = document.getElementById('date-picker-input');
+  if (!inp) return;
+  inp.onchange = (e) => {
+    const val = e.target.value; // YYYY-MM-DD
+    if (!val) return;
+    // Build a fake button reference and activate it
+    document.querySelectorAll('.date-strip-btn').forEach(b => b.classList.remove('active'));
+    currentDate = val;
+    currentResult = document.getElementById('result-filter')?.value || '';
+    currentPage = 1;
+    applyFilters();
+  };
+  inp.showPicker ? inp.showPicker() : inp.click();
 }
 
 document.addEventListener('DOMContentLoaded', async () => {

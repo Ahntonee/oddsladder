@@ -5,12 +5,16 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Football Predictions Blog — Predictvilla</title>
 <meta name="description" content="Expert football predictions, analysis, and betting tips from the Predictvilla intelligence team.">
-<link rel="canonical" href="https://predictvilla.com/blog.html">
+<meta name="keywords" content="">
+<link rel="canonical" href="https://predictvilla.com/blog.html" id="canonical-tag">
 <meta property="og:title" content="Football Predictions Blog — Predictvilla">
 <meta property="og:description" content="Expert football predictions, analysis, and betting tips.">
 <meta property="og:image" content="https://predictvilla.com/images/logo.webp">
+<meta property="og:url" content="https://predictvilla.com/blog.html">
 <meta property="og:type" content="article">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Football Predictions Blog — Predictvilla">
+<meta name="twitter:description" content="Expert football predictions, analysis, and betting tips.">
 <meta name="twitter:image" content="https://predictvilla.com/images/logo.webp">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Jura:wght@400;500;600;700&family=Exo+2:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800;900&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -50,17 +54,36 @@ document.addEventListener('DOMContentLoaded', async () => {
     const { post, related } = (await r.json()).data;
 
     // Update meta
-    document.title = `${post.meta_title || post.title} — Predictvilla`;
-    setMeta('description', post.meta_description || post.excerpt || '');
+    const seoTitle = (post.meta_title || post.title) + ' — Predictvilla';
+    const seoDesc  = post.meta_description || post.excerpt || '';
+    const postUrl  = `https://predictvilla.com/blog/${post.slug}`;
+    const ogImage  = post.featured_image && !post.featured_image.startsWith('data:')
+                       ? post.featured_image
+                       : 'https://predictvilla.com/images/logo.webp';
+
+    document.title = seoTitle;
+    setMeta('description', seoDesc);
     setMeta('keywords', post.keywords || '');
-    setOg('title', post.title);
-    setOg('description', post.excerpt || '');
-    if (post.featured_image) setOg('image', post.featured_image);
+
+    // Canonical
+    const canon = document.getElementById('canonical-tag');
+    if (canon) canon.href = postUrl;
+
+    // Open Graph
+    setOg('title',       seoTitle);
+    setOg('description', seoDesc);
+    setOg('url',         postUrl);
+    setOg('image',       ogImage);
+
+    // Twitter Card
+    setMeta('twitter:title',       seoTitle);
+    setMeta('twitter:description', seoDesc);
+    setMeta('twitter:image',       ogImage);
 
     // JSON-LD
     const ld = document.createElement('script');
     ld.type = 'application/ld+json';
-    ld.textContent = JSON.stringify({ "@context":"https://schema.org","@type":"Article","headline":post.title,"datePublished":post.published_at,"author":{"@type":"Person","name":post.author_name||'Predictvilla'},"publisher":{"@type":"Organization","name":"Predictvilla"} });
+    ld.textContent = JSON.stringify({ "@context":"https://schema.org","@type":"Article","headline":post.meta_title||post.title,"description":seoDesc,"url":postUrl,"image":ogImage,"datePublished":post.published_at,"author":{"@type":"Person","name":post.author_name||'Predictvilla'},"publisher":{"@type":"Organization","name":"Predictvilla","logo":{"@type":"ImageObject","url":"https://predictvilla.com/images/logo.webp"}} });
     document.head.appendChild(ld);
 
     document.getElementById('bc-title').textContent = post.title;

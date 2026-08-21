@@ -1936,31 +1936,60 @@ body.has-sidebar { padding-left: var(--sidebar-w); padding-top: var(--topbar-h);
 
 /* ── Date Strip ── */
 .date-strip {
-  display: flex; align-items: center; gap: 4px;
+  display: flex; align-items: center;
+  background: #111; border-radius: 40px;
+  padding: 5px 8px; gap: 0;
   overflow-x: auto; scroll-snap-type: x mandatory;
-  padding-bottom: 2px; margin-bottom: 14px;
+  margin-bottom: 14px;
   -webkit-overflow-scrolling: touch;
+  width: fit-content; max-width: 100%;
 }
+[data-theme="dark"] .date-strip { background: #1c1c1c; }
 .date-strip::-webkit-scrollbar { display: none; }
+
+.date-strip-sep {
+  width: 1px; height: 28px; background: rgba(255,255,255,0.15);
+  flex-shrink: 0; margin: 0 4px;
+}
+
 .date-strip-btn {
   flex-shrink: 0; scroll-snap-align: start;
-  padding: 7px 14px; border-radius: 8px;
-  font-size: 13px; font-weight: 600;
-  background: var(--bg-2); border: 1px solid var(--border);
-  color: var(--text-soft); cursor: pointer;
+  padding: 6px 14px; border-radius: 30px;
+  border: none; background: transparent;
+  color: rgba(255,255,255,0.55); cursor: pointer;
   white-space: nowrap; transition: all 0.15s; font-family: inherit;
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+  min-width: 44px;
 }
-.date-strip-btn:hover { border-color: var(--primary); color: var(--primary); }
-.date-strip-btn.active { background: var(--primary); color: #0d1600; border-color: var(--primary); }
+.date-strip-btn .ds-num {
+  font-size: 15px; font-weight: 600; line-height: 1; color: inherit;
+}
+.date-strip-btn .ds-sub {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.05em;
+  text-transform: uppercase; line-height: 1; color: inherit; opacity: 0.65;
+}
+.date-strip-btn:hover { color: rgba(255,255,255,0.9); }
+.date-strip-btn.active { background: #fff; color: #111; }
+.date-strip-btn.active .ds-sub { opacity: 0.6; }
+
 .date-strip-btn.live-btn {
-  background: #dc2626; color: #fff; border-color: #dc2626;
-  display: flex; align-items: center; gap: 6px; font-weight: 700;
+  background: #dc2626; color: #fff;
+  flex-direction: row; gap: 6px; font-weight: 700;
+  padding: 8px 16px; min-width: unset;
 }
 .date-strip-btn.live-btn .live-count {
   background: rgba(255,255,255,0.25); border-radius: 10px;
   padding: 1px 7px; font-size: 11px; font-weight: 700;
 }
-.date-strip-btn.live-btn.active, .date-strip-btn.live-btn:hover { background: #b91c1c; border-color: #b91c1c; }
+.date-strip-btn.live-btn:hover, .date-strip-btn.live-btn.active { background: #b91c1c; color: #fff; }
+
+.date-strip-cal {
+  flex-shrink: 0; padding: 6px 10px; margin-left: 2px;
+  color: rgba(255,255,255,0.4); cursor: pointer;
+  display: flex; align-items: center; font-size: 18px;
+  transition: color 0.15s; background: none; border: none;
+}
+.date-strip-cal:hover { color: rgba(255,255,255,0.85); }
 .pred-prob { display: flex; align-items: center; justify-content: center; }
 .prob-badge {
   display: inline-flex; align-items: center; justify-content: center;
