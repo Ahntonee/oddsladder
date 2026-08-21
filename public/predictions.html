@@ -65,12 +65,8 @@
             <button class="category-tab" data-cat="vip">VIP</button>
           </div>
 
-          <!-- Date Tabs -->
-          <div class="date-tabs mb-2">
-            <button class="date-tab" onclick="setDate(this,'yesterday')">Yesterday</button>
-            <button class="date-tab active" onclick="setDate(this,'today')">Today</button>
-            <button class="date-tab" onclick="setDate(this,'tomorrow')">Tomorrow</button>
-          </div>
+          <!-- Date Strip -->
+          <div class="date-strip" id="date-strip"></div>
 
           <!-- Filters -->
           <div class="flex gap-2 mb-3" style="flex-wrap:wrap;align-items:center">
@@ -129,8 +125,58 @@
 let currentPage = 1, currentDate = 'today', currentCat = '', currentLeague = '', currentMarket = '', currentResult = '', searchTerm = '';
 let searchTimer;
 
+function buildDateStrip() {
+  const strip = document.getElementById('date-strip');
+  if (!strip) return;
+  const now = new Date();
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  let html = `<button class="date-strip-btn live-btn" data-date="live" onclick="setDateStrip(this,'live')">
+    <span class="material-icons-round" style="font-size:16px">radio_button_checked</span> Live
+    <span class="live-count" id="live-count">—</span>
+  </button>`;
+  for (let i = -1; i <= 5; i++) {
+    const d = new Date(now); d.setDate(d.getDate() + i);
+    let label, dateKey;
+    if (i === -1) { label = 'Yesterday'; dateKey = 'yesterday'; }
+    else if (i === 0) { label = 'Today'; dateKey = 'today'; }
+    else if (i === 1) { label = 'Tomorrow'; dateKey = 'tomorrow'; }
+    else {
+      const day = days[d.getDay()];
+      dateKey = d.toISOString().split('T')[0];
+      label = `${day} ${d.getDate()} ${months[d.getMonth()]}`;
+    }
+    const active = (dateKey === 'today') ? ' active' : '';
+    html += `<button class="date-strip-btn${active}" data-date="${dateKey}" onclick="setDateStrip(this,'${dateKey}')">${label}</button>`;
+  }
+  strip.innerHTML = html;
+  updateLiveCount();
+}
+
+async function updateLiveCount() {
+  try {
+    const r = await fetch('/api/predictions?date=today&limit=100');
+    const data = await r.json();
+    const preds = data.data?.predictions || [];
+    const liveSet = new Set(['1H','2H','HT','ET','BT','P','LIVE','1H_HT','2H_ET']);
+    const cnt = preds.filter(p => liveSet.has(p.fixture_status) && p.home_score !== null).length;
+    const el = document.getElementById('live-count');
+    if (el) el.textContent = cnt;
+  } catch {}
+}
+
+function setDateStrip(btn, date) {
+  document.querySelectorAll('.date-strip-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentDate = date === 'live' ? 'today' : date;
+  currentResult = date === 'live' ? 'live' : (document.getElementById('result-filter')?.value || '');
+  currentPage = 1;
+  applyFilters();
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   await initPage();
+  buildDateStrip();
   await renderBankerCards(document.getElementById('banker-section'));
   await renderVipTeaser(document.getElementById('vip-section'));
   await populateLeagues();

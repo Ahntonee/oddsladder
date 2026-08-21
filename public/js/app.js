@@ -750,7 +750,7 @@ function buildPredictionRow(p, isVip = false) {
     : `<div class="pred-time">${timeStr}</div>`;
 
   const scoreHtml = (isFT || isLive) && p.home_score !== null
-    ? `<div class="pred-score-col"><span>${p.home_score}</span><span class="score-dash">-</span><span>${p.away_score}</span><span class="ft-label">${isLive ? (p.elapsed_minutes ? p.elapsed_minutes + "'" : 'LIVE') : 'FT'}</span></div>`
+    ? `<div class="pred-score-col"><span>${p.home_score}</span><span>${p.away_score}</span><span class="ft-label">${isLive ? (p.elapsed_minutes ? p.elapsed_minutes + "'" : 'LIVE') : 'FT'}</span></div>`
     : `<div class="pred-score-col vs-text">vs</div>`;
 
   const prob = p.confidence_score || p.intelligence_score || null;
@@ -762,6 +762,7 @@ function buildPredictionRow(p, isVip = false) {
   const oddVal = p.odds ? parseFloat(p.odds).toFixed(2) : null;
 
   return `<a href="/prediction/${escapeHtml(p.slug || p.id)}" class="pred-row ${resultClass}">
+    <div class="pred-result-bar"></div>
     ${timeHtml}
     <div class="pred-teams">
       <div class="pred-team-wrap">
@@ -808,7 +809,7 @@ async function loadPredictions(params = {}, container, append = false) {
     }
 
     const rows = preds.map(p => buildPredictionRow(p, isVip)).join('');
-    const header = `<div class="pred-list-header"><span></span><span>Match</span><span>Prob</span><span>Tips</span><span>Odd</span></div>`;
+    const header = `<div class="pred-list-header"><span></span><span></span><span>Match</span><span>Prob</span><span>Tips</span><span>Odd</span></div>`;
 
     if (append) {
       let list = container.querySelector('.pred-list');
