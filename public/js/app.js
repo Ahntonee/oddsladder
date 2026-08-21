@@ -398,7 +398,7 @@ function injectJsonLd(data) {
 }
 function setPageMeta({ title, description, image, type = 'website', noindex = false } = {}) {
   const BASE = 'https://predictvilla.com';
-  const img = image || `${BASE}/images/logo.png`;
+  const img = image || `${BASE}/images/logo.webp`;
   const canonical = BASE + window.location.pathname;
   if (title) { document.title = `${title} — Predictvilla`; setOg('title', title); setMeta('twitter:title', title); }
   if (description) { setMeta('description', description); setOg('description', description); setMeta('twitter:description', description); }
@@ -460,7 +460,7 @@ async function injectHeader() {
   sidebar.innerHTML = `
     <div class="sidebar-logo-wrap">
       <a href="/" class="sidebar-logo">
-        <img src="/images/logo.png" alt="OL" onerror="this.style.display='none'">
+        <img src="/images/logo.svg" alt="Predictvilla" onerror="this.style.display='none'">
         <span>Predictvilla</span>
       </a>
       <button class="sidebar-close-btn" id="sidebar-close"><span class="material-icons-round">close</span></button>
@@ -502,7 +502,7 @@ async function injectHeader() {
       <div class="topbar-inner">
         <button class="hamburger-btn" id="sidebar-toggle"><span class="material-icons-round">menu</span></button>
         <a href="/" class="topbar-logo">
-          <img src="/images/logo.png" alt="" onerror="this.style.display='none'">
+          <img src="/images/logo.svg" alt="Predictvilla" onerror="this.style.display='none'">
           <span>Predictvilla</span>
         </a>
         <div style="flex:1"></div>
@@ -612,7 +612,7 @@ async function injectFooter() {
         <div class="footer-grid-new">
 
           <div class="footer-brand-col">
-            <img src="/images/logo.png" alt="Predictvilla" class="footer-logo" onerror="this.style.display='none'">
+            <img src="/images/logo.svg" alt="Predictvilla" class="footer-logo" onerror="this.style.display='none'">
             <p class="footer-desc">Predictvilla is an online service that provides the most accurate football prediction, soccer betting tips as well as news to its users.</p>
             <div class="footer-socials">${socialHtml}</div>
           </div>
@@ -899,7 +899,7 @@ if (document.readyState === 'loading') {
     overlay.innerHTML = `
       <div id="ol-cookie-modal">
         <div class="cm-head">
-          <img src="/images/logo.png" alt="Predictvilla">
+          <img src="/images/logo.svg" alt="Predictvilla">
           <h2>Cookie Preferences</h2>
         </div>
         <div class="cm-body">
